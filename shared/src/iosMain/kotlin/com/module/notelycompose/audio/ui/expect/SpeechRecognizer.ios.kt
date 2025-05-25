@@ -27,6 +27,9 @@ import platform.posix.exception
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+const val IOS_VERSION = 16
+const val ZERO = 0
+
 actual class SpeechRecognizer {
     private var audioEngine: AVAudioEngine? = null
     private var request: SFSpeechAudioBufferRecognitionRequest? = null
@@ -38,7 +41,6 @@ actual class SpeechRecognizer {
 
     actual fun initialize() {
         recognizer = SFSpeechRecognizer()
-
         isInitialized = true
     }
     actual fun finishRecognizer() {
@@ -141,7 +143,14 @@ actual class SpeechRecognizer {
     private fun prepareEngine(){
         val audioEngine = AVAudioEngine()
         val request = SFSpeechAudioBufferRecognitionRequest()
-        request.addsPunctuation = true
+
+        // Only set addsPunctuation on iOS 16.0+
+        val systemVersion = platform.UIKit.UIDevice.currentDevice.systemVersion
+        val majorVersion = systemVersion.split(".")[ZERO].toIntOrNull() ?: ZERO
+        if (majorVersion >= IOS_VERSION) {
+            request.addsPunctuation = true
+        }
+
         request.taskHint = SFSpeechRecognitionTaskHintDictation
         request.shouldReportPartialResults = true
 
