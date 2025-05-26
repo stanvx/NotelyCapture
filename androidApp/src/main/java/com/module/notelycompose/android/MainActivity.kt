@@ -9,6 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -22,6 +26,7 @@ import com.module.notelycompose.android.di.AudioRecorderSpeechModule
 import com.module.notelycompose.android.presentation.AndroidAudioPlayerViewModel
 import com.module.notelycompose.android.presentation.AndroidAudioRecorderViewModel
 import com.module.notelycompose.android.presentation.AndroidNoteListViewModel
+import com.module.notelycompose.android.presentation.AndroidOnboardingViewModel
 import com.module.notelycompose.android.presentation.AndroidPlatformViewModel
 import com.module.notelycompose.android.presentation.AndroidSpeechRecognitionViewModel
 import com.module.notelycompose.android.presentation.AndroidTextEditorViewModel
@@ -33,6 +38,8 @@ import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
 import com.module.notelycompose.notes.ui.detail.RecognitionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
+import com.module.notelycompose.onboarding.presentation.model.OnboardingState
+import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -58,8 +65,20 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
+                    val onboardingState by viewmodel.state.collectAsState()
 
-                    NoteAppRoot()
+                    when (onboardingState) {
+                        is OnboardingState.Initial -> Unit
+                        is OnboardingState.NotCompleted -> {
+                            OnboardingWalkthrough(
+                                onFinish = {
+                                    viewmodel.onCompleteOnboarding()
+                                }
+                            )
+                        }
+                        is OnboardingState.Completed -> NoteAppRoot()
+                    }
                 }
             }
         }

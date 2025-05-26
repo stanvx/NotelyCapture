@@ -9,6 +9,7 @@ jna = "5.13.0"
 kotlinxSerializationJsonVersion = "1.6.0"
 material = "1.11.0"
 materialIconsCore = "1.7.3"
+multiplatformSettings = "1.1.1"
 navCompose = "2.8.3"
 sqldelight = "1.5.5"
 sqldelightCoroutines = "1.5.4"
@@ -38,6 +39,8 @@ jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 kotlinx-serialization-json-v160 = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJsonVersion" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
+multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navCompose" }
 sqldelight-runtime = { group = "com.squareup.sqldelight", name = "runtime", version.ref = "sqldelight" }
 sqldelight-coroutines = { group = "com.squareup.sqldelight", name = "coroutines-extensions", version.ref = "sqldelightCoroutines" }

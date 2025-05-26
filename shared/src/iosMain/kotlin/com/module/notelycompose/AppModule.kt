@@ -19,6 +19,8 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.preferences.SettingsFactory
 
 class AppModule {
     val noteDataSource: NoteDataSource by lazy {
@@ -78,4 +80,8 @@ class AppModule {
     val textEditorHelper: TextEditorHelper by lazy { TextEditorHelper() }
 
     val platformInfo: Platform by lazy { getPlatform() }
+
+    val preferencesRepository: PreferencesRepository by lazy {
+        PreferencesRepository(SettingsFactory().createSettings())
+    }
 }

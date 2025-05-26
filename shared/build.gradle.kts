@@ -50,6 +50,9 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(libs.compose.vectorize.core)
                 implementation(libs.kotlinx.serialization.json)
+
+                implementation(libs.multiplatform.settings)
+                implementation(libs.multiplatform.settings.coroutines)
             }
         }
         val commonTest by getting {
@@ -65,7 +68,7 @@ kotlin {
                 // SpeechRecognizer
                 implementation(libs.alphacephei.vosk.android)
                 implementation(libs.kotlinx.serialization.json.v160)
-
+                implementation(libs.multiplatform.settings)
             }
         }
         val iosX64Main by getting {

@@ -69,7 +69,7 @@ dependencies {
 
     implementation(project(":models"))
     implementation(libs.kotlinx.datetime)
-
+    implementation(libs.multiplatform.settings)
 }
 
 java {
