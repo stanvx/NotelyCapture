@@ -1,0 +1,4 @@
+• Full Notes functionality
+- Update Recorder UI
+- Use pure dark colors for dark mode
+- Android Apk file size exceed 25MB due to offline transcription model
