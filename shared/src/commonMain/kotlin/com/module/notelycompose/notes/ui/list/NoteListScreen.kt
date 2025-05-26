@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.settings.SettingsBottomSheet
@@ -53,6 +54,7 @@ fun SharedNoteListScreen(
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isSettingsTapped by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // State to control bottom sheet
     val bottomSheetState = rememberModalBottomSheetState(
@@ -112,6 +114,7 @@ fun SharedNoteListScreen(
                                 bottomSheetState.show()
                             }
                         }
+                        keyboardController?.hide()
                     },
                     onSettingsClicked = {
                         isSettingsTapped = true
@@ -122,6 +125,7 @@ fun SharedNoteListScreen(
                                 bottomSheetState.show()
                             }
                         }
+                        keyboardController?.hide()
                     }
                 )
             },

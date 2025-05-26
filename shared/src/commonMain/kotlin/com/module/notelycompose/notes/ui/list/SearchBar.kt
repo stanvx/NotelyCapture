@@ -1,10 +1,12 @@
 package com.module.notelycompose.notes.ui.list
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,7 +15,9 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +41,7 @@ import org.jetbrains.compose.resources.stringResource
 fun SearchBar(
     onSearchByKeyword: (String) -> Unit
 ) {
-    var value by remember { mutableStateOf("") }
+    var searchText by remember { mutableStateOf("") }
     var isFocused by remember { mutableStateOf(false) }
     var isLabelVisible by remember { mutableStateOf(true) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -51,17 +55,23 @@ fun SearchBar(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         OutlinedTextField(
-            value = value,
+            value = searchText,
             onValueChange = {
-                value = it
-                isLabelVisible = !isFocused && value.isEmpty()
+                searchText = it
+                isLabelVisible = !isFocused && searchText.isEmpty()
                 onSearchByKeyword(it)
+            },
+            placeholder = {
+                Text(
+                    text = stringResource(Res.string.search_bar_search_text),
+                    color = LocalCustomColors.current.languageSearchBorderColor
+                )
             },
             modifier = Modifier
                 .weight(1f)
                 .onFocusChanged { focusState ->
                     isFocused = focusState.isFocused
-                    isLabelVisible = !isFocused && value.isEmpty()
+                    isLabelVisible = !isFocused && searchText.isEmpty()
                 },
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 cursorColor = LocalCustomColors.current.searchOutlinedTextFieldColor,
@@ -70,14 +80,6 @@ fun SearchBar(
                 unfocusedBorderColor = LocalCustomColors.current.searchOutlinedTextFieldColor,
                 disabledBorderColor = LocalCustomColors.current.searchOutlinedTextFieldColor
             ),
-            label = {
-                if (isLabelVisible) {
-                    Text(
-                        text = stringResource(Res.string.search_bar_search_text),
-                        color = LocalCustomColors.current.searchOutlinedTextFieldColor
-                    )
-                }
-            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -86,12 +88,34 @@ fun SearchBar(
                     modifier = Modifier.size(38.dp).padding(start = 8.dp)
                 )
             },
+            trailingIcon = {
+                if (searchText.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            searchText = ""
+                            onSearchByKeyword(searchText)
+                        },
+                        modifier = Modifier
+                            .size(20.dp)
+                            .background(
+                                LocalCustomColors.current.languageSearchCancelButtonColor.copy(alpha = 0.3f),
+                                CircleShape
+                            )
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear",
+                            tint = LocalCustomColors.current.languageSearchCancelIconTintColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            },
             shape = RoundedCornerShape(48.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide()
-                    isLabelVisible = value.isEmpty()
+                    isLabelVisible = searchText.isEmpty()
                     focusManager.clearFocus()
                 }
             ),
