@@ -15,54 +15,75 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.onboarding_one
+import notelycompose.shared.generated.resources.onboarding_ios_four
+import notelycompose.shared.generated.resources.onboarding_ios_one
+import notelycompose.shared.generated.resources.onboarding_ios_three
+import notelycompose.shared.generated.resources.onboarding_ios_two
 import org.jetbrains.compose.resources.painterResource
 
 data class OnboardingPage(
     val title: String,
     val description: String,
     val backgroundColor: Color,
-    val textColor: Color
+    val textColor: Color,
+    val androidResources: Painter,
+    val iOSResources: Painter
 )
 
 @Composable
 fun OnboardingWalkthrough(
     onFinish: () -> Unit = {}
 ) {
-    val pages = listOf(
+    val pages = mutableListOf(
         OnboardingPage(
             title = "Create Notes\nand Share",
             description = "Write and share your notes\ninstantly with ease",
-            backgroundColor = Color(0xFFFFF9C7),
-            textColor = Color(0xFFCA7F58)
+            backgroundColor = Color(0xFFFFFAD0),
+            textColor = Color(0xFFCA7F58),
+            androidResources = painterResource(Res.drawable.onboarding_ios_one),
+            iOSResources = painterResource(Res.drawable.onboarding_ios_one)
         ),
         OnboardingPage(
             title = "Record Voice\nNote and Share",
             description = "Capture and share voice notes\non the go.",
-            backgroundColor = Color(0xFFFFF9C7),
-            textColor = Color(0xFFCA7F58)
+            backgroundColor = Color(0xFFFFFAD0),
+            textColor = Color(0xFFCA7F58),
+            androidResources = painterResource(Res.drawable.onboarding_ios_two),
+            iOSResources = painterResource(Res.drawable.onboarding_ios_two)
         ),
         OnboardingPage(
             title = "Transcribe\nand Summarise",
             description = "Convert voice notes to text and\nsummaries without internet.",
-            backgroundColor = Color(0xFFFFF9C7),
-            textColor = Color(0xFFCA7F58)
-        ),
-        OnboardingPage(
-            title = "Stay Organized",
-            description = "Keep all your voice notes organized and easily accessible whenever you need them.",
-            backgroundColor = Color(0xFFFFF9C7),
-            textColor = Color(0xFFCA7F58)
+            backgroundColor = Color(0xFFFFFAD0),
+            textColor = Color(0xFFCA7F58),
+            androidResources = painterResource(Res.drawable.onboarding_ios_three),
+            iOSResources = painterResource(Res.drawable.onboarding_ios_three)
         )
     )
+
+    // Add 4th screen only for iOS
+    if(!getPlatform().isAndroid) {
+        pages.add(
+            OnboardingPage(
+                title = "Supports\nOver 50 languages",
+                description = "Create and transcribe notes in your preferred language.",
+                backgroundColor = Color(0xFFFFFAD0),
+                textColor = Color(0xFFCA7F58),
+                androidResources = painterResource(Res.drawable.onboarding_ios_four),
+                iOSResources = painterResource(Res.drawable.onboarding_ios_four)
+            )
+        )
+    }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()
@@ -178,6 +199,12 @@ fun OnboardingPageContent(
 @Composable
 fun VoiceNotePageContent(page: OnboardingPage) {
 
+    val resource = if(getPlatform().isAndroid) {
+        page.androidResources
+    } else {
+        page.iOSResources
+    }
+
     Text(
         text = page.title,
         fontSize = 32.sp,
@@ -204,15 +231,13 @@ fun VoiceNotePageContent(page: OnboardingPage) {
             contentAlignment = Alignment.Center
         ) {
             Image(
-                painter = painterResource(Res.drawable.onboarding_one),
+                painter = resource,
                 contentDescription = "Image illustration",
                 modifier = Modifier
-                    .width(500.dp),
+                    .width(360.dp),
                 contentScale = ContentScale.FillWidth
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = page.description,
@@ -221,7 +246,8 @@ fun VoiceNotePageContent(page: OnboardingPage) {
             color = Color(0xFF333333),
             textAlign = TextAlign.Center,
             lineHeight = 24.sp,
-            modifier = Modifier.padding(horizontal = 24.dp)
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
         )
     }
 }
