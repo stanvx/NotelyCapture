@@ -18,7 +18,17 @@ android {
 }
 
 tasks.register('genUUID') {
-    def uuid = UUID.randomUUID().toString()
+    def uuid
+    try {
+        // Try to get git commit hash
+        def gitCommit = "git rev-parse HEAD".execute().text.trim()
+        uuid = UUID.nameUUIDFromBytes(gitCommit.getBytes()).toString()
+    } catch (Exception e) {
+        // Fallback to version-based UUID if git is not available
+        def versionString = "com.module.notelycompose.android-1.0.6"
+        uuid = UUID.nameUUIDFromBytes(versionString.getBytes()).toString()
+    }
+
     def odir = file("$buildDir/generated/assets/model-en-us")
     def ofile = file("$odir/uuid")
     doLast {
