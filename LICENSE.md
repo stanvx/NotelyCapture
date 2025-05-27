@@ -1,5 +1,4 @@
-NotelyVoice - Open Source Project  
-Copyright (C) 2024 [NotelyVoice]
+Copyright (C) 2024 NotelyVoice
 
 This program is free software: you can redistribute it and/or modify  
 it under the terms of the GNU General Public License as published by  
