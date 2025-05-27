@@ -39,6 +39,7 @@ fun NoteListScreen(
             androidNoteListViewModel.onProcessIntent(OnSearchNote(keyword))
         },
         selectedTabTitle = state.selectedTabTitle,
-        appVersion = platformState.appVersion
+        appVersion = platformState.appVersion,
+        showEmptyContent = state.showEmptyContent
     )
 }

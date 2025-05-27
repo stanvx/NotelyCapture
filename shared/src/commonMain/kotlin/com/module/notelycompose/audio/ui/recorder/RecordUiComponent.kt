@@ -92,8 +92,6 @@ fun RecordUiComponent(
 ) {
     var screenState by remember { mutableStateOf(ScreenState.Initial) }
 
-    println("hello1: " + isRecordPaused)
-
     Box(
         modifier = Modifier
             .fillMaxSize()

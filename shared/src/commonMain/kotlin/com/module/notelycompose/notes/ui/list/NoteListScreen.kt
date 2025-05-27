@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
-import com.module.notelycompose.notes.ui.settings.SettingsBottomSheet
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import kotlinx.coroutines.launch
@@ -49,7 +48,8 @@ fun SharedNoteListScreen(
     onFilterTabItemClicked: (String) -> Unit,
     onSearchByKeyword: (String) -> Unit,
     selectedTabTitle: String,
-    appVersion: String
+    appVersion: String,
+    showEmptyContent: Boolean
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -189,6 +189,7 @@ fun SharedNoteListScreen(
                         onNoteDeleteClicked(it)
                     }
                 )
+                if(showEmptyContent) EmptyNoteUi()
             }
         }
     }
