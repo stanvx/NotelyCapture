@@ -65,20 +65,21 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
-                    val onboardingState by viewmodel.state.collectAsState()
-
-                    when (onboardingState) {
-                        is OnboardingState.Initial -> Unit
-                        is OnboardingState.NotCompleted -> {
-                            OnboardingWalkthrough(
-                                onFinish = {
-                                    viewmodel.onCompleteOnboarding()
-                                }
-                            )
-                        }
-                        is OnboardingState.Completed -> NoteAppRoot()
-                    }
+                    NoteAppRoot()
+//                    val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
+//                    val onboardingState by viewmodel.state.collectAsState()
+//
+//                    when (onboardingState) {
+//                        is OnboardingState.Initial -> Unit
+//                        is OnboardingState.NotCompleted -> {
+//                            OnboardingWalkthrough(
+//                                onFinish = {
+//                                    viewmodel.onCompleteOnboarding()
+//                                }
+//                            )
+//                        }
+//                        is OnboardingState.Completed -> NoteAppRoot()
+//                    }
                 }
             }
         }
