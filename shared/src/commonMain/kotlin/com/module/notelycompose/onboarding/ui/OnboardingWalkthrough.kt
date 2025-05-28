@@ -25,10 +25,13 @@ import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.onboarding_ios_four
 import notelycompose.shared.generated.resources.onboarding_ios_one
 import notelycompose.shared.generated.resources.onboarding_ios_three
 import notelycompose.shared.generated.resources.onboarding_ios_two
+import notelycompose.shared.generated.resources.onboarding_ios_four
+import notelycompose.shared.generated.resources.onboarding_android_one
+import notelycompose.shared.generated.resources.onboarding_android_three
+import notelycompose.shared.generated.resources.onboarding_android_two
 import org.jetbrains.compose.resources.painterResource
 
 data class OnboardingPage(
@@ -50,7 +53,7 @@ fun OnboardingWalkthrough(
             description = "Write and share your notes\ninstantly with ease",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_ios_one),
+            androidResources = painterResource(Res.drawable.onboarding_android_one),
             iOSResources = painterResource(Res.drawable.onboarding_ios_one)
         ),
         OnboardingPage(
@@ -58,7 +61,7 @@ fun OnboardingWalkthrough(
             description = "Capture and share voice notes\non the go.",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_ios_two),
+            androidResources = painterResource(Res.drawable.onboarding_android_two),
             iOSResources = painterResource(Res.drawable.onboarding_ios_two)
         ),
         OnboardingPage(
@@ -66,7 +69,7 @@ fun OnboardingWalkthrough(
             description = "Convert voice notes to text and\nsummaries without internet.",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_ios_three),
+            androidResources = painterResource(Res.drawable.onboarding_android_three),
             iOSResources = painterResource(Res.drawable.onboarding_ios_three)
         )
     )
