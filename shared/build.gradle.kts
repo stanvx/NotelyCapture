@@ -66,6 +66,8 @@ kotlin {
                 implementation(libs.alphacephei.vosk.android)
                 implementation(libs.kotlinx.serialization.json.v160)
 
+                implementation(project(":lib"))
+
             }
         }
         val iosX64Main by getting {

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Notely Voice</string>
+    <string name="error">Error</string>
 
     <!-- TopBar -->
     <string name="top_bar_back">Back</string>
@@ -86,6 +87,9 @@
     <string name="transcription_dialog_append">Append</string>
     <string name="transcription_dialog_summarize">Summarize</string>
     <string name="transcription_dialog_original">Original</string>
+
+    <!-- Download Dialog -->
+        <string name="download_dialog_error">Error while downloading</string>
 
     <!-- Information UI -->
     <string name="information_base_url">https://tosinonikute.com/notely/</string>

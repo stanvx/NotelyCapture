@@ -20,16 +20,18 @@ import androidx.navigation.navArgument
 import com.module.notelycompose.android.di.AudioRecorderSpeechModule
 import com.module.notelycompose.android.presentation.AndroidAudioPlayerViewModel
 import com.module.notelycompose.android.presentation.AndroidAudioRecorderViewModel
+import com.module.notelycompose.android.presentation.AndroidModelDownloaderViewModel
 import com.module.notelycompose.android.presentation.AndroidNoteListViewModel
-import com.module.notelycompose.android.presentation.AndroidSpeechRecognitionViewModel
+import com.module.notelycompose.android.presentation.AndroidTranscriptionViewModel
 import com.module.notelycompose.android.presentation.AndroidTextEditorViewModel
 import com.module.notelycompose.android.presentation.core.Routes
 import com.module.notelycompose.android.presentation.ui.NoteListScreen
+import com.module.notelycompose.notes.ui.detail.DownloaderActions
 import com.module.notelycompose.notes.ui.detail.NoteActions
 import com.module.notelycompose.notes.ui.detail.NoteAudioActions
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
-import com.module.notelycompose.notes.ui.detail.RecognitionActions
+import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -118,7 +120,8 @@ fun NoteDetailWrapper(
 ) {
     val audioPlayerViewModel = hiltViewModel<AndroidAudioPlayerViewModel>()
     val audioRecorderViewModel = hiltViewModel<AndroidAudioRecorderViewModel>()
-    val speechRecognitionViewModel = hiltViewModel<AndroidSpeechRecognitionViewModel>()
+    val transcriptionViewModel = hiltViewModel<AndroidTranscriptionViewModel>()
+    val downloaderViewModel = hiltViewModel<AndroidModelDownloaderViewModel>()
     val editorViewModel = hiltViewModel<AndroidTextEditorViewModel>()
 
     if(noteId.toLong() > 0L) {
@@ -131,7 +134,11 @@ fun NoteDetailWrapper(
     val audioRecorderState = audioRecorderViewModel.state.collectAsState().value
         .let { audioRecorderViewModel.onGetUiState(it) }
 
-    val speechRecognitionState = speechRecognitionViewModel.state.collectAsState().value
+    val transcriptionState = transcriptionViewModel.state.collectAsState().value
+
+
+    val downloaderState = downloaderViewModel.state.collectAsState().value
+    val downloaderEffect = downloaderViewModel.effect
 
     val editorState = editorViewModel.state.collectAsState().value
         .let { editorViewModel.onGetUiState(it) }
@@ -159,13 +166,13 @@ fun NoteDetailWrapper(
         finishRecorder = {}
     )
 
-    val recognitionActions = RecognitionActions(
-        requestAudioPermission = speechRecognitionViewModel::requestAudioPermission,
-        initRecognizer = speechRecognitionViewModel::initRecognizer,
-        finishRecognizer = speechRecognitionViewModel::finishRecognizer,
-        startRecognizer = speechRecognitionViewModel::startRecognizer,
-        stopRecognition = speechRecognitionViewModel::stopRecognizer,
-        summarize =  speechRecognitionViewModel::summarize
+    val transcriptionActions = TranscriptionActions(
+        requestAudioPermission = transcriptionViewModel::requestAudioPermission,
+        initRecognizer = transcriptionViewModel::initRecognizer,
+        finishRecognizer = transcriptionViewModel::finishRecognizer,
+        startRecognizer = transcriptionViewModel::startRecognizer,
+        stopRecognition = transcriptionViewModel::stopRecognizer,
+        summarize =  transcriptionViewModel::summarize
     )
 
     val noteActions = NoteActions(
@@ -174,6 +181,10 @@ fun NoteDetailWrapper(
             onNavigateBack()
         },
         onStarNote = editorViewModel::onToggleStar
+    )
+
+    val downloaderActions = DownloaderActions(
+        checkModelAvailability = downloaderViewModel::checkModelAvailability
     )
 
     NoteDetailScreen(
@@ -186,7 +197,10 @@ fun NoteDetailWrapper(
         onFormatActions = formatActions,
         onAudioActions = audioActions,
         onNoteActions = noteActions,
-        onRecognitionActions = recognitionActions,
-        transcriptionUiState = speechRecognitionState
+        onTranscriptionActions = transcriptionActions,
+        transcriptionUiState = transcriptionState,
+        downloaderUiState = downloaderState,
+        downloaderEffect = downloaderEffect,
+        onDownloaderActions = downloaderActions
     )
 }

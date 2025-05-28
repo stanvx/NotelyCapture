@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.recorder.recordingUiComponentBackButton
@@ -68,7 +70,9 @@ fun TranscriptionDialog(
     DisposableEffect(Unit) {
         onAskingForAudioPermission()
         onRecognitionInitialized()
+        onRecognitionStart()
         onDispose {
+            onRecognitionStopped
             onRecognitionFinished()
         }
     }
@@ -106,24 +110,36 @@ fun TranscriptionDialog(
                         color = LocalCustomColors.current.bodyContentColor
                     )
                 }
-                FloatingActionButton(
-                    modifier = Modifier.padding(vertical = 8.dp),
-                    shape = CircleShape,
-                    onClick = {
-                        if (!transcriptionUiState.isListening) {
-                            onRecognitionStart()
-                        } else {
-                            onRecognitionStopped()
-                        }
-                    },
-                    backgroundColor = if (transcriptionUiState.isListening) Color.Red else Color.Green
-                ) {
-                    Icon(
-                        imageVector = Images.Icons.IcRecorder,
-                        contentDescription = stringResource(Res.string.note_detail_recorder),
-                        tint = LocalCustomColors.current.bodyContentColor
+                if(transcriptionUiState.progress == 0){
+                    LinearProgressIndicator(
+                        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                        strokeCap = StrokeCap.Round
+                    )
+                }else if(transcriptionUiState.progress in 1..99){
+                    LinearProgressIndicator(
+                        (transcriptionUiState.progress / 100f),
+                        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                        strokeCap = StrokeCap.Round
                     )
                 }
+//                FloatingActionButton(
+//                    modifier = Modifier.padding(vertical = 8.dp),
+//                    shape = CircleShape,
+//                    onClick = {
+//                        if (!transcriptionUiState.isListening) {
+//                            onRecognitionStart()
+//                        } else {
+//                            onRecognitionStopped()
+//                        }
+//                    },
+//                    backgroundColor = if (transcriptionUiState.isListening) Color.Red else Color.Green
+//                ) {
+//                    Icon(
+//                        imageVector = Images.Icons.IcRecorder,
+//                        contentDescription = stringResource(Res.string.note_detail_recorder),
+//                        tint = LocalCustomColors.current.bodyContentColor
+//                    )
+//                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -132,6 +148,7 @@ fun TranscriptionDialog(
                 ) {
                     OutlinedButton(
                         modifier = Modifier.weight(1f),
+                        enabled = !transcriptionUiState.inTranscription,
                         border = ButtonDefaults.outlinedButtonBorder.copy(width = 2.dp),
                         shape = RoundedCornerShape(4.dp),
                         content = {
@@ -145,6 +162,7 @@ fun TranscriptionDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     OutlinedButton(
                         modifier = Modifier.weight(1f),
+                        enabled = !transcriptionUiState.inTranscription,
                         border = ButtonDefaults.outlinedButtonBorder.copy(width = 2.dp),
                         shape = RoundedCornerShape(4.dp),
                         content = {

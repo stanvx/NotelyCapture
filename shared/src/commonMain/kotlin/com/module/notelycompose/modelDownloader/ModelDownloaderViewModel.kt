@@ -1,0 +1,63 @@
+package com.module.notelycompose.modelDownloader
+
+import com.module.notelycompose.audio.ui.expect.Downloader
+import com.module.notelycompose.audio.ui.expect.Transcriper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+
+class ModelDownloaderViewModel(
+    private val downloader: Downloader,
+    private val transcriper: Transcriper,
+    coroutineScope: CoroutineScope? = null
+) {
+    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+    private val _uiState = MutableStateFlow(DownloaderUiState("ggml-base.bin"))
+    val uiState: StateFlow<DownloaderUiState> = _uiState
+
+    private val _effects = MutableSharedFlow<DownloaderEffect>()
+    val effects: SharedFlow<DownloaderEffect> = _effects
+
+
+    fun checkTranscriptionAvailability() {
+        viewModelScope.launch {
+            if (downloader.hasRunningDownload()) {
+                trackDownload()
+            } else {
+                if (!transcriper.doesModelExists() || !transcriper.isValidModel() ) {
+                    downloader.startDownload(
+                        "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
+                        _uiState.value.fileName
+                    )
+                    trackDownload()
+                } else {
+                    _effects.emit(DownloaderEffect.ModelsAreReady())
+                }
+            }
+        }
+    }
+
+    private suspend fun trackDownload() {
+        _effects.emit(DownloaderEffect.DownloadEffect())
+        downloader.trackDownloadProgress(onProgressUpdated = { progress, downloadedMB, totalMB ->
+            _uiState.update { current ->
+                current.copy(
+                    progress = progress.toFloat(),
+                    downloaded = downloadedMB,
+                    total = totalMB
+                )
+            }
+        }, onSuccess = {
+            viewModelScope.launch { _effects.emit(DownloaderEffect.ModelsAreReady()) }
+
+        }, onFailed = {
+            viewModelScope.launch { _effects.emit(DownloaderEffect.ErrorEffect()) }
+        })
+    }
+}

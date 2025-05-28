@@ -9,7 +9,7 @@ import com.module.notelycompose.notes.ui.detail.NoteActions
 import com.module.notelycompose.notes.ui.detail.NoteAudioActions
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
-import com.module.notelycompose.notes.ui.detail.RecognitionActions
+import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 
 fun NoteDetailController(
@@ -94,7 +94,7 @@ fun NoteDetailController(
 
         )
 
-        val recognitionActions = RecognitionActions(
+        val transcriptionActions = TranscriptionActions(
             requestAudioPermission = speechRecognitionViewModel::requestAudioPermission,
             initRecognizer = speechRecognitionViewModel::initRecognizer,
             finishRecognizer = speechRecognitionViewModel::finishRecognizer,
@@ -121,7 +121,7 @@ fun NoteDetailController(
             onFormatActions = formatActions,
             onAudioActions = audioActions,
             onNoteActions = noteActions,
-            onRecognitionActions = recognitionActions,
+            onTranscriptionActions = transcriptionActions,
             transcriptionUiState = speechRecognitionState
         )
     }

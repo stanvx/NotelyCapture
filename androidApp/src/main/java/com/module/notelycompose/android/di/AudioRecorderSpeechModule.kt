@@ -1,10 +1,13 @@
 package com.module.notelycompose.android.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.activity.result.ActivityResultLauncher
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.expect.AudioRecorder
+import com.module.notelycompose.audio.ui.expect.Downloader
 import com.module.notelycompose.audio.ui.expect.SpeechRecognizer
+import com.module.notelycompose.audio.ui.expect.Transcriper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,6 +19,15 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AudioRecorderSpeechModule {
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences(
+            "notely_shared_prefs",
+            Context.MODE_PRIVATE
+        )
+    }
 
     @Singleton
     class PermissionLauncherHolder @Inject constructor() {
@@ -63,7 +75,6 @@ object AudioRecorderSpeechModule {
         return AudioRecorderPresentationToUiMapper()
     }
 
-
     @Singleton
     class SpeechRecognizerFactory @Inject constructor(
         @ApplicationContext private val context: Context,
@@ -89,6 +100,63 @@ object AudioRecorderSpeechModule {
 
     @Provides
     fun provideSpeechRecognizer(factory: SpeechRecognizerFactory): SpeechRecognizer {
+        return factory.create()
+    }
+
+
+    @Singleton
+    class TranscriperFactory @Inject constructor(
+        @ApplicationContext private val context: Context,
+        private val permissionLauncherHolder: PermissionLauncherHolder
+    ) {
+        fun create(): Transcriper {
+            return Transcriper(
+                context = context,
+                permissionLauncher = permissionLauncherHolder.permissionLauncher
+            )
+        }
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideTranscriperFactory(
+        @ApplicationContext context: Context,
+        permissionLauncherHolder: PermissionLauncherHolder
+    ): TranscriperFactory {
+        return TranscriperFactory(context, permissionLauncherHolder)
+    }
+
+    @Provides
+    fun provideTranscriper(factory: TranscriperFactory): Transcriper {
+        return factory.create()
+    }
+
+    @Singleton
+    class DownloaderFactory @Inject constructor(
+        @ApplicationContext private val context: Context,
+        private val prefs:SharedPreferences
+    ) {
+        fun create(): Downloader {
+            return Downloader(
+                mainContext = context,
+                prefs = prefs
+            )
+        }
+    }
+
+
+    @Provides
+    @Singleton
+    fun downloaderFactory(
+        @ApplicationContext context: Context,
+        prefs: SharedPreferences
+    ): DownloaderFactory {
+        return DownloaderFactory(context, prefs)
+    }
+
+    @Provides
+    fun provideDownloader(factory: DownloaderFactory): Downloader {
         return factory.create()
     }
 }
