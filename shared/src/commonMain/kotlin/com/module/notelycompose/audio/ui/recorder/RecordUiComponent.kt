@@ -1,5 +1,6 @@
 package com.module.notelycompose.audio.ui.recorder
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -12,6 +13,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,11 +31,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -55,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.vectors.IcChevronLeft
+import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import kotlinx.coroutines.delay
@@ -66,6 +70,7 @@ import notelycompose.shared.generated.resources.recording_ui_loading
 import notelycompose.shared.generated.resources.recording_ui_loading_rotation
 import notelycompose.shared.generated.resources.recording_ui_checkmark
 import notelycompose.shared.generated.resources.top_bar_back
+import notelycompose.shared.generated.resources.transcription_icon
 import org.jetbrains.compose.resources.stringResource
 
 enum class ScreenState {
@@ -80,7 +85,10 @@ fun RecordUiComponent(
     recordCounterString: String,
     onStartRecord: (()->Unit) -> Unit,
     onStopRecord: () -> Unit,
-    onAfterRecord: () -> Unit
+    onAfterRecord: () -> Unit,
+    onPauseRecording: () -> Unit,
+    onResumeRecording: () -> Unit,
+    isRecordPaused: Boolean
 ) {
     var screenState by remember { mutableStateOf(ScreenState.Initial) }
 
@@ -99,8 +107,8 @@ fun RecordUiComponent(
                     onStartRecord({
                         screenState = ScreenState.Recording
                     })
-
-                }
+                },
+                onStopRecording = onStopRecord
             )
             ScreenState.Recording -> RecordingInProgressScreen(
                 counterTimeString = recordCounterString,
@@ -108,7 +116,10 @@ fun RecordUiComponent(
                     onStopRecord()
                     screenState = ScreenState.Success
                 },
-                onNavigateBack = onDismiss
+                onNavigateBack = onDismiss,
+                isRecordPaused = isRecordPaused,
+                onPauseRecording = onPauseRecording,
+                onResumeRecording = onResumeRecording
             )
             ScreenState.Success -> {
                 RecordingSuccessScreen()
@@ -119,7 +130,6 @@ fun RecordUiComponent(
                 }
             }
 
-
         }
     }
 }
@@ -127,7 +137,8 @@ fun RecordUiComponent(
 @Composable
 fun RecordingInitialScreen(
     onNavigateBack: () -> Unit,
-    onTapToRecord: () -> Unit
+    onTapToRecord: () -> Unit,
+    onStopRecording: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -135,9 +146,8 @@ fun RecordingInitialScreen(
             .background(LocalCustomColors.current.bodyBackgroundColor)
     ) {
         recordingUiComponentBackButton(
-            onNavigateBack = {
-                onNavigateBack()
-            }
+            onNavigateBack = onNavigateBack,
+            onStopRecording = onStopRecording
         )
 
         Column(
@@ -152,7 +162,7 @@ fun RecordingInitialScreen(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(LocalCustomColors.current.bodyContentColor)
+                    .background(Color.Green)
                     .clickable { onTapToRecord() },
                 contentAlignment = Alignment.Center
             ) {
@@ -178,8 +188,11 @@ fun RecordingInitialScreen(
 @Composable
 fun RecordingInProgressScreen(
     counterTimeString: String,
+    onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit,
-    onNavigateBack: () -> Unit
+    onPauseRecording: () -> Unit,
+    onResumeRecording: () -> Unit,
+    isRecordPaused: Boolean
 ) {
     Box(
         modifier = Modifier
@@ -187,9 +200,8 @@ fun RecordingInProgressScreen(
             .background(LocalCustomColors.current.bodyBackgroundColor)
     ) {
         recordingUiComponentBackButton(
-            onNavigateBack = {
-                onNavigateBack()
-            }
+            onNavigateBack = onNavigateBack,
+            onStopRecording = onStopRecording
         )
 
         Column(
@@ -202,7 +214,9 @@ fun RecordingInProgressScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(200.dp)
             ) {
-                LoadingAnimation()
+                LoadingAnimation(
+                    isRecordPaused = isRecordPaused
+                )
                 Text(
                     text = counterTimeString,
                     style = MaterialTheme.typography.headlineLarge,
@@ -222,21 +236,53 @@ fun RecordingInProgressScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
-                        .padding(2.dp),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(LocalCustomColors.current.bodyContentColor)
-                            .clickable { onStopRecording() }
-                    )
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
+                            .padding(vertical = 2.dp, horizontal = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if(!isRecordPaused) Images.Icons.IcPause else Icons.Filled.PlayArrow,
+                            contentDescription = stringResource(Res.string.transcription_icon),
+                            tint = LocalCustomColors.current.bodyContentColor,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clickable {
+                                    if(isRecordPaused) {
+                                        onResumeRecording()
+                                    } else {
+                                        onPauseRecording()
+                                    }
+                                }
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
+                            .padding(2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color.Red)
+                                .clickable {
+                                    onStopRecording()
+                                }
+                        )
+                    }
                 }
 
                 Text(
@@ -244,7 +290,7 @@ fun RecordingInProgressScreen(
                     color = LocalCustomColors.current.bodyContentColor,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 24.dp)
                 )
             }
         }
@@ -252,25 +298,30 @@ fun RecordingInProgressScreen(
 }
 
 @Composable
-fun LoadingAnimation() {
+fun LoadingAnimation(
+    isRecordPaused: Boolean
+) {
     val drawArcColor = LocalCustomColors.current.bodyContentColor
-    val infiniteTransition = rememberInfiniteTransition(
-        label = stringResource(Res.string.recording_ui_loading)
-    )
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = stringResource(Res.string.recording_ui_loading_rotation)
-    )
+    val rotationAngle = remember { Animatable(0f) }
+
+    LaunchedEffect(isRecordPaused) {
+        if (!isRecordPaused) {
+            rotationAngle.animateTo(
+                targetValue = rotationAngle.value + 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(2000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        } else {
+            rotationAngle.stop()
+        }
+    }
 
     Canvas(modifier = Modifier.size(200.dp)) {
         drawArc(
             color = drawArcColor,
-            startAngle = rotation,
+            startAngle = rotationAngle.value,
             sweepAngle = 300f,
             useCenter = false,
             style = Stroke(width = 4f, cap = StrokeCap.Round)
@@ -342,11 +393,15 @@ fun RecordingSuccessScreen() {
 
 @Composable
 fun recordingUiComponentBackButton(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onStopRecording: () -> Unit
 ) {
     if (getPlatform().isAndroid) {
         IconButton(
-            onClick = onNavigateBack,
+            onClick = {
+                onStopRecording()
+                onNavigateBack()
+            },
             modifier = Modifier.padding(16.dp)
         ) {
             androidx.compose.material3.Icon(
@@ -360,7 +415,10 @@ fun recordingUiComponentBackButton(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(16.dp)
-                .clickable { onNavigateBack() }
+                .clickable {
+                    onStopRecording()
+                    onNavigateBack()
+                }
         ) {
             Icon(
                 imageVector = Images.Icons.IcChevronLeft,

@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.audio.ui.recorder.RecordUiComponent
+import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.DownloaderUiState
@@ -104,6 +105,9 @@ fun NoteDetailScreen(
     onTranscriptionActions: TranscriptionActions,
     onDownloaderActions: DownloaderActions,
     onNoteActions: NoteActions
+    onRecognitionActions: RecognitionActions,
+    onNoteActions: NoteActions,
+    isRecordPaused: Boolean
 ) {
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -112,7 +116,10 @@ fun NoteDetailScreen(
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+   // Setup when dialog appears
 
     LaunchedEffect(Unit) {
         downloaderEffect.collect {
@@ -145,7 +152,14 @@ fun NoteDetailScreen(
     }
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
-        topBar = { DetailNoteTopBar(onNavigateBack = onNavigateBack) },
+        topBar = {
+            DetailNoteTopBar(
+                onNavigateBack = onNavigateBack,
+                onShare = {
+                    showShareDialog = true
+                }
+            )
+        },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if(editorState.recording.isRecordingExist) {
@@ -226,6 +240,9 @@ fun NoteDetailScreen(
             recordCounterString = recordCounterString,
             onStartRecord = onAudioActions.onStartRecord,
             onStopRecord = onAudioActions.onStopRecord,
+            isRecordPaused = isRecordPaused,
+            onPauseRecording = onAudioActions.onPauseRecording,
+            onResumeRecording = onAudioActions.onResumeRecording
         )
     }
 
@@ -277,6 +294,20 @@ fun NoteDetailScreen(
                     },
                 ) { Text(stringResource(resource = Res.string.confirmation_cancel)) }
             }
+        )
+    }
+
+    if (showShareDialog) {
+        ShareDialog(
+            onShareAudioRecording = {
+                // onShareAudioRecording()
+                showShareDialog = false
+            },
+            onShareTexts = {
+                // onShareTexts()
+                showShareDialog = false
+            },
+            onDismiss = { showShareDialog = false }
         )
     }
 }
@@ -457,6 +488,8 @@ data class NoteFormatActions(
 data class NoteAudioActions(
     val onStartRecord: (()->Unit) -> Unit,
     val onStopRecord: () -> Unit,
+    val onPauseRecording: () -> Unit,
+    val onResumeRecording: () -> Unit,
     val setupRecorder: suspend () -> Unit,
     val finishRecorder: suspend () -> Unit,
     val onRequestAudioPermission: () -> Unit,

@@ -1,0 +1,8 @@
+Note-Taking
+- Rich Text Editing - Format your notes with: Title, Bold, italic, and underline text.
+- Text alignment (left, right, center)
+- Record Voice notes
+- Offline Functionality - Full app Transcription and functionality without an internet connection
+- Advanced Speech-to-Text Transcription - Convert voice notes speech to text with high accuracy
+- Simple Search - Find your notes instantly with text search
+- Smart Filtering - Filter notes by type (Starred, Voice Notes, Recent)

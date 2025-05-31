@@ -13,6 +13,7 @@ import platform.AVFAudio.setActive
 import platform.Foundation.NSError
 import platform.Foundation.NSLocale
 import platform.Foundation.NSURL
+import platform.Foundation.localeIdentifier
 import platform.Speech.SFSpeechAudioBufferRecognitionRequest
 import platform.Speech.SFSpeechRecognitionTask
 import platform.Speech.SFSpeechRecognitionTaskHintDictation
@@ -26,6 +27,9 @@ import platform.posix.exception
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+const val IOS_VERSION = 16
+const val ZERO = 0
+
 actual class SpeechRecognizer {
     private var audioEngine: AVAudioEngine? = null
     private var request: SFSpeechAudioBufferRecognitionRequest? = null
@@ -35,12 +39,8 @@ actual class SpeechRecognizer {
     private var isListening = false
     val audioSession = AVAudioSession.sharedInstance()
 
-
-
-
     actual fun initialize() {
         recognizer = SFSpeechRecognizer()
-
         isInitialized = true
     }
     actual fun finishRecognizer() {
@@ -143,7 +143,14 @@ actual class SpeechRecognizer {
     private fun prepareEngine(){
         val audioEngine = AVAudioEngine()
         val request = SFSpeechAudioBufferRecognitionRequest()
-        request.addsPunctuation = true
+
+        // Only set addsPunctuation on iOS 16.0+
+        val systemVersion = platform.UIKit.UIDevice.currentDevice.systemVersion
+        val majorVersion = systemVersion.split(".")[ZERO].toIntOrNull() ?: ZERO
+        if (majorVersion >= IOS_VERSION) {
+            request.addsPunctuation = true
+        }
+
         request.taskHint = SFSpeechRecognitionTaskHintDictation
         request.shouldReportPartialResults = true
 
@@ -162,5 +169,15 @@ actual class SpeechRecognizer {
         this.audioEngine = audioEngine
         this.request = request
         audioEngine.startAndReturnError(null)
+    }
+    
+    private fun supportedLocales() {
+        // Get the supported locales and extract their identifiers
+        val supportedLocales = SFSpeechRecognizer.supportedLocales()
+        val localeIdentifiers = supportedLocales.map { locale ->
+            (locale as NSLocale).localeIdentifier
+        }
+
+        print("Supported languages: $localeIdentifiers")
     }
 }

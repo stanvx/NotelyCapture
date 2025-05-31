@@ -20,7 +20,8 @@ private const val INITIAL_SECOND = 0
 
 data class AudioRecorderPresentationState(
     val recordCounterString: String = RECORD_COUNTER_START,
-    val recordingPath: String = ""
+    val recordingPath: String = "",
+    val isRecordPaused: Boolean = false
 )
 
 class AudioRecorderViewModel(
@@ -34,6 +35,7 @@ class AudioRecorderViewModel(
 
     private var counterJob: Job? = null
     private var recordingTimeSeconds = INITIAL_SECOND
+    private var elapsedTimeBeforePause = 0
 
     fun onStartRecording(updateUI:()->Unit) {
         viewModelScope.launch {
@@ -51,8 +53,6 @@ class AudioRecorderViewModel(
             }
         }
     }
-
-
 
     private fun startCounter() {
         // Reset counter
@@ -96,11 +96,23 @@ class AudioRecorderViewModel(
     }
 
     suspend fun setupRecorder(){
-            audioRecorder.setup()
+        audioRecorder.setup()
     }
-    suspend fun finishRecorder(){
-            audioRecorder.teardown()
 
+    suspend fun finishRecorder(){
+        audioRecorder.teardown()
+    }
+
+    fun onPauseRecording() {
+        audioRecorder.pauseRecording()
+        updatePausedState()
+        pauseCounter()
+    }
+
+    fun onResumeRecording() {
+        audioRecorder.resumeRecording()
+        updatePausedState()
+        resumeCounter()
     }
 
     private fun stopCounter() {
@@ -122,6 +134,33 @@ class AudioRecorderViewModel(
                 if (!audioRecorder.hasRecordingPermission()) {
                     return@launch
                 }
+            }
+        }
+    }
+
+    private fun updatePausedState() {
+        _audioRecorderPresentationState.value = _audioRecorderPresentationState.value.copy(
+            isRecordPaused = audioRecorder.isPaused()
+        )
+    }
+
+    private fun pauseCounter() {
+        counterJob?.cancel()
+        counterJob = null
+        elapsedTimeBeforePause = recordingTimeSeconds
+    }
+
+    private fun resumeCounter() {
+        counterJob?.cancel()
+        counterJob = viewModelScope.launch {
+            // Start counting from the last saved time
+            recordingTimeSeconds = elapsedTimeBeforePause
+            updateCounterString()
+
+            while (true) {
+                delay(1.seconds)
+                recordingTimeSeconds++
+                updateCounterString()
             }
         }
     }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
@@ -30,8 +29,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
+import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
@@ -46,11 +47,14 @@ fun SharedNoteListScreen(
     onNoteDeleteClicked: (NoteUiModel) -> Unit,
     onFilterTabItemClicked: (String) -> Unit,
     onSearchByKeyword: (String) -> Unit,
-    selectedTabTitle: String
+    selectedTabTitle: String,
+    appVersion: String,
+    showEmptyContent: Boolean
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isSettingsTapped by remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // State to control bottom sheet
     val bottomSheetState = rememberModalBottomSheetState(
@@ -72,22 +76,22 @@ fun SharedNoteListScreen(
 
     ModalBottomSheetLayout(
         sheetState = bottomSheetState,
-        sheetShape =
-            if(isSettingsTapped) {
-                RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-            } else {
-                RectangleShape
-            },
+        sheetShape = RectangleShape,
         sheetContent = {
             if(isSettingsTapped) {
-                SettingsBottomSheet(
-                    onDismiss = dismissBottomSheet
+//                SettingsBottomSheet(
+//                    onDismiss = dismissBottomSheet
+//                )
+                SettingsScreen(
+                    onDismiss = dismissBottomSheet,
+                    bottomSheetState = bottomSheetState
                 )
             } else {
                 InfoBottomSheet(
                     onDismiss = dismissBottomSheet,
                     onNavigateToWebPage = navigateToWebPage,
-                    bottomSheetState = bottomSheetState
+                    bottomSheetState = bottomSheetState,
+                    appVersion = appVersion
                 )
             }
         },
@@ -110,6 +114,7 @@ fun SharedNoteListScreen(
                                 bottomSheetState.show()
                             }
                         }
+                        keyboardController?.hide()
                     },
                     onSettingsClicked = {
                         isSettingsTapped = true
@@ -120,6 +125,7 @@ fun SharedNoteListScreen(
                                 bottomSheetState.show()
                             }
                         }
+                        keyboardController?.hide()
                     }
                 )
             },
@@ -183,6 +189,7 @@ fun SharedNoteListScreen(
                         onNoteDeleteClicked(it)
                     }
                 )
+                if(showEmptyContent) EmptyNoteUi()
             }
         }
     }

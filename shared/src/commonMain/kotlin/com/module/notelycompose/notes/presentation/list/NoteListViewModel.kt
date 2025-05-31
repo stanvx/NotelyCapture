@@ -56,8 +56,10 @@ class NoteListViewModel(
         searchQuery.debounce(SEARCH_DEBOUNCE)
             .onEach { query ->
                 _state.update { currentState ->
+                    val filtered = applyFilters(_state.value.originalNotes, _state.value.selectedTabTitle, query)
                     currentState.copy(
-                        filteredNotes = applyFilters(_state.value.originalNotes, _state.value.selectedTabTitle, query)
+                        filteredNotes = filtered,
+                        showEmptyContent = filtered.isEmpty()
                     )
                 }
             }.launchIn(viewModelScope)
@@ -115,6 +117,7 @@ class NoteListViewModel(
             )
         }
     }
+
     private fun handleNotesUpdate(
         notes: List<NoteDomainModel>,
         filter: String,
@@ -126,10 +129,12 @@ class NoteListViewModel(
         _state.update { currentState ->
             currentState.copy(
                 originalNotes = presentationNotes,
-                filteredNotes = applyFilters(presentationNotes, filter, query)
+                filteredNotes = applyFilters(presentationNotes, filter, query),
+                showEmptyContent = presentationNotes.isEmpty()
             )
         }
     }
+
     private fun matchesFilter(note: NotePresentationModel, filter: NotesFilterDomainModel): Boolean {
         return when (filter) {
             NotesFilterDomainModel.VOICES -> isVoiceNote(note)
@@ -143,7 +148,6 @@ class NoteListViewModel(
         return note.title.contains(query, ignoreCase = true) ||
                 note.content.contains(query, ignoreCase = true)
     }
-
 
     private fun handleNoteDeletion(note: NoteUiModel) {
         viewModelScope.launch {

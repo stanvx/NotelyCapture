@@ -16,8 +16,8 @@ android {
         applicationId = "com.module.notelycompose.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 7
+        versionName = "1.0.6"
     }
     buildFeatures {
         compose = true
@@ -41,6 +41,21 @@ android {
     }
     kotlinOptions {
         jvmTarget = JvmTarget.JVM_17.target
+    }
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
 }
 
@@ -69,7 +84,7 @@ dependencies {
 
     implementation(project(":models"))
     implementation(libs.kotlinx.datetime)
-
+    implementation(libs.multiplatform.settings)
 }
 
 java {

@@ -97,15 +97,16 @@ fun NoteDetailController(
             onStartRecord = audioRecorderViewModel::onStartRecording,
             onStopRecord = audioRecorderViewModel::onStopRecording,
             onRequestAudioPermission = audioRecorderViewModel::onRequestAudioPermission,
-            onAfterRecord = {editorViewModel.onUpdateRecordingPath(audioRecorderState.recordingPath) },
-            onDeleteRecord = {editorViewModel.onDeleteRecord()},
+            onAfterRecord = { editorViewModel.onUpdateRecordingPath(audioRecorderState.recordingPath) },
+            onDeleteRecord = { editorViewModel.onDeleteRecord() },
             onLoadAudio = audioPlayerViewModel::onLoadAudio,
             onClear = audioPlayerViewModel::onCleared,
             onSeekTo = audioPlayerViewModel::onSeekTo,
             onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
             setupRecorder = audioRecorderViewModel::setupRecorder,
-            finishRecorder = audioRecorderViewModel::finishRecorder
-
+            finishRecorder = audioRecorderViewModel::finishRecorder,
+            onPauseRecording = audioRecorderViewModel::onPauseRecording,
+            onResumeRecording = audioRecorderViewModel::onResumeRecording
         )
 
         val transcriptionActions = TranscriptionActions(
@@ -141,6 +142,9 @@ fun NoteDetailController(
             downloaderEffect = modelDownloaderViewModel.effect,
             onDownloaderActions = downloadActions
 
+            onRecognitionActions = recognitionActions,
+            transcriptionUiState = speechRecognitionState,
+            isRecordPaused = audioRecorderState.isRecordPaused
         )
     }
 }

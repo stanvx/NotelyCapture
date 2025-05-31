@@ -6,6 +6,8 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
 import com.module.notelycompose.notes.ui.list.SharedNoteListScreen
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
+import com.module.notelycompose.onboarding.presentation.model.OnboardingState
+import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 
 fun NoteListController(
     selectedTabTitle :String,
@@ -25,23 +27,50 @@ fun NoteListController(
                 notesFilterMapper = appModule.notesFilterMapper
             )
         }
+        val platformViewmodel = remember {
+            IOSPlatformViewModel(
+                platformInfo = appModule.platformInfo
+            )
+        }
         val state = viewmodel.state.collectAsState()
         val notes = viewmodel.onGetUiState(state.value)
-        SharedNoteListScreen(
-            notes = notes,
-            onFloatingActionButtonClicked = onFloatingActionButtonClicked,
-            onNoteClicked = onNoteClicked,
-            onNoteDeleteClicked = { id ->
-                viewmodel.onProcessIntent(NoteListIntent.OnNoteDeleted(id))
-            },
-            onFilterTabItemClicked = { filter ->
-                onFilterTabClicked(filter)
-                viewmodel.onProcessIntent(NoteListIntent.OnFilterNote(filter))
-            },
-            onSearchByKeyword = { keyword ->
-                viewmodel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
-            },
-            selectedTabTitle = state.value.selectedTabTitle
-        )
+
+        val onboardingViewmodel = remember {
+            IOSOnboardingViewModel(
+                preferencesRepository = appModule.preferencesRepository
+            )
+        }
+        val onboardingState = onboardingViewmodel.state.collectAsState()
+
+        when (onboardingState.value) {
+            is OnboardingState.Initial -> Unit
+            is OnboardingState.NotCompleted -> {
+                OnboardingWalkthrough(
+                    onFinish = {
+                        onboardingViewmodel.onCompleteOnboarding()
+                    }
+                )
+            }
+            is OnboardingState.Completed -> {
+                SharedNoteListScreen(
+                    notes = notes,
+                    onFloatingActionButtonClicked = onFloatingActionButtonClicked,
+                    onNoteClicked = onNoteClicked,
+                    onNoteDeleteClicked = { id ->
+                        viewmodel.onProcessIntent(NoteListIntent.OnNoteDeleted(id))
+                    },
+                    onFilterTabItemClicked = { filter ->
+                        onFilterTabClicked(filter)
+                        viewmodel.onProcessIntent(NoteListIntent.OnFilterNote(filter))
+                    },
+                    onSearchByKeyword = { keyword ->
+                        viewmodel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
+                    },
+                    selectedTabTitle = state.value.selectedTabTitle,
+                    appVersion = platformViewmodel.state.value.appVersion,
+                    showEmptyContent = state.value.showEmptyContent
+                )
+            }
+        }
     }
 }
