@@ -45,7 +45,9 @@ class ModelDownloaderViewModel(
 
     private suspend fun trackDownload() {
         _effects.emit(DownloaderEffect.DownloadEffect())
-        downloader.trackDownloadProgress(onProgressUpdated = { progress, downloadedMB, totalMB ->
+        downloader.trackDownloadProgress(
+            _uiState.value.fileName,
+            onProgressUpdated = { progress, downloadedMB, totalMB ->
             _uiState.update { current ->
                 current.copy(
                     progress = progress.toFloat(),

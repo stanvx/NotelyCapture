@@ -105,6 +105,44 @@ kotlin {
             kotlinOptions.freeCompilerArgs += "-Xexpect-actual-classes"
         }
     }
+
+    val whisperFrameworkPath = file("${projectDir}/../iosApp/whisper.xcframework")
+    println("========================================== ${whisperFrameworkPath}")
+    iosSimulatorArm64 {
+        compilations.getByName("main") {
+            val whisper by cinterops.creating {
+                defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
+                compilerOpts(
+                    "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
+                    "-F${whisperFrameworkPath}"
+                )
+            }
+        }
+    }
+    iosArm64 {
+        compilations.getByName("main") {
+            val whisper by cinterops.creating {
+                defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
+                compilerOpts(
+                    "-I${whisperFrameworkPath}/ios-arm64/whisper.framework/Headers",
+                    "-F$whisperFrameworkPath"
+                )
+            }
+        }
+    }
+
+    iosX64 {
+        compilations.getByName("main") {
+            val whisper by cinterops.creating {
+                defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
+                compilerOpts(
+                    "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
+                    "-F$whisperFrameworkPath"
+                )
+            }
+        }
+    }
+
 }
 sqldelight {
     database("NoteDatabase") {

@@ -54,6 +54,7 @@ actual class Downloader(
     }
 
     actual suspend fun trackDownloadProgress(
+        fileName: String,
         onProgressUpdated: (progress: Int, downloadedMB: String, totalMB: String) -> Unit,
         onSuccess: () -> Unit,
         onFailed: (String) -> Unit,

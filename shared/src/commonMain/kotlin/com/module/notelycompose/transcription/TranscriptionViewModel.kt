@@ -34,7 +34,8 @@ class TranscriptionViewModel(
 
 
     fun startRecognizer(filePath: String, language: String) {
-        viewModelScope.launch {
+        println("startRecognizer =========================")
+        viewModelScope.launch(Dispatchers.Default) {
             if (transcriper.hasRecordingPermission()) {
                 _uiState.update { current ->
                     current.copy(inTranscription = true)
@@ -48,17 +49,24 @@ class TranscriptionViewModel(
                             )
                         }
                     }, onNewSegment = { _, _, text ->
-                        println("text ========================= $text")
+                        
+                        val delimiter = if(_uiState.value.originalText.endsWith(".")) "\n\n" else ""
+                        println("\n text ========================= $text")
                         _uiState.update { current ->
                             current.copy(
-                                originalText = "${_uiState.value.originalText}\n\n${text}".trim(),
+                                originalText = "${_uiState.value.originalText}$delimiter${text.trim()}".trim(),
                                 partialText = text
                             )
                         }
 
                     },
                     onComplete = {
-
+                        println("\n completed ========================= ")
+                        _uiState.update {current ->
+                            current.copy(
+                                inTranscription = false
+                            )
+                        }
                     })
             }
         }

@@ -1,5 +1,7 @@
 package com.module.notelycompose.transcription
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,10 +72,12 @@ fun TranscriptionDialog(
     }
     DisposableEffect(Unit) {
         onAskingForAudioPermission()
+        println("in dialog initializer")
         onRecognitionInitialized()
+        println("in dialog starter")
         onRecognitionStart()
         onDispose {
-            onRecognitionStopped
+            onRecognitionStopped()
             onRecognitionFinished()
         }
     }
@@ -116,11 +121,7 @@ fun TranscriptionDialog(
                         strokeCap = StrokeCap.Round
                     )
                 }else if(transcriptionUiState.progress in 1..99){
-                    LinearProgressIndicator(
-                        (transcriptionUiState.progress / 100f),
-                        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
-                        strokeCap = StrokeCap.Round
-                    )
+                   SmoothLinearProgressBar((transcriptionUiState.progress / 100f))
                 }
 //                FloatingActionButton(
 //                    modifier = Modifier.padding(vertical = 8.dp),
@@ -215,6 +216,22 @@ fun BackButton(
             )
         }
     }
+}
+
+
+@Composable
+fun SmoothLinearProgressBar(progress: Float) {
+    // Animate the progress value for smooth transitions
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 500) // Adjust duration as needed
+    )
+
+    LinearProgressIndicator(
+        progress,
+        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+        strokeCap = StrokeCap.Round
+    )
 }
 
 

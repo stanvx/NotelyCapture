@@ -1,179 +1,157 @@
 package com.module.notelycompose.audio.ui.expect
 
-import kotlinx.cinterop.CPointer
+import com.module.notelycompose.whisper.WhisperCallback
+import com.module.notelycompose.whisper.WhisperContext
+import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.ObjCObjectVar
-import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.AVFAudio.AVAudioEngine
-import platform.AVFAudio.AVAudioSession
-import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
-import platform.AVFAudio.AVAudioSessionModeMeasurement
-import platform.AVFAudio.AVAudioSessionRecordPermissionGranted
-import platform.AVFAudio.setActive
-import platform.Foundation.NSError
-import platform.Foundation.NSLocale
+import kotlinx.cinterop.get
+import kotlinx.cinterop.reinterpret
+import platform.Foundation.NSData
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
-import platform.Speech.SFSpeechAudioBufferRecognitionRequest
-import platform.Speech.SFSpeechRecognitionTask
-import platform.Speech.SFSpeechRecognitionTaskHintDictation
-import platform.Speech.SFSpeechRecognizer
-import platform.Speech.SFSpeechRecognizerAuthorizationStatus
-import platform.Speech.SFSpeechURLRecognitionRequest
-import platform.darwin.dispatch_async
-import platform.darwin.dispatch_get_main_queue
-import platform.posix.close
-import platform.posix.exception
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-
-actual class Transcriper {
-    private var audioEngine: AVAudioEngine? = null
-    private var request: SFSpeechAudioBufferRecognitionRequest? = null
-    private var task: SFSpeechRecognitionTask? = null
-    private var recognizer: SFSpeechRecognizer? = null
-    private var isInitialized = false
-    private var isListening = false
-    val audioSession = AVAudioSession.sharedInstance()
+import platform.Foundation.NSUserDomainMask
+import platform.Foundation.dataWithContentsOfURL
+import kotlin.math.max
+import kotlin.math.min
 
 
 
+actual class Transcriper{
+    private var canTranscribe: Boolean = false
+    private var isTranscribing = false
+    private var isModelLoaded = false
+    private var whisperContext: WhisperContext? = null
 
-    actual fun initialize() {
-        recognizer = SFSpeechRecognizer()
 
-        isInitialized = true
-    }
-    actual fun finish() {
-        isInitialized = false
-        reset()
+    actual fun hasRecordingPermission(): Boolean {
+        return true
     }
 
-    actual fun stop() {
-        if(isListening) {
-            println("speech:stopRecognizer")
-            isListening = false
-            task?.cancel()
-            task = null
-            audioEngine?.stop()
-            reset()
+
+    actual suspend fun requestRecordingPermission(): Boolean {
+       return true
+    }
+
+
+    actual suspend fun initialize() {
+        println("speech: initialize model")
+        if(!isModelLoaded)
+        loadBaseModel()
+    }
+
+    private fun loadBaseModel(){
+        try {
+            whisperContext = null
+            println("Loading model...")
+            val modelPath = getModelPath()
+            whisperContext = WhisperContext.createContext(modelPath)
+            println("Loaded model ${modelPath.substringAfterLast("/")}")
+            isModelLoaded = true
+            canTranscribe = true
+
+        } catch (e: Throwable) {
+            println("========================== ${e.message}")
+            e.printStackTrace()
         }
     }
 
-
-    actual fun start(filePath:String, language:String) {
-        if(!isListening) {
-            isListening = true
-            try {
-                prepareEngine()
-
-                println("speech:startRecognizer ${recognizer}")
-                if (request != null) {
-                    task = recognizer?.recognitionTaskWithRequest(request!!) { result, error ->
-                       // println("speech:task")
-                        dispatch_async(dispatch_get_main_queue()) {
-                            when {
-                                error != null -> {
-                                    println(error.localizedDescription)
-                                }
-
-                                result == null -> {
-                                    println("No recognition result")
-                                }
-
-                                result.isFinal() -> {
-                                    val text = result.bestTranscription.formattedString
-                                   // println("Final Result $text")
-                                    ""//onComplete(result.final, text)
-                                }
-
-                                else -> {
-                                    val text = result.bestTranscription.formattedString
-                                 //   println("Result $text")
-                                    ""//onComplete(result.final, text)
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                println("speech: $e")
-                e.printStackTrace()
-            }
-        }
+    actual fun doesModelExists() : Boolean{
+        return NSFileManager.defaultManager.fileExistsAtPath(getModelPath())
     }
 
-    actual  fun hasRecordingPermission(): Boolean {
-        return SFSpeechRecognizer.authorizationStatus() == SFSpeechRecognizerAuthorizationStatus.SFSpeechRecognizerAuthorizationStatusAuthorized &&
-                audioSession.recordPermission() == AVAudioSessionRecordPermissionGranted
+    actual fun isValidModel() : Boolean{
+        try {
+            if(!isModelLoaded)
+                loadBaseModel()
+        }catch (e:Exception){
+            return false
+        }
+        return true
     }
 
-    actual suspend fun requestRecordingPermission(): Boolean = suspendCancellableCoroutine { continuation ->
-        var speechAuthCompleted = false
-        var recordAuthCompleted = false
-        var speechAuthGranted = false
-        var recordAuthGranted = false
-
-        SFSpeechRecognizer.requestAuthorization { status ->
-            speechAuthGranted = status == SFSpeechRecognizerAuthorizationStatus.SFSpeechRecognizerAuthorizationStatusAuthorized
-            speechAuthCompleted = true
-
-            if (recordAuthCompleted) {
-                continuation.resume(speechAuthGranted && recordAuthGranted)
-            }
-        }
-
-        AVAudioSession.sharedInstance().requestRecordPermission { granted ->
-            recordAuthGranted = granted
-            recordAuthCompleted = true
-
-            if (speechAuthCompleted) {
-                continuation.resume(speechAuthGranted && recordAuthGranted)
-            }
-        }
-
-        continuation.invokeOnCancellation {
-            // Clean up if the coroutine is cancelled
-        }
-    }
-    private fun reset() {
-        audioEngine = null
-        request = null
-    }
-    @OptIn(ExperimentalForeignApi::class)
-    private fun prepareEngine(){
-        val audioEngine = AVAudioEngine()
-        val request = SFSpeechAudioBufferRecognitionRequest()
-        request.addsPunctuation = true
-        request.taskHint = SFSpeechRecognitionTaskHintDictation
-        request.shouldReportPartialResults = true
-
-        val audioSession = AVAudioSession.sharedInstance()
-        audioSession.setCategory(AVAudioSessionCategoryPlayAndRecord, null)
-        audioSession.setMode(AVAudioSessionModeMeasurement, null)
-        audioSession.setActive(true, null)
-        val inputNode = audioEngine.inputNode
-        val recordingFormat = inputNode.outputFormatForBus(0u)
-        inputNode.installTapOnBus(0u, bufferSize = 1024u, format = recordingFormat) { buffer, _ ->
-            if (buffer != null) {
-                request.appendAudioPCMBuffer(buffer)
-            }
-        }
-        audioEngine.prepare()
-        this.audioEngine = audioEngine
-        this.request = request
-        audioEngine.startAndReturnError(null)
+    actual suspend fun stop() {
+        isTranscribing = false
+        whisperContext?.stopTranscription = true
     }
 
-    actual fun doesModelExists(): Boolean {
-        TODO("Not yet implemented")
+    actual suspend fun finish() {
+        whisperContext?.release()
     }
 
     actual suspend fun start(
-        filePath: String,
-        language: String,
-        onProgress: (Int) -> Unit,
-        onNewSegment: (Long, Long, String) -> Unit,
-        onComplete: () -> Unit
+        filePath: String, language: String,
+        onProgress : (Int) -> Unit,
+        onNewSegment : (Long, Long,String) -> Unit,
+        onComplete : () -> Unit
     ) {
+        if (!canTranscribe) {
+            return
+        }
+
+        canTranscribe = false
+
+        try {
+            println("Reading wave samples... ")
+            val data = decodeWaveFile(filePath)
+            println("${data.size / (16000 / 1000)} ms\n")
+            println("Transcribing data...\n")
+           whisperContext?.fullTranscribe(data, language, object : WhisperCallback{
+                override fun onProgress(progress: Int) {
+                    onProgress(progress)
+                }
+
+                override fun onNewSegment(l1: Long, l2: Long, text: String) {
+                    onNewSegment(l1,l2,text)
+                }
+
+               override fun onComplete() {
+                   onComplete()
+               }
+
+            })
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("${e.message}\n")
+        }
+
+        canTranscribe = true
+
     }
+
+    @OptIn(ExperimentalForeignApi::class)
+    fun decodeWaveFile(path: String): FloatArray {
+        val url = NSURL.fileURLWithPath(path)
+        val data = NSData.dataWithContentsOfURL(url) ?: throw Exception("Failed to read file")
+
+        val length = data.length.toInt()
+        val bytes = data.bytes?.reinterpret<ByteVar>() ?: throw Exception("Invalid WAV file")
+
+        // Skip 44-byte WAV header
+        val start = 44
+        val sampleCount = (length - start) / 2
+        val floatArray = FloatArray(sampleCount)
+
+        var i = 0
+        while (i < sampleCount) {
+            val byteIndex = start + i * 2
+            val low = bytes[byteIndex].toInt() and 0xFF
+            val high = bytes[byteIndex + 1].toInt()
+            val shortVal = (high shl 8) or low
+            floatArray[i] = max(-1.0f, min(shortVal / 32767.0f, 1.0f))
+            i++
+        }
+
+        return floatArray
+    }
+
+    private fun getModelPath():String{
+        val documentsDirectory = NSFileManager.defaultManager.URLsForDirectory(
+            NSDocumentDirectory,
+            NSUserDomainMask
+        ).first() as NSURL
+
+        return documentsDirectory.URLByAppendingPathComponent("ggml-base.bin")?.path?:""
+    }
+
 }
