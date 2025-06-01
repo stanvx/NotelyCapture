@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
+import android.os.Environment
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import com.github.squti.androidwaverecorder.WaveRecorder
@@ -28,9 +29,8 @@ actual class AudioRecorder(
     private var currentRecordingPath: String? = null
 
     actual  fun startRecording() {
-        val randomNumber = Random.nextInt(100000, 999999)
-        val fileName = "$RECORDING_PREFIX$randomNumber$RECORDING_EXTENSION"
-        val file = File(context.cacheDir, fileName)
+        val fileName = "$RECORDING_PREFIX${System.currentTimeMillis()}$RECORDING_EXTENSION"
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
         currentRecordingPath = file.absolutePath
 
         recorder = WaveRecorder(file.absolutePath)
@@ -111,7 +111,7 @@ actual class AudioRecorder(
     actual fun pauseRecording() {
         if (isCurrentlyRecording && !isCurrentlyPaused) {
             try {
-                recorder?.pause()
+                recorder?.pauseRecording()
                 isCurrentlyPaused = true
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -122,7 +122,7 @@ actual class AudioRecorder(
     actual fun resumeRecording() {
         if (isCurrentlyRecording && isCurrentlyPaused) {
             try {
-                recorder?.resume()
+                recorder?.resumeRecording()
                 isCurrentlyPaused = false
             } catch (e: Exception) {
                 e.printStackTrace()

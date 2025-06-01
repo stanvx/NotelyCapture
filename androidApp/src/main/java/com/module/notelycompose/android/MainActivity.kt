@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,7 +31,6 @@ import com.module.notelycompose.android.presentation.AndroidNoteListViewModel
 import com.module.notelycompose.android.presentation.AndroidTranscriptionViewModel
 import com.module.notelycompose.android.presentation.AndroidOnboardingViewModel
 import com.module.notelycompose.android.presentation.AndroidPlatformViewModel
-import com.module.notelycompose.android.presentation.AndroidSpeechRecognitionViewModel
 import com.module.notelycompose.android.presentation.AndroidTextEditorViewModel
 import com.module.notelycompose.android.presentation.core.Routes
 import com.module.notelycompose.android.presentation.ui.NoteListScreen
@@ -39,6 +39,7 @@ import com.module.notelycompose.notes.ui.detail.NoteActions
 import com.module.notelycompose.notes.ui.detail.NoteAudioActions
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
+import com.module.notelycompose.notes.ui.detail.ShareActions
 import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
@@ -52,7 +53,7 @@ private const val DEFAULT_NOTE_ID = "0"
 private const val ROUTE_SEPARATOR = "/"
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var permissionLauncherHolder: AudioRecorderSpeechModule.PermissionLauncherHolder
     @Inject
@@ -152,6 +153,7 @@ fun NoteDetailWrapper(
     val transcriptionViewModel = hiltViewModel<AndroidTranscriptionViewModel>()
     val downloaderViewModel = hiltViewModel<AndroidModelDownloaderViewModel>()
     val editorViewModel = hiltViewModel<AndroidTextEditorViewModel>()
+    val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
 
     if(noteId.toLong() > 0L) {
         editorViewModel.onGetNoteById(noteId)
@@ -206,6 +208,13 @@ fun NoteDetailWrapper(
         summarize =  transcriptionViewModel::summarize
     )
 
+    val shareActions = ShareActions(
+        shareText = platformViewModel::shareText,
+        shareRecording = platformViewModel::shareRecording
+    )
+
+
+
     val noteActions = NoteActions(
         onDeleteNote = {
             editorViewModel.onDeleteNote()
@@ -228,13 +237,12 @@ fun NoteDetailWrapper(
         onFormatActions = formatActions,
         onAudioActions = audioActions,
         onNoteActions = noteActions,
-        onRecognitionActions = recognitionActions,
-        transcriptionUiState = speechRecognitionState,
-        isRecordPaused = audioRecorderState.isRecordPaused
+        isRecordPaused = audioRecorderState.isRecordPaused,
         onTranscriptionActions = transcriptionActions,
         transcriptionUiState = transcriptionState,
         downloaderUiState = downloaderState,
         downloaderEffect = downloaderEffect,
-        onDownloaderActions = downloaderActions
+        onDownloaderActions = downloaderActions,
+        onShareActions = shareActions
     )
 }

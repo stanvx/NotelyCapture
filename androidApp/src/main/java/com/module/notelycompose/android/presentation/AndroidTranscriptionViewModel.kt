@@ -1,23 +1,25 @@
 package com.module.notelycompose.android.presentation
 
+import androidx.appcompat.widget.ViewUtils
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.transcription.TranscriptionViewModel
 import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.Transcriper
+import com.module.notelycompose.audio.ui.expect.PlatformUtils
+import com.module.notelycompose.audio.ui.expect.Transcriber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class AndroidTranscriptionViewModel @Inject constructor(
-    private val transcriper: Transcriper,
-    private val downloader: Downloader
+    private val transcriber: Transcriber,
+    private val platformUtils: PlatformUtils
 ) : ViewModel() {
 
     private val viewModel by lazy {
         TranscriptionViewModel(
-            transcriper = transcriper,
-            downloader = downloader,
+            transcriber = transcriber,
+            platformUtils = platformUtils,
             coroutineScope = viewModelScope
         )
     }
@@ -33,8 +35,8 @@ class AndroidTranscriptionViewModel @Inject constructor(
     fun finishRecognizer(){
         viewModel.finishRecognizer()
     }
-    fun startRecognizer(filePath:String, language: String) {
-        viewModel.startRecognizer(filePath, language)
+    fun startRecognizer(filePath:String) {
+        viewModel.startRecognizer(filePath)
     }
 
     fun stopRecognizer() {

@@ -1,8 +1,12 @@
 package com.module.notelycompose.android.di
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.appcompat.app.AppCompatActivity
 import com.module.notelycompose.AndroidPlatform
 import com.module.notelycompose.Platform
+import com.module.notelycompose.audio.ui.expect.PlatformUtils
 import com.module.notelycompose.core.DatabaseDriverFactory
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.notes.data.NoteSqlDelightDataSource
@@ -26,12 +30,33 @@ import com.squareup.sqldelight.db.SqlDriver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+
+    @Provides
+    @Singleton
+    fun providePlatformTheme(@ApplicationContext context: Context, prefs: SharedPreferences): PlatformUtils {
+        return PlatformUtils(
+            context,
+            prefs)
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences(
+            "notely_shared_prefs",
+            Context.MODE_PRIVATE
+        )
+    }
 
     @Provides
     @Singleton

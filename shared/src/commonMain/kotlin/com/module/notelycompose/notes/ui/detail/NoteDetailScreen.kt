@@ -104,9 +104,8 @@ fun NoteDetailScreen(
     onAudioActions: NoteAudioActions,
     onTranscriptionActions: TranscriptionActions,
     onDownloaderActions: DownloaderActions,
-    onNoteActions: NoteActions
-    onRecognitionActions: RecognitionActions,
     onNoteActions: NoteActions,
+    onShareActions: ShareActions,
     isRecordPaused: Boolean
 ) {
     var showFormatBar by remember { mutableStateOf(false) }
@@ -256,8 +255,7 @@ fun NoteDetailScreen(
             onRecognitionFinished = { onTranscriptionActions.finishRecognizer() },
             onRecognitionStart = {
                 onTranscriptionActions.startRecognizer(
-                    editorState.recording.recordingPath,
-                    "en"
+                    editorState.recording.recordingPath
                 )
             },
             onRecognitionStopped = { onTranscriptionActions.stopRecognition() },
@@ -300,11 +298,11 @@ fun NoteDetailScreen(
     if (showShareDialog) {
         ShareDialog(
             onShareAudioRecording = {
-                // onShareAudioRecording()
+                onShareActions.shareRecording(editorState.recording.recordingPath)
                 showShareDialog = false
             },
             onShareTexts = {
-                // onShareTexts()
+                onShareActions.shareText(editorState.content.text)
                 showShareDialog = false
             },
             onDismiss = { showShareDialog = false }
@@ -505,9 +503,14 @@ data class TranscriptionActions(
     val requestAudioPermission: () -> Unit,
     val initRecognizer: () -> Unit,
     val finishRecognizer: () -> Unit,
-    val startRecognizer: (String, String) -> Unit,
+    val startRecognizer: (String) -> Unit,
     val stopRecognition: () -> Unit,
     val summarize: () -> Unit
+)
+
+data class ShareActions(
+    val shareText: (String) -> Unit,
+    val shareRecording: (String) -> Unit
 )
 
 data class DownloaderActions(

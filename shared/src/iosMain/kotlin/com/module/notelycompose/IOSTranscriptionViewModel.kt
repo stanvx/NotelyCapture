@@ -2,17 +2,16 @@ package com.module.notelycompose
 
 import com.module.notelycompose.audio.ui.expect.Downloader
 import com.module.notelycompose.transcription.TranscriptionViewModel
-import com.module.notelycompose.audio.ui.expect.SpeechRecognizer
-import com.module.notelycompose.audio.ui.expect.Transcriper
+import com.module.notelycompose.audio.ui.expect.Transcriber
 
 class IOSTranscriptionViewModel(
     private val downloader: Downloader,
-    private val transcriper: Transcriper
+    private val transcriber: Transcriber
 ) {
     private val viewModel by lazy {
         TranscriptionViewModel(
             downloader = downloader,
-            transcriper = transcriper,
+            transcriper = transcriber,
 
         )
     }

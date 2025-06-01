@@ -47,7 +47,7 @@ fun NoteDetailController(
         val transcriptionViewModel = remember {
             IOSTranscriptionViewModel(
                downloader = transcriptionModule.downloader,
-                transcriper = transcriptionModule.transcriper
+                transcriber = transcriptionModule.mTranscriber
             )
         }
 
@@ -55,7 +55,7 @@ fun NoteDetailController(
         val modelDownloaderViewModel = remember {
             IOSModelDownloaderViewModel(
                 downloader = transcriptionModule.downloader,
-                transcriper = transcriptionModule.transcriper
+                transcriber = transcriptionModule.mTranscriber
             )
         }
         val transcriptionState by transcriptionViewModel.state.collectAsState()
@@ -140,10 +140,7 @@ fun NoteDetailController(
             transcriptionUiState = transcriptionState,
             downloaderUiState = downloadingState,
             downloaderEffect = modelDownloaderViewModel.effect,
-            onDownloaderActions = downloadActions
-
-            onRecognitionActions = recognitionActions,
-            transcriptionUiState = speechRecognitionState,
+            onDownloaderActions = downloadActions,
             isRecordPaused = audioRecorderState.isRecordPaused
         )
     }

@@ -17,7 +17,7 @@ import kotlin.math.min
 
 
 
-actual class Transcriper{
+actual class Transcriber{
     private var canTranscribe: Boolean = false
     private var isTranscribing = false
     private var isModelLoaded = false

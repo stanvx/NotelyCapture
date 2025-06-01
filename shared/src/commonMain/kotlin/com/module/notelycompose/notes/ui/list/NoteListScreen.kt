@@ -31,6 +31,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
@@ -49,7 +50,11 @@ fun SharedNoteListScreen(
     onSearchByKeyword: (String) -> Unit,
     selectedTabTitle: String,
     appVersion: String,
-    showEmptyContent: Boolean
+    showEmptyContent: Boolean,
+    selectedTheme: Theme,
+    selectedLanguage: String,
+    onThemeSelected: (Theme) -> Unit,
+    onLanguageClicked: (Pair<String, String>) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -84,7 +89,11 @@ fun SharedNoteListScreen(
 //                )
                 SettingsScreen(
                     onDismiss = dismissBottomSheet,
-                    bottomSheetState = bottomSheetState
+                    bottomSheetState = bottomSheetState,
+                    selectedTheme = selectedTheme,
+                    selectedLanguage = selectedLanguage,
+                    onThemeSelected = onThemeSelected,
+                    onLanguageClicked = onLanguageClicked
                 )
             } else {
                 InfoBottomSheet(

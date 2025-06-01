@@ -1,6 +1,6 @@
 package com.module.notelycompose.audio.ui.expect
 
-expect class Transcriper {
+expect class Transcriber {
     fun doesModelExists():Boolean
      suspend fun initialize()
      suspend fun finish()

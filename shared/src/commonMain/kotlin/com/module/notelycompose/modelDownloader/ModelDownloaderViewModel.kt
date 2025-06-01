@@ -1,7 +1,7 @@
 package com.module.notelycompose.modelDownloader
 
 import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.Transcriper
+import com.module.notelycompose.audio.ui.expect.Transcriber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class ModelDownloaderViewModel(
     private val downloader: Downloader,
-    private val transcriper: Transcriper,
+    private val transcriber: Transcriber,
     coroutineScope: CoroutineScope? = null
 ) {
     private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
@@ -30,7 +30,7 @@ class ModelDownloaderViewModel(
             if (downloader.hasRunningDownload()) {
                 trackDownload()
             } else {
-                if (!transcriper.doesModelExists() || !transcriper.isValidModel() ) {
+                if (!transcriber.doesModelExists() || !transcriber.isValidModel() ) {
                     downloader.startDownload(
                         "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
                         _uiState.value.fileName

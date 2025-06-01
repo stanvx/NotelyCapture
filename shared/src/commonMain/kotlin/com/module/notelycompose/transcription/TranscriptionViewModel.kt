@@ -1,10 +1,11 @@
 package com.module.notelycompose.transcription
 
-import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.Transcriper
+import com.module.notelycompose.audio.ui.expect.PlatformUtils
+import com.module.notelycompose.audio.ui.expect.Transcriber
 import com.module.notelycompose.summary.Text2Summary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -12,36 +13,36 @@ import kotlinx.coroutines.launch
 
 
 class TranscriptionViewModel(
-    private val transcriper: Transcriper,
-    private val downloader: Downloader,
+    private val transcriber: Transcriber,
+    private val platformUtils: PlatformUtils,
     coroutineScope: CoroutineScope? = null
 ) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.IO)
     private val _uiState = MutableStateFlow(TranscriptionUiState())
     val uiState: StateFlow<TranscriptionUiState> = _uiState
 
     fun requestAudioPermission() {
         viewModelScope.launch {
-            transcriper.requestRecordingPermission()
+            transcriber.requestRecordingPermission()
         }
     }
 
     fun initRecognizer() {
         viewModelScope.launch {
-            transcriper.initialize()
+            transcriber.initialize()
         }
     }
 
 
-    fun startRecognizer(filePath: String, language: String) {
+    fun startRecognizer(filePath: String) {
         println("startRecognizer =========================")
         viewModelScope.launch(Dispatchers.Default) {
-            if (transcriper.hasRecordingPermission()) {
+            if (transcriber.hasRecordingPermission()) {
                 _uiState.update { current ->
                     current.copy(inTranscription = true)
                 }
-                transcriper.start(
-                    filePath, language, onProgress = { progress ->
+                transcriber.start(
+                    filePath, platformUtils.getDefaultTranscriptionLanguage(), onProgress = { progress ->
                         println("progress ========================= $progress")
                         _uiState.update { current ->
                             current.copy(
@@ -78,7 +79,7 @@ class TranscriptionViewModel(
             current.copy(inTranscription = false)
         }
         viewModelScope.launch {
-            transcriper.stop()
+            transcriber.stop()
         }
 
     }
@@ -94,7 +95,7 @@ class TranscriptionViewModel(
             )
         }
         viewModelScope.launch {
-            transcriper.finish()
+            transcriber.finish()
         }
     }
 

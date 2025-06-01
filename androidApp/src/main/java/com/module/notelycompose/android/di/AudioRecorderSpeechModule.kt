@@ -7,7 +7,7 @@ import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresenta
 import com.module.notelycompose.audio.ui.expect.AudioRecorder
 import com.module.notelycompose.audio.ui.expect.Downloader
 import com.module.notelycompose.audio.ui.expect.SpeechRecognizer
-import com.module.notelycompose.audio.ui.expect.Transcriper
+import com.module.notelycompose.audio.ui.expect.Transcriber
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,14 +20,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AudioRecorderSpeechModule {
 
-    @Provides
-    @Singleton
-    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
-        return context.getSharedPreferences(
-            "notely_shared_prefs",
-            Context.MODE_PRIVATE
-        )
-    }
+
 
     @Singleton
     class PermissionLauncherHolder @Inject constructor() {
@@ -109,8 +102,8 @@ object AudioRecorderSpeechModule {
         @ApplicationContext private val context: Context,
         private val permissionLauncherHolder: PermissionLauncherHolder
     ) {
-        fun create(): Transcriper {
-            return Transcriper(
+        fun create(): Transcriber {
+            return Transcriber(
                 context = context,
                 permissionLauncher = permissionLauncherHolder.permissionLauncher
             )
@@ -128,7 +121,7 @@ object AudioRecorderSpeechModule {
     }
 
     @Provides
-    fun provideTranscriper(factory: TranscriperFactory): Transcriper {
+    fun provideTranscriper(factory: TranscriperFactory): Transcriber {
         return factory.create()
     }
 

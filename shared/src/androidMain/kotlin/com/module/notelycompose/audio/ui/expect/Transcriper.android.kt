@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.resume
 
-actual class Transcriper(
+actual class Transcriber(
     private val context: Context,
     private val permissionLauncher: ActivityResultLauncher<String>?
 ) {

@@ -24,6 +24,7 @@ kotlinxSerializationJson = "1.5.1"
 app-icon = "1.2.6"
 splashscreen = "1.0.1"
 voskAndroidVersion = "0.3.47"
+appcompat = "1.7.0"
 
 [libraries]
 # Non-UI dependencies
@@ -63,6 +64,7 @@ atomicfu-gradle-plugin = { group = "org.jetbrains.kotlinx", name = "atomicfu-gra
 activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 animation-android = { group = "androidx.compose.animation", name = "animation-android", version.ref = "animationAndroid" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
