@@ -23,12 +23,10 @@ animationAndroid = "1.7.6"
 kotlinxSerializationJson = "1.5.1"
 app-icon = "1.2.6"
 splashscreen = "1.0.1"
-voskAndroidVersion = "0.3.47"
 appcompat = "1.7.0"
 
 [libraries]
 # Non-UI dependencies
-alphacephei-vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAndroidVersion" }
 android-wave-recorder = { module = "com.github.squti:Android-Wave-Recorder", version.ref = "androidWaveRecorder" }
 compose-vectorize-core = { module = "dev.sergiobelda.compose.vectorize:compose-vectorize-core", version.ref = "composeVectorizeCore" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

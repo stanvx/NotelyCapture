@@ -6,7 +6,6 @@ import androidx.activity.result.ActivityResultLauncher
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.expect.AudioRecorder
 import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.SpeechRecognizer
 import com.module.notelycompose.audio.ui.expect.Transcriber
 import dagger.Module
 import dagger.Provides
@@ -66,34 +65,6 @@ object AudioRecorderSpeechModule {
     @Singleton
     fun provideAudioRecorderPresentationToUiStateMapper(): AudioRecorderPresentationToUiMapper {
         return AudioRecorderPresentationToUiMapper()
-    }
-
-    @Singleton
-    class SpeechRecognizerFactory @Inject constructor(
-        @ApplicationContext private val context: Context,
-        private val permissionLauncherHolder: PermissionLauncherHolder
-    ) {
-        fun create(): SpeechRecognizer {
-            return SpeechRecognizer(
-                context = context,
-                permissionLauncher = permissionLauncherHolder.permissionLauncher
-            )
-        }
-    }
-
-
-    @Provides
-    @Singleton
-    fun provideSpeechRecognizerFactory(
-        @ApplicationContext context: Context,
-        permissionLauncherHolder: PermissionLauncherHolder
-    ): SpeechRecognizerFactory {
-        return SpeechRecognizerFactory(context, permissionLauncherHolder)
-    }
-
-    @Provides
-    fun provideSpeechRecognizer(factory: SpeechRecognizerFactory): SpeechRecognizer {
-        return factory.create()
     }
 
 

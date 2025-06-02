@@ -65,8 +65,7 @@ kotlin {
                 implementation(libs.sqldelight.android.driver)
                 // Wav Recorder
                 implementation(libs.android.wave.recorder)
-                // SpeechRecognizer
-                implementation(libs.alphacephei.vosk.android)
+
                 implementation(libs.kotlinx.serialization.json.v160)
                 implementation(libs.multiplatform.settings)
 
