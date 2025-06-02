@@ -10,6 +10,7 @@ import com.module.notelycompose.notes.ui.detail.NoteActions
 import com.module.notelycompose.notes.ui.detail.NoteAudioActions
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
+import com.module.notelycompose.notes.ui.detail.ShareActions
 import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 
@@ -44,10 +45,11 @@ fun NoteDetailController(
 
 
         val transcriptionModule = TranscriptionModule()
+        val platformUtilsModule = PlatformModule()
         val transcriptionViewModel = remember {
             IOSTranscriptionViewModel(
-               downloader = transcriptionModule.downloader,
-                transcriber = transcriptionModule.mTranscriber
+                transcriber = transcriptionModule.mTranscriber,
+                platformUtils = platformUtilsModule.platformUtils
             )
         }
 
@@ -58,6 +60,15 @@ fun NoteDetailController(
                 transcriber = transcriptionModule.mTranscriber
             )
         }
+
+        val platformViewModel = remember {
+            IOSPlatformViewModel(
+                platformUtils = platformUtilsModule.platformUtils,
+                platformInfo = platformUtilsModule.platformInfo
+            )
+        }
+
+
         val transcriptionState by transcriptionViewModel.state.collectAsState()
         val downloadingState by modelDownloaderViewModel.state.collectAsState()
         val audioRecorderPresentationState by audioRecorderViewModel.state.collectAsState()
@@ -126,6 +137,11 @@ fun NoteDetailController(
             onStarNote = editorViewModel::onToggleStar
         )
 
+        val onShareActions = ShareActions(
+            shareText = platformViewModel::shareText,
+            shareRecording = platformViewModel::shareRecording
+        )
+
         NoteDetailScreen(
             newNoteDateString = editorState.createdAt,
             editorState = editorState,
@@ -141,7 +157,8 @@ fun NoteDetailController(
             downloaderUiState = downloadingState,
             downloaderEffect = modelDownloaderViewModel.effect,
             onDownloaderActions = downloadActions,
-            isRecordPaused = audioRecorderState.isRecordPaused
+            isRecordPaused = audioRecorderState.isRecordPaused,
+            onShareActions = onShareActions
         )
     }
 }

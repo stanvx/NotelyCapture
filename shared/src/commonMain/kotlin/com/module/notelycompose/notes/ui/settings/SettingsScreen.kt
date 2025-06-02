@@ -261,7 +261,7 @@ fun TranscriptionLanguageItem(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = selectedLanguage.uppercase(),
+                            text = selectedLanguage.uppercase().take(2),
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold

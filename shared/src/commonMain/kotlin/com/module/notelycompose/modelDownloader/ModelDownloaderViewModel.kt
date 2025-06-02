@@ -56,7 +56,9 @@ class ModelDownloaderViewModel(
                 )
             }
         }, onSuccess = {
-            viewModelScope.launch { _effects.emit(DownloaderEffect.ModelsAreReady()) }
+            viewModelScope.launch {
+                transcriber.initialize()
+                _effects.emit(DownloaderEffect.ModelsAreReady()) }
 
         }, onFailed = {
             viewModelScope.launch { _effects.emit(DownloaderEffect.ErrorEffect()) }

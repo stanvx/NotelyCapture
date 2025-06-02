@@ -1,18 +1,18 @@
 package com.module.notelycompose
 
 import com.module.notelycompose.audio.ui.expect.Downloader
+import com.module.notelycompose.audio.ui.expect.PlatformUtils
 import com.module.notelycompose.transcription.TranscriptionViewModel
 import com.module.notelycompose.audio.ui.expect.Transcriber
 
 class IOSTranscriptionViewModel(
-    private val downloader: Downloader,
-    private val transcriber: Transcriber
+    private val transcriber: Transcriber,
+    private val platformUtils: PlatformUtils
 ) {
     private val viewModel by lazy {
         TranscriptionViewModel(
-            downloader = downloader,
-            transcriper = transcriber,
-
+            platformUtils = platformUtils,
+            transcriber = transcriber
         )
     }
     val state = viewModel.uiState
@@ -27,8 +27,8 @@ class IOSTranscriptionViewModel(
     fun finishRecognizer(){
         viewModel.finishRecognizer()
     }
-    fun startRecognizer(filePath:String, language:String) {
-        viewModel.startRecognizer(filePath, language)
+    fun startRecognizer(filePath:String) {
+        viewModel.startRecognizer(filePath)
     }
 
     private fun formatText(text: String): String {

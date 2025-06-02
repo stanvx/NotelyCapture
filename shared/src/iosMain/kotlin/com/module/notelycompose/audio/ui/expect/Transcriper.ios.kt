@@ -72,7 +72,7 @@ actual class Transcriber{
 
     actual suspend fun stop() {
         isTranscribing = false
-        whisperContext?.stopTranscription = true
+        whisperContext?.stopTranscribing()
     }
 
     actual suspend fun finish() {
@@ -86,6 +86,7 @@ actual class Transcriber{
         onComplete : () -> Unit
     ) {
         if (!canTranscribe) {
+            println("Model not loaded yet")
             return
         }
 

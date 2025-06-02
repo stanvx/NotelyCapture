@@ -12,6 +12,8 @@
 		0B3BA2942DE7BC4400C7AE76 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */; };
 		0B3BA2952DE7BC4400C7AE76 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0B574A782DB5A93700D72FF5 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */; };
+		0B5B75232DECB40400DB5582 /* Theming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5B75222DECB40400DB5582 /* Theming.swift */; };
+		0B5B75252DECF52500DB5582 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5B75242DECF52500DB5582 /* SceneDelegate.swift */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
 		7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* NoteListScreenView.swift */; };
 		B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D592A559CCC00E98168 /* AppView.swift */; };
@@ -38,6 +40,8 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = whisper.xcframework; sourceTree = "<group>"; };
 		0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = SplashScreen.storyboard; sourceTree = "<group>"; };
+		0B5B75222DECB40400DB5582 /* Theming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theming.swift; sourceTree = "<group>"; };
+		0B5B75242DECF52500DB5582 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Notely Voice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Notely Voice.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* NoteListScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteListScreenView.swift; sourceTree = "<group>"; };
@@ -95,6 +99,8 @@
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 				B60F1D592A559CCC00E98168 /* AppView.swift */,
 				0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */,
+				0B5B75222DECB40400DB5582 /* Theming.swift */,
+				0B5B75242DECF52500DB5582 /* SceneDelegate.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -218,11 +224,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0B5B75232DECB40400DB5582 /* Theming.swift in Sources */,
 				B63AA3CB2A54627E00EBFFB4 /* NoteListScreen.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				B60F1D602A559F7E00E98168 /* NoteDetailScreenController.swift in Sources */,
 				B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */,
 				7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */,
+				0B5B75252DECF52500DB5582 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

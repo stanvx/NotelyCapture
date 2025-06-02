@@ -9,10 +9,13 @@ import platform.UIKit.UIDevice
 import kotlin.math.max
 import kotlin.math.min
 import cnames.structs.whisper_context
+import kotlinx.atomicfu.AtomicBoolean
+import kotlinx.atomicfu.atomic
 import platform.posix.memcpy
 import platform.posix.uname
 
 var  globalWhisperCallback:WhisperCallback? = null
+val stopTranscription = atomic(false) // Thread-safe flag
 sealed class WhisperError : Exception() {
     object CouldNotInitializeContext : WhisperError()
     object TranscriptionFailed : WhisperError()
@@ -32,12 +35,14 @@ interface WhisperCallback{
 ) {
 
 
-      var stopTranscription = false
 
 
+    fun stopTranscribing() {
+        stopTranscription.value = true
+    }
 
      fun release() {
-        whisper_free(context)
+        //whisper_free(context)
     }
 
     private fun extractTextById(ctx: CPointer<whisper_context>?, nNew: Int, whisperCallback: WhisperCallback) {
@@ -51,7 +56,7 @@ interface WhisperCallback{
 
     fun fullTranscribe(samples: FloatArray, tLanguage: String, callback: WhisperCallback) {
         globalWhisperCallback = callback
-        stopTranscription = false
+        stopTranscription.value = false
         println("full_transcribe_param")
 
         val params = whisper_full_default_params(whisper_sampling_strategy.WHISPER_SAMPLING_GREEDY)
@@ -96,7 +101,7 @@ interface WhisperCallback{
                     }
 
                     abort_callback = staticCFunction { _: COpaquePointer? ->
-                        false
+                        stopTranscription.value
                     }
                 }
             }
@@ -112,6 +117,7 @@ interface WhisperCallback{
             ) {
                 throw WhisperError.TranscriptionFailed
             }else{
+                stopTranscription.value = false
                 callback.onComplete()
             }
         }

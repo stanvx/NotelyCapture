@@ -74,7 +74,8 @@ class DownloadDelegate(
         task: NSURLSessionTask,
         didCompleteWithError: NSError?
     ) {
-        println("Error ---------------")
-        onFailed?.invoke(didCompleteWithError?.description?:"Error")
+        println("Error --------------- ${didCompleteWithError?.description}")
+        if(didCompleteWithError != null)
+        onFailed?.invoke(didCompleteWithError.description?:"Error")
     }
 }
