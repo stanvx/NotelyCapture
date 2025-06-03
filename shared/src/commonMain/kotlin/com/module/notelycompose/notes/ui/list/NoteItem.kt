@@ -33,7 +33,6 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val ZERO_WORDS = 0
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NoteItem(
     note: NoteUiModel,

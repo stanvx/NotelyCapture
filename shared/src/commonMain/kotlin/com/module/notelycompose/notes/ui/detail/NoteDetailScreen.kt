@@ -359,10 +359,6 @@ private fun NoteEditor(
     onUpdateContent: (TextFieldValue) -> Unit
 ) {
 
-//    val scrollState = rememberScrollState()
-//    LaunchedEffect(editorState.content) {
-//        scrollState.animateScrollTo(scrollState.maxValue)
-//    }
     val transformation = VisualTransformation { text ->
         TransformedText(
             buildAnnotatedString {
