@@ -1,0 +1,4 @@
+- Fixed delete acton with no confirm dialog 
+- Open Faq & Privacy Links in Device browser
+- Full Notes functionality
+- Android Apk file size exceed 25MB due to offline transcription model
