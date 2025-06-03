@@ -68,7 +68,8 @@ fun NoteListController(
                     },
                     selectedTabTitle = state.value.selectedTabTitle,
                     appVersion = platformViewmodel.state.value.appVersion,
-                    showEmptyContent = state.value.showEmptyContent
+                    showEmptyContent = state.value.showEmptyContent,
+                    onOpenBrowser = {}
                 )
             }
         }

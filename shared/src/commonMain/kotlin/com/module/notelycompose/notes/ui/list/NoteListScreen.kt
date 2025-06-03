@@ -49,7 +49,8 @@ fun SharedNoteListScreen(
     onSearchByKeyword: (String) -> Unit,
     selectedTabTitle: String,
     appVersion: String,
-    showEmptyContent: Boolean
+    showEmptyContent: Boolean,
+    onOpenBrowser: (String) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -79,19 +80,17 @@ fun SharedNoteListScreen(
         sheetShape = RectangleShape,
         sheetContent = {
             if(isSettingsTapped) {
-//                SettingsBottomSheet(
-//                    onDismiss = dismissBottomSheet
+//                SettingsScreen(
+//                    onDismiss = dismissBottomSheet,
+//                    bottomSheetState = bottomSheetState
 //                )
-                SettingsScreen(
-                    onDismiss = dismissBottomSheet,
-                    bottomSheetState = bottomSheetState
-                )
             } else {
                 InfoBottomSheet(
                     onDismiss = dismissBottomSheet,
                     onNavigateToWebPage = navigateToWebPage,
                     bottomSheetState = bottomSheetState,
-                    appVersion = appVersion
+                    appVersion = appVersion,
+                    onOpenBrowser = onOpenBrowser
                 )
             }
         },

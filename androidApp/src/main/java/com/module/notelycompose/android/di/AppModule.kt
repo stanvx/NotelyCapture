@@ -1,6 +1,7 @@
 package com.module.notelycompose.android.di
 
 import android.app.Application
+import android.content.Context
 import com.module.notelycompose.AndroidPlatform
 import com.module.notelycompose.Platform
 import com.module.notelycompose.core.DatabaseDriverFactory
@@ -22,10 +23,12 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.web.BrowserLauncher
 import com.squareup.sqldelight.db.SqlDriver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -182,5 +185,13 @@ object AppModule {
     @Singleton
     fun provideTextEditorHelper(): TextEditorHelper {
         return TextEditorHelper()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBrowserLauncher(
+        @ApplicationContext context: Context
+    ): BrowserLauncher {
+        return BrowserLauncher(context)
     }
 }

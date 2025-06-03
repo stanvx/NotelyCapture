@@ -15,7 +15,8 @@ fun NoteListScreen(
     androidNoteListViewModel: AndroidNoteListViewModel,
     platformViewModel: AndroidPlatformViewModel,
     onFloatingActionButtonClicked: () -> Unit,
-    onNoteClicked: (Long) -> Unit
+    onNoteClicked: (Long) -> Unit,
+    onOpenBrowser: (String) -> Unit
 ) {
     val state by androidNoteListViewModel.state.collectAsState()
     val notes = androidNoteListViewModel.onGetUiState(state)
@@ -40,6 +41,7 @@ fun NoteListScreen(
         },
         selectedTabTitle = state.selectedTabTitle,
         appVersion = platformState.appVersion,
-        showEmptyContent = state.showEmptyContent
+        showEmptyContent = state.showEmptyContent,
+        onOpenBrowser = onOpenBrowser
     )
 }
