@@ -8,6 +8,10 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.module.notelycompose.notes.ui.detail.DeleteConfirmationDialog
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.vectors.IcArrowUpRight
@@ -35,6 +40,13 @@ fun NoteItem(
     onNoteClick: (Long) -> Unit,
     onDeleteClick: (Long) -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    DeleteConfirmationDialog(
+        showDialog = showDeleteDialog,
+        onDismiss = { showDeleteDialog = false },
+        onConfirm = { onDeleteClick(note.id) }
+    )
+
         Card(
             modifier = Modifier.fillMaxWidth()
                 .clickable {
@@ -59,7 +71,7 @@ fun NoteItem(
                     Spacer(modifier = Modifier.width(8.dp))
                     IconButton(
                         onClick = {
-                            onDeleteClick(note.id)
+                            showDeleteDialog = true
                         }
                     ) {
                         Icon(
