@@ -52,8 +52,6 @@ private const val ROUTE_SEPARATOR = "/"
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var permissionLauncherHolder: AudioRecorderSpeechModule.PermissionLauncherHolder
-    @Inject
-    lateinit var platformInfo: Platform
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
