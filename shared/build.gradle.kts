@@ -69,6 +69,7 @@ kotlin {
                 implementation(libs.alphacephei.vosk.android)
                 implementation(libs.kotlinx.serialization.json.v160)
                 implementation(libs.multiplatform.settings)
+                implementation(libs.activity.compose)
             }
         }
         val iosX64Main by getting {

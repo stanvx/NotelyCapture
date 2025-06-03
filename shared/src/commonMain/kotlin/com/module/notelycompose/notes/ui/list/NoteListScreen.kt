@@ -18,11 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.note_list_add_note
@@ -56,6 +59,7 @@ fun SharedNoteListScreen(
     val coroutineScope = rememberCoroutineScope()
     var isSettingsTapped by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     // State to control bottom sheet
     val bottomSheetState = rememberModalBottomSheetState(
@@ -191,5 +195,16 @@ fun SharedNoteListScreen(
                 if(showEmptyContent) EmptyNoteUi()
             }
         }
+    }
+
+    // handle custom back button
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        dismissBottomSheet()
+    }
+    LaunchedEffect(bottomSheetState) {
+        snapshotFlow { bottomSheetState.currentValue }
+            .collect { sheetValue ->
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
+            }
     }
 }
