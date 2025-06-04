@@ -84,10 +84,10 @@ fun SharedNoteListScreen(
         sheetShape = RectangleShape,
         sheetContent = {
             if(isSettingsTapped) {
-//                SettingsScreen(
-//                    onDismiss = dismissBottomSheet,
-//                    bottomSheetState = bottomSheetState
-//                )
+                SettingsScreen(
+                    onDismiss = dismissBottomSheet,
+                    bottomSheetState = bottomSheetState
+                )
             } else {
                 InfoBottomSheet(
                     onDismiss = dismissBottomSheet,
