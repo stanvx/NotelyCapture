@@ -183,9 +183,8 @@ fun LanguageSelectionScreen(
                                 }
                                 if (index < filteredLanguages.size - 1) {
                                     Divider(
-                                        modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                        thickness = 1.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant
+                                        thickness = 0.5.dp,
+                                        color = LocalCustomColors.current.languageListDividerColor
                                     )
                                 }
                             }

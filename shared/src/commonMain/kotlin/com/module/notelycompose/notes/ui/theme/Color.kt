@@ -79,7 +79,7 @@ val LightCustomColors = CustomColors(
     languageListHeaderColor = Color.Black,
     languageListTextColor = Color.Black,
     languageListBackgroundColor = Color(0xFFEEEEEE),
-    languageListDividerColor = Color.Black,
+    languageListDividerColor = Color.Black.copy(alpha = 0.3f),
     languageSearchUnfocusedColor = Color.Black,
     shareDialogBackgroundColor = Color.White,
     shareDialogButtonColor = Color(0xFF333333)
