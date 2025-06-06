@@ -45,7 +45,7 @@ actual class PlatformUtils(
     }
 
     actual fun getDefaultTranscriptionLanguage(): String {
-        return prefs.getString("language", "auto") ?: "auto"
+        return prefs.getString("language", "en") ?: "en"
     }
 
     actual fun shareText(text: String) {

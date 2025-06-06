@@ -277,7 +277,7 @@ fun TranscriptionLanguageItem(
                     }
 
                     Text(
-                        text = languageCodeMap[selectedLanguage] ?:"en",
+                        text = languageCodeMap[selectedLanguage] ?:"auto",
                         fontSize = 16.sp,
                         color = LocalCustomColors.current.bodyContentColor,
                         modifier = Modifier.padding(start = 12.dp)

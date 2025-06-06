@@ -40,7 +40,7 @@ actual class PlatformUtils{
     }
 
     actual fun getDefaultTranscriptionLanguage(): String {
-        return userDefaults.stringForKey("language") ?: "auto"
+        return userDefaults.stringForKey("language") ?: "en"
     }
 
     actual fun shareText(text: String) {
