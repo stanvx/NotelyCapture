@@ -22,9 +22,10 @@ import kotlin.random.Random
 import platform.AVFoundation.*
 import platform.darwin.*
 import platform.AVFAudio.*
+import platform.CoreAudioTypes.kAudioFormatLinearPCM
 
 private const val RECORDING_PREFIX = "recording_"
-private const val RECORDING_EXTENSION = ".m4a"
+private const val RECORDING_EXTENSION = ".wav"
 
 actual class AudioRecorder {
 
@@ -91,11 +92,10 @@ actual class AudioRecorder {
         }
 
         val settings = mapOf<Any?, Any?>(
-            AVFormatIDKey to kAudioFormatMPEG4AAC,
-            AVSampleRateKey to 44100.0,
+            AVFormatIDKey to kAudioFormatLinearPCM,
+            AVSampleRateKey to 16000.0,
             AVNumberOfChannelsKey to 1,
             AVEncoderAudioQualityKey to AVAudioQualityHigh,
-            AVEncoderBitRateKey to 32000
         )
 
         audioRecorder = AVAudioRecorder(recordingURL, settings, null)

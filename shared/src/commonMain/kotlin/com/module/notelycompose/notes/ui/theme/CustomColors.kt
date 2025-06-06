@@ -15,6 +15,7 @@ data class CustomColors(
     val bodyBackgroundColor: Color,
     val contentTopColor: Color,
     val bodyContentColor: Color,
+    val onBodyColor: Color,
     val floatActionButtonBorderColor: Color,
     val floatActionButtonIconColor: Color,
     val searchOutlinedTextFieldColor: Color,

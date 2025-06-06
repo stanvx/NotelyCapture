@@ -1,5 +1,6 @@
 package com.module.notelycompose
 
+import com.module.notelycompose.audio.ui.expect.PlatformUtils
 import com.module.notelycompose.core.DatabaseDriverFactory
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.notes.data.NoteSqlDelightDataSource
@@ -83,5 +84,9 @@ class AppModule {
 
     val preferencesRepository: PreferencesRepository by lazy {
         PreferencesRepository(SettingsFactory().createSettings())
+    }
+
+    val platformUtils : PlatformUtils by lazy {
+        PlatformUtils()
     }
 }

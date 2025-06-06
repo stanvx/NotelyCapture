@@ -5,11 +5,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.uikit.OnFocusBehavior
 import androidx.compose.ui.window.ComposeUIViewController
+import com.module.notelycompose.notes.ui.detail.DownloaderActions
 import com.module.notelycompose.notes.ui.detail.NoteActions
 import com.module.notelycompose.notes.ui.detail.NoteAudioActions
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
-import com.module.notelycompose.notes.ui.detail.RecognitionActions
+import com.module.notelycompose.notes.ui.detail.ShareActions
+import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 
 fun NoteDetailController(
@@ -41,13 +43,34 @@ fun NoteDetailController(
             )
         }
 
-        val speechRecognitionModule = SpeechRecognitionModule()
-        val speechRecognitionViewModel = remember {
-            IOSSpeechRecognitionViewModel(
-                speechRecognizer = speechRecognitionModule.speechRecognizer
+
+        val transcriptionModule = TranscriptionModule()
+        val platformUtilsModule = PlatformModule()
+        val transcriptionViewModel = remember {
+            IOSTranscriptionViewModel(
+                transcriber = transcriptionModule.mTranscriber,
+                platformUtils = platformUtilsModule.platformUtils
             )
         }
-        val speechRecognitionState by speechRecognitionViewModel.state.collectAsState()
+
+
+        val modelDownloaderViewModel = remember {
+            IOSModelDownloaderViewModel(
+                downloader = transcriptionModule.downloader,
+                transcriber = transcriptionModule.mTranscriber
+            )
+        }
+
+        val platformViewModel = remember {
+            IOSPlatformViewModel(
+                platformUtils = platformUtilsModule.platformUtils,
+                platformInfo = platformUtilsModule.platformInfo
+            )
+        }
+
+
+        val transcriptionState by transcriptionViewModel.state.collectAsState()
+        val downloadingState by modelDownloaderViewModel.state.collectAsState()
         val audioRecorderPresentationState by audioRecorderViewModel.state.collectAsState()
         val audioRecorderState = audioRecorderViewModel.onGetUiState(audioRecorderPresentationState)
 
@@ -69,6 +92,9 @@ fun NoteDetailController(
         val editorPresentationState by editorViewModel.state.collectAsState()
         val editorState = editorViewModel.onGetUiState(editorPresentationState)
 
+        val downloadActions = DownloaderActions(
+            checkModelAvailability = modelDownloaderViewModel::checkModelAvailability
+        )
         val formatActions = NoteFormatActions(
             onToggleBold = editorViewModel::onToggleBold,
             onToggleItalic = editorViewModel::onToggleItalic,
@@ -94,13 +120,13 @@ fun NoteDetailController(
             onResumeRecording = audioRecorderViewModel::onResumeRecording
         )
 
-        val recognitionActions = RecognitionActions(
-            requestAudioPermission = speechRecognitionViewModel::requestAudioPermission,
-            initRecognizer = speechRecognitionViewModel::initRecognizer,
-            finishRecognizer = speechRecognitionViewModel::finishRecognizer,
-            startRecognizer = speechRecognitionViewModel::startRecognizer,
-            stopRecognition = speechRecognitionViewModel::stopRecognizer,
-            summarize =  speechRecognitionViewModel::summarize
+        val transcriptionActions = TranscriptionActions(
+            requestAudioPermission = transcriptionViewModel::requestAudioPermission,
+            initRecognizer = transcriptionViewModel::initRecognizer,
+            finishRecognizer = transcriptionViewModel::finishRecognizer,
+            startRecognizer = transcriptionViewModel::startRecognizer,
+            stopRecognition = transcriptionViewModel::stopRecognizer,
+            summarize =  transcriptionViewModel::summarize
         )
 
         val noteActions = NoteActions(
@@ -109,6 +135,11 @@ fun NoteDetailController(
                 onNavigateBack()
             },
             onStarNote = editorViewModel::onToggleStar
+        )
+
+        val onShareActions = ShareActions(
+            shareText = platformViewModel::shareText,
+            shareRecording = platformViewModel::shareRecording
         )
 
         NoteDetailScreen(
@@ -121,9 +152,13 @@ fun NoteDetailController(
             onFormatActions = formatActions,
             onAudioActions = audioActions,
             onNoteActions = noteActions,
-            onRecognitionActions = recognitionActions,
-            transcriptionUiState = speechRecognitionState,
-            isRecordPaused = audioRecorderState.isRecordPaused
+            onTranscriptionActions = transcriptionActions,
+            transcriptionUiState = transcriptionState,
+            downloaderUiState = downloadingState,
+            downloaderEffect = modelDownloaderViewModel.effect,
+            onDownloaderActions = downloadActions,
+            isRecordPaused = audioRecorderState.isRecordPaused,
+            onShareActions = onShareActions
         )
     }
 }

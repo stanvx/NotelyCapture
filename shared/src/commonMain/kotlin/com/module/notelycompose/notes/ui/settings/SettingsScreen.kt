@@ -3,7 +3,19 @@ package com.module.notelycompose.notes.ui.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ModalBottomSheetState
@@ -11,8 +23,19 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,14 +43,47 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+
+val languageCodeMap = mapOf(
+    "auto" to "Auto detect",
+    "ar" to "Arabic",
+    "ca" to "Catalan",
+    "zh" to "Chinese",
+    "nl" to "Dutch",
+    "en" to "English",
+    "fi" to "Finnish",
+    "fr" to "French",
+    "gl" to "Galician",
+    "de" to "German",
+    "id" to "Indonesian",
+    "it" to "Italian",
+    "ja" to "Japanese",
+    "ko" to "Korean",
+    "ms" to "Malay",
+    "no" to "Norwegian",
+    "pl" to "Polish",
+    "pt" to "Portuguese",
+    "ru" to "Russian",
+    "es" to "Spanish",
+    "sv" to "Swedish",
+    "tl" to "Tagalog",
+    "th" to "Thai",
+    "tr" to "Turkish",
+    "uk" to "Ukrainian",
+    "vi" to "Vietnamese",
+)
 
 @Composable
 fun SettingsScreen(
     onDismiss: () -> Unit,
-    bottomSheetState: ModalBottomSheetState
+    bottomSheetState: ModalBottomSheetState,
+    selectedTheme: Theme,
+    selectedLanguage: String,
+    onThemeSelected: (Theme) -> Unit,
+    onLanguageClicked: (Pair<String, String>) -> Unit
 ) {
-    var selectedTheme by remember { mutableStateOf(Theme.SYSTEM) }
     var showLanguageScreen by remember { mutableStateOf(false) }
 
     LaunchedEffect(bottomSheetState) {
@@ -43,7 +99,9 @@ fun SettingsScreen(
         LanguageSelectionScreen(
             onBackPressed = {
                 showLanguageScreen = false
-            }
+            },
+            onLanguageClicked = onLanguageClicked,
+            languageCodeMap = languageCodeMap
         )
     } else {
         Column(
@@ -64,13 +122,15 @@ fun SettingsScreen(
                 item {
                     LanguageRegionSection(onShowLanguageScreen = { onShow ->
                         showLanguageScreen = onShow
-                    })
+                    },
+                        selectedLanguage = selectedLanguage
+                    )
                 }
 
                 item {
                     AppearanceSection(
                         selectedTheme = selectedTheme,
-                        onThemeSelected = { selectedTheme = it }
+                        onThemeSelected = onThemeSelected
                     )
                 }
             }
@@ -124,7 +184,8 @@ private fun SettingsHeader(
 
 @Composable
 private fun LanguageRegionSection(
-    onShowLanguageScreen: (Boolean) -> Unit
+    onShowLanguageScreen: (Boolean) -> Unit,
+    selectedLanguage: String
 ) {
     Column {
         Text(
@@ -135,13 +196,17 @@ private fun LanguageRegionSection(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        TranscriptionLanguageItem(onShowLanguageScreen = onShowLanguageScreen)
+        TranscriptionLanguageItem(
+            onShowLanguageScreen = onShowLanguageScreen,
+            selectedLanguage = selectedLanguage
+        )
     }
 }
 
 @Composable
 fun TranscriptionLanguageItem(
-    onShowLanguageScreen: (Boolean) -> Unit
+    onShowLanguageScreen: (Boolean) -> Unit,
+    selectedLanguage: String
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -196,7 +261,7 @@ fun TranscriptionLanguageItem(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "EN",
+                            text = selectedLanguage.uppercase().take(2),
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -204,7 +269,7 @@ fun TranscriptionLanguageItem(
                     }
 
                     Text(
-                        text = "English",
+                        text = languageCodeMap[selectedLanguage] ?:"auto",
                         fontSize = 16.sp,
                         color = LocalCustomColors.current.bodyContentColor,
                         modifier = Modifier.padding(start = 12.dp)
@@ -324,7 +389,7 @@ private fun ThemeOption(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -403,8 +468,3 @@ private fun ThemePreview(theme: Theme) {
     }
 }
 
-enum class Theme(val displayName: String) {
-    LIGHT("Light"),
-    DARK("Dark"),
-    SYSTEM("System")
-}

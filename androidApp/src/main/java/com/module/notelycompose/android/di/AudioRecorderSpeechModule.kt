@@ -1,10 +1,12 @@
 package com.module.notelycompose.android.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.activity.result.ActivityResultLauncher
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.expect.AudioRecorder
-import com.module.notelycompose.audio.ui.expect.SpeechRecognizer
+import com.module.notelycompose.audio.ui.expect.Downloader
+import com.module.notelycompose.audio.ui.expect.Transcriber
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,6 +18,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AudioRecorderSpeechModule {
+
+
 
     @Singleton
     class PermissionLauncherHolder @Inject constructor() {
@@ -65,12 +69,12 @@ object AudioRecorderSpeechModule {
 
 
     @Singleton
-    class SpeechRecognizerFactory @Inject constructor(
+    class TranscriperFactory @Inject constructor(
         @ApplicationContext private val context: Context,
         private val permissionLauncherHolder: PermissionLauncherHolder
     ) {
-        fun create(): SpeechRecognizer {
-            return SpeechRecognizer(
+        fun create(): Transcriber {
+            return Transcriber(
                 context = context,
                 permissionLauncher = permissionLauncherHolder.permissionLauncher
             )
@@ -80,15 +84,43 @@ object AudioRecorderSpeechModule {
 
     @Provides
     @Singleton
-    fun provideSpeechRecognizerFactory(
+    fun provideTranscriperFactory(
         @ApplicationContext context: Context,
         permissionLauncherHolder: PermissionLauncherHolder
-    ): SpeechRecognizerFactory {
-        return SpeechRecognizerFactory(context, permissionLauncherHolder)
+    ): TranscriperFactory {
+        return TranscriperFactory(context, permissionLauncherHolder)
     }
 
     @Provides
-    fun provideSpeechRecognizer(factory: SpeechRecognizerFactory): SpeechRecognizer {
+    fun provideTranscriper(factory: TranscriperFactory): Transcriber {
+        return factory.create()
+    }
+
+    @Singleton
+    class DownloaderFactory @Inject constructor(
+        @ApplicationContext private val context: Context,
+        private val prefs:SharedPreferences
+    ) {
+        fun create(): Downloader {
+            return Downloader(
+                mainContext = context,
+                prefs = prefs
+            )
+        }
+    }
+
+
+    @Provides
+    @Singleton
+    fun downloaderFactory(
+        @ApplicationContext context: Context,
+        prefs: SharedPreferences
+    ): DownloaderFactory {
+        return DownloaderFactory(context, prefs)
+    }
+
+    @Provides
+    fun provideDownloader(factory: DownloaderFactory): Downloader {
         return factory.create()
     }
 }

@@ -1,10 +1,12 @@
 package com.module.notelycompose.notes.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,10 +14,12 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.getPlatform
@@ -29,23 +33,17 @@ data class Language(
 
 @Composable
 fun LanguageSelectionScreen(
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    onLanguageClicked: (Pair<String, String>) -> Unit,
+    languageCodeMap: Map<String, String>
 ) {
     var searchText by remember { mutableStateOf("") }
-
-    val languages = listOf(
-        Language("English"),
-        Language("English (Canada)"),
-        Language("English (UK)"),
-        Language("English (Australia)"),
-        Language("English (America)")
-    )
-
-    val languages2 = listOf(
-        Language("French"),
-        Language("French (Canada)"),
-        Language("French (Burkina Faso)")
-    )
+    val filteredLanguages by derivedStateOf {
+        languageCodeMap.filter { (language, code) ->
+            language.contains(searchText, ignoreCase = true) ||
+                    code.contains(searchText, ignoreCase = true)
+        }
+    }
 
     if (getPlatform().isAndroid) {
         AndroidNoteTopBar(
@@ -64,7 +62,6 @@ fun LanguageSelectionScreen(
             .background(LocalCustomColors.current.bodyBackgroundColor)
             .padding(16.dp)
     ) {
-
         // Title
         Text(
             text = "Select Language",
@@ -129,7 +126,6 @@ fun LanguageSelectionScreen(
         )
 
         // Language List
-
         Text(
             text = "SUPPORTED LANGUAGES",
             color = LocalCustomColors.current.languageListHeaderColor,
@@ -140,104 +136,59 @@ fun LanguageSelectionScreen(
                 .padding(vertical = 8.dp, horizontal = 4.dp)
         )
 
-        // start
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(12.dp))
         ) {
-            items(languages) { language ->
-                // Check if this is the first or last language item
-                val isFirst = language == languages.first()
-                val isLast = language == languages.last()
-
-                val shape = when {
-                    isFirst && isLast -> RoundedCornerShape(12.dp)
-                    isFirst -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                    isLast -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                    else -> RoundedCornerShape(0.dp)
-                }
-
-                Surface(
+            if (filteredLanguages.isEmpty()) {
+                Text(
+                    text = "No languages found",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(shape)
-                        .clickable { /* Handle language selection */ },
-                    color = LocalCustomColors.current.languageListBackgroundColor,
-                    shape = shape
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                    color = LocalCustomColors.current.languageListTextColor
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = language.name,
-                            color = LocalCustomColors.current.languageListTextColor,
-                            fontSize = 16.sp,
+                    itemsIndexed(filteredLanguages.entries.toList()) { index, languageEntry ->
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
-                        )
-
-                        // Add separator line between items (except for the last item)
-                        if (!isLast) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(0.5.dp)
-                                    .background(LocalCustomColors.current.languageListDividerColor.copy(alpha = 0.3f))
-                                    .padding(horizontal = 16.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // end
-
-        Spacer(modifier = Modifier.padding(top = 16.dp))
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            items(languages2) { language ->
-                // Check if this is the first or last language item
-                val isFirst = language == languages2.first()
-                val isLast = language == languages2.last()
-
-                val shape = when {
-                    isFirst && isLast -> RoundedCornerShape(12.dp)
-                    isFirst -> RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                    isLast -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                    else -> RoundedCornerShape(0.dp)
-                }
-
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(shape)
-                        .clickable { /* Handle language selection */ },
-                    color = LocalCustomColors.current.languageListBackgroundColor,
-                    shape = shape
-                ) {
-                    Column {
-                        Text(
-                            text = language.name,
-                            color = LocalCustomColors.current.languageListTextColor,
-                            fontSize = 16.sp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        )
-
-                        // Add separator line between items (except for the last item)
-                        if (!isLast) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(0.5.dp)
-                                    .background(LocalCustomColors.current.languageListDividerColor.copy(alpha = 0.3f))
-                                    .padding(horizontal = 16.dp)
-                            )
+                                .clickable {
+                                    onLanguageClicked(languageEntry.toPair())
+                                    onBackPressed()
+                                },
+                            color = LocalCustomColors.current.languageListBackgroundColor,
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = languageEntry.value,
+                                        color = LocalCustomColors.current.languageListTextColor,
+                                        fontSize = 16.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                if (index < filteredLanguages.size - 1) {
+                                    Divider(
+                                        modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                                        thickness = 1.dp,
+                                        color = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }

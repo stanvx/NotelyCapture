@@ -14,7 +14,7 @@ android {
     compileSdk = 35
     defaultConfig {
         applicationId = "com.module.notelycompose.android"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 8
         versionName = "1.0.7"
@@ -81,8 +81,6 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
-
-    implementation(project(":models"))
     implementation(libs.kotlinx.datetime)
     implementation(libs.multiplatform.settings)
     implementation(libs.androidx.browser)

@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
 import androidx.compose.material.DismissDirection
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FabPosition
@@ -68,13 +70,19 @@ import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.audio.ui.recorder.RecordUiComponent
 import com.module.notelycompose.notes.ui.share.ShareDialog
+import com.module.notelycompose.modelDownloader.DownloaderDialog
+import com.module.notelycompose.modelDownloader.DownloaderEffect
+import com.module.notelycompose.modelDownloader.DownloaderUiState
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.transcription.TranscriptionDialog
 import com.module.notelycompose.transcription.TranscriptionUiState
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
+import notelycompose.shared.generated.resources.confirmation_cancel
+import notelycompose.shared.generated.resources.download_dialog_error
 import notelycompose.shared.generated.resources.ic_transcription
 import notelycompose.shared.generated.resources.note_detail_recorder
 import notelycompose.shared.generated.resources.transcription_icon
@@ -87,24 +95,49 @@ fun NoteDetailScreen(
     editorState: EditorUiState,
     audioPlayerUiState: AudioPlayerUiState,
     transcriptionUiState: TranscriptionUiState,
+    downloaderUiState: DownloaderUiState,
+    downloaderEffect: SharedFlow<DownloaderEffect>,
     recordCounterString: String,
     onNavigateBack: () -> Unit,
     onUpdateContent: (newContent: TextFieldValue) -> Unit,
     onFormatActions: NoteFormatActions,
     onAudioActions: NoteAudioActions,
-    onRecognitionActions: RecognitionActions,
+    onTranscriptionActions: TranscriptionActions,
+    onDownloaderActions: DownloaderActions,
     onNoteActions: NoteActions,
+    onShareActions: ShareActions,
     isRecordPaused: Boolean
 ) {
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     var showRecordDialog by remember { mutableStateOf(false) }
     var showTranscriptionDialog by remember { mutableStateOf(false) }
+    var showDownloadDialog by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
    // Setup when dialog appears
+
+    LaunchedEffect(Unit) {
+        downloaderEffect.collect {
+            when (it) {
+                is DownloaderEffect.DownloadEffect -> showDownloadDialog = true
+                is DownloaderEffect.ErrorEffect -> {
+                    showDownloadDialog = false
+                    showErrorDialog = true
+                }
+
+                is DownloaderEffect.ModelsAreReady -> {
+                    showDownloadDialog = false
+                    showTranscriptionDialog = true
+                }
+            }
+        }
+    }
+
+// Setup when dialog appears
     DisposableEffect(Unit) {
         val job = coroutineScope.launch {
             onAudioActions.setupRecorder()
@@ -128,6 +161,7 @@ fun NoteDetailScreen(
         },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if(editorState.recording.isRecordingExist) {
                     FloatingActionButton(
                         modifier = Modifier.border(
                             width = 1.dp,
@@ -135,7 +169,7 @@ fun NoteDetailScreen(
                             shape = CircleShape
                         ),
                         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { showTranscriptionDialog = true }
+                        onClick = { onDownloaderActions.checkModelAvailability() }
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_transcription),
@@ -143,6 +177,7 @@ fun NoteDetailScreen(
                             tint = LocalCustomColors.current.bodyContentColor
                         )
                     }
+                }
 
                 FloatingActionButton(
                     modifier = Modifier.border(
@@ -215,14 +250,18 @@ fun NoteDetailScreen(
         TranscriptionDialog(
             modifier = Modifier.fillMaxSize(),
             transcriptionUiState,
-            onAskingForAudioPermission = { onRecognitionActions.requestAudioPermission() },
-            onRecognitionInitialized = { onRecognitionActions.initRecognizer() },
-            onRecognitionFinished = { onRecognitionActions.finishRecognizer() },
-            onRecognitionStart = { onRecognitionActions.startRecognizer() },
-            onRecognitionStopped = {onRecognitionActions.stopRecognition()},
+            onAskingForAudioPermission = { onTranscriptionActions.requestAudioPermission() },
+            onRecognitionInitialized = { onTranscriptionActions.initRecognizer() },
+            onRecognitionFinished = { onTranscriptionActions.finishRecognizer() },
+            onRecognitionStart = {
+                onTranscriptionActions.startRecognizer(
+                    editorState.recording.recordingPath
+                )
+            },
+            onRecognitionStopped = { onTranscriptionActions.stopRecognition() },
             onDismiss = { showTranscriptionDialog = false },
             onSummarizeContent = {
-               onRecognitionActions.summarize()
+                onTranscriptionActions.summarize()
             },
             onAppendContent = {
                 onUpdateContent(TextFieldValue("${editorState.content.text}\n$it"))
@@ -231,14 +270,39 @@ fun NoteDetailScreen(
         )
     }
 
+    if (showDownloadDialog) {
+        LocalSoftwareKeyboardController.current?.hide()
+        DownloaderDialog(
+            modifier = Modifier.height(100.dp),
+            downloaderUiState,
+            onDismiss = { showDownloadDialog = false }
+        )
+    }
+
+    if (showErrorDialog) {
+        LocalSoftwareKeyboardController.current?.hide()
+        AlertDialog(
+            modifier = Modifier.height(100.dp),
+            title = { Text(stringResource(resource = Res.string.download_dialog_error)) },
+            onDismissRequest = { showErrorDialog = false },
+            buttons = {
+                Button(
+                    onClick = {
+                        showErrorDialog = false
+                    },
+                ) { Text(stringResource(resource = Res.string.confirmation_cancel)) }
+            }
+        )
+    }
+
     if (showShareDialog) {
         ShareDialog(
             onShareAudioRecording = {
-                // onShareAudioRecording()
+                onShareActions.shareRecording(editorState.recording.recordingPath)
                 showShareDialog = false
             },
             onShareTexts = {
-                // onShareTexts()
+                onShareActions.shareText(editorState.content.text)
                 showShareDialog = false
             },
             onDismiss = { showShareDialog = false }
@@ -431,13 +495,22 @@ data class NoteAudioActions(
     val onTogglePlayPause: () -> Unit
 )
 
-data class RecognitionActions(
+data class TranscriptionActions(
     val requestAudioPermission: () -> Unit,
     val initRecognizer: () -> Unit,
     val finishRecognizer: () -> Unit,
-    val startRecognizer: () -> Unit,
+    val startRecognizer: (String) -> Unit,
     val stopRecognition: () -> Unit,
     val summarize: () -> Unit
+)
+
+data class ShareActions(
+    val shareText: (String) -> Unit,
+    val shareRecording: (String) -> Unit
+)
+
+data class DownloaderActions(
+    val checkModelAvailability: () -> Unit
 )
 
 data class NoteActions(

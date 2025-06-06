@@ -1,6 +1,7 @@
 package com.module.notelycompose
 
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.window.ComposeUIViewController
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
@@ -29,9 +30,13 @@ fun NoteListController(
         }
         val platformViewmodel = remember {
             IOSPlatformViewModel(
-                platformInfo = appModule.platformInfo
+                platformInfo = appModule.platformInfo,
+                platformUtils = appModule.platformUtils
             )
         }
+        val platformState by platformViewmodel.state.collectAsState()
+
+
         val state = viewmodel.state.collectAsState()
         val notes = viewmodel.onGetUiState(state.value)
 
@@ -69,6 +74,10 @@ fun NoteListController(
                     selectedTabTitle = state.value.selectedTabTitle,
                     appVersion = platformViewmodel.state.value.appVersion,
                     showEmptyContent = state.value.showEmptyContent,
+                    selectedTheme = platformState.selectedTheme,
+                    selectedLanguage = platformState.selectedLanguage,
+                    onLanguageClicked = {platformViewmodel.setDefaultTranscriptionLanguage(it.first)},
+                    onThemeSelected = platformViewmodel::changeTheme,
                     onOpenBrowser = {}
                 )
             }
