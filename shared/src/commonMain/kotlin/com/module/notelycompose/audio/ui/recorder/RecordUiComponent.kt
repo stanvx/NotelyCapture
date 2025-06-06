@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.IcRecorder
@@ -66,8 +67,6 @@ import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.recording_ui_microphone
 import notelycompose.shared.generated.resources.recording_ui_tap_start_record
 import notelycompose.shared.generated.resources.recording_ui_tap_stop_record
-import notelycompose.shared.generated.resources.recording_ui_loading
-import notelycompose.shared.generated.resources.recording_ui_loading_rotation
 import notelycompose.shared.generated.resources.recording_ui_checkmark
 import notelycompose.shared.generated.resources.top_bar_back
 import notelycompose.shared.generated.resources.transcription_icon
@@ -131,6 +130,10 @@ fun RecordUiComponent(
             }
 
         }
+    }
+
+    HandlePlatformBackNavigation(enabled = true) {
+        onDismiss()
     }
 }
 
