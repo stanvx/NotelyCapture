@@ -30,4 +30,8 @@ class AndroidModelDownloaderViewModel @Inject constructor(
       viewModel.checkTranscriptionAvailability()
     }
 
+    fun startDownload(){
+        viewModel.startDownload()
+    }
+
 }

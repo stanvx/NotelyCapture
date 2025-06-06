@@ -11,5 +11,7 @@ data class DownloaderUiState(
 sealed class DownloaderEffect() {
      class DownloadEffect : DownloaderEffect()
     class ModelsAreReady:DownloaderEffect()
+    class AskForUserAcceptance:DownloaderEffect()
      class ErrorEffect : DownloaderEffect()
+    class CheckingEffect : DownloaderEffect()
 }

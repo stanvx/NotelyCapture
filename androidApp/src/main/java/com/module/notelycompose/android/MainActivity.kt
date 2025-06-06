@@ -224,7 +224,8 @@ fun NoteDetailWrapper(
     )
 
     val downloaderActions = DownloaderActions(
-        checkModelAvailability = downloaderViewModel::checkModelAvailability
+        checkModelAvailability = downloaderViewModel::checkModelAvailability,
+        startDownload = downloaderViewModel::startDownload
     )
 
     NoteDetailScreen(
