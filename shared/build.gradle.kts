@@ -68,9 +68,8 @@ kotlin {
 
                 implementation(libs.kotlinx.serialization.json.v160)
                 implementation(libs.multiplatform.settings)
-
                 implementation(project(":lib"))
-
+                implementation(libs.activity.compose)
             }
         }
         val iosX64Main by getting {

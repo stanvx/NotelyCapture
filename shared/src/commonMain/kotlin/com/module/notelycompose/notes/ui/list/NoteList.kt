@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteList(
     noteList: List<NoteUiModel>,

@@ -16,7 +16,8 @@ fun NoteListScreen(
     androidNoteListViewModel: AndroidNoteListViewModel,
     platformViewModel: AndroidPlatformViewModel,
     onFloatingActionButtonClicked: () -> Unit,
-    onNoteClicked: (Long) -> Unit
+    onNoteClicked: (Long) -> Unit,
+    onOpenBrowser: (String) -> Unit
 ) {
     val state by androidNoteListViewModel.state.collectAsState()
     val notes = androidNoteListViewModel.onGetUiState(state)
@@ -45,6 +46,7 @@ fun NoteListScreen(
         selectedTheme = platformState.selectedTheme,
         selectedLanguage = platformState.selectedLanguage,
         onThemeSelected = platformViewModel::changeTheme,
-        onLanguageClicked = {platformViewModel.setDefaultTranscriptionLanguage(it.first)}
+        onLanguageClicked = {platformViewModel.setDefaultTranscriptionLanguage(it.first)},
+        onOpenBrowser = onOpenBrowser
     )
 }

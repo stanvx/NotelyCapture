@@ -16,8 +16,8 @@ android {
         applicationId = "com.module.notelycompose.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
     }
     buildFeatures {
         compose = true
@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.kotlinx.datetime)
     implementation(libs.multiplatform.settings)
+    implementation(libs.androidx.browser)
 }
 
 java {
