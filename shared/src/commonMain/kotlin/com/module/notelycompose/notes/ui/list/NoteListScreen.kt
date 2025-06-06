@@ -18,12 +18,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,6 +38,7 @@ import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.note_list_add_note
@@ -55,12 +58,14 @@ fun SharedNoteListScreen(
     selectedTheme: Theme,
     selectedLanguage: String,
     onThemeSelected: (Theme) -> Unit,
-    onLanguageClicked: (Pair<String, String>) -> Unit
+    onLanguageClicked: (Pair<String, String>) -> Unit,
+    onOpenBrowser: (String) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isSettingsTapped by rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     // State to control bottom sheet
     val bottomSheetState = rememberModalBottomSheetState(
@@ -85,9 +90,6 @@ fun SharedNoteListScreen(
         sheetShape = RectangleShape,
         sheetContent = {
             if(isSettingsTapped) {
-//                SettingsBottomSheet(
-//                    onDismiss = dismissBottomSheet
-//                )
                 SettingsScreen(
                     onDismiss = dismissBottomSheet,
                     bottomSheetState = bottomSheetState,
@@ -101,7 +103,8 @@ fun SharedNoteListScreen(
                     onDismiss = dismissBottomSheet,
                     onNavigateToWebPage = navigateToWebPage,
                     bottomSheetState = bottomSheetState,
-                    appVersion = appVersion
+                    appVersion = appVersion,
+                    onOpenBrowser = onOpenBrowser
                 )
             }
         },
@@ -202,5 +205,16 @@ fun SharedNoteListScreen(
                 if(showEmptyContent) EmptyNoteUi()
             }
         }
+    }
+
+    // handle custom back button
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        dismissBottomSheet()
+    }
+    LaunchedEffect(bottomSheetState) {
+        snapshotFlow { bottomSheetState.currentValue }
+            .collect { sheetValue ->
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
+            }
     }
 }

@@ -71,22 +71,16 @@ fun OnboardingWalkthrough(
             textColor = Color(0xFFCA7F58),
             androidResources = painterResource(Res.drawable.onboarding_android_three),
             iOSResources = painterResource(Res.drawable.onboarding_ios_three)
+        ),
+        OnboardingPage(
+            title = "Supports\nOver 50 languages",
+            description = "Create and transcribe notes in your preferred language.",
+            backgroundColor = Color(0xFFFFFAD0),
+            textColor = Color(0xFFCA7F58),
+            androidResources = painterResource(Res.drawable.onboarding_ios_four),
+            iOSResources = painterResource(Res.drawable.onboarding_ios_four)
         )
     )
-
-    // Add 4th screen only for iOS
-    if(!getPlatform().isAndroid) {
-        pages.add(
-            OnboardingPage(
-                title = "Supports\nOver 50 languages",
-                description = "Create and transcribe notes in your preferred language.",
-                backgroundColor = Color(0xFFFFFAD0),
-                textColor = Color(0xFFCA7F58),
-                androidResources = painterResource(Res.drawable.onboarding_ios_four),
-                iOSResources = painterResource(Res.drawable.onboarding_ios_four)
-            )
-        )
-    }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val coroutineScope = rememberCoroutineScope()

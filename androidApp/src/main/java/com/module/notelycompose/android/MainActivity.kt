@@ -45,6 +45,7 @@ import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 import com.module.notelycompose.platform.presentation.PlatformViewModel
+import com.module.notelycompose.web.BrowserLauncher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var permissionLauncherHolder: AudioRecorderSpeechModule.PermissionLauncherHolder
     @Inject
-    lateinit var platformInfo: Platform
+    lateinit var browserLauncher: BrowserLauncher
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,21 +70,20 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NoteAppRoot()
-//                    val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
-//                    val onboardingState by viewmodel.state.collectAsState()
-//
-//                    when (onboardingState) {
-//                        is OnboardingState.Initial -> Unit
-//                        is OnboardingState.NotCompleted -> {
-//                            OnboardingWalkthrough(
-//                                onFinish = {
-//                                    viewmodel.onCompleteOnboarding()
-//                                }
-//                            )
-//                        }
-//                        is OnboardingState.Completed -> NoteAppRoot()
-//                    }
+                    val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
+                    val onboardingState by viewmodel.state.collectAsState()
+
+                    when (onboardingState) {
+                        is OnboardingState.Initial -> Unit
+                        is OnboardingState.NotCompleted -> {
+                            OnboardingWalkthrough(
+                                onFinish = {
+                                    viewmodel.onCompleteOnboarding()
+                                }
+                            )
+                        }
+                        is OnboardingState.Completed -> NoteAppRoot(onOpenBrowser = { browserLauncher.openUrl(it) })
+                    }
                 }
             }
         }
@@ -104,7 +104,9 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun NoteAppRoot() {
+fun NoteAppRoot(
+    onOpenBrowser: (String) -> Unit
+) {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
@@ -121,7 +123,8 @@ fun NoteAppRoot() {
                 },
                 onNoteClicked = {
                     navController.navigate(Routes.DETAIL + ROUTE_SEPARATOR + it)
-                }
+                },
+                onOpenBrowser = onOpenBrowser
             )
         }
 

@@ -26,6 +26,7 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.web.BrowserLauncher
 import com.squareup.sqldelight.db.SqlDriver
 import dagger.Module
 import dagger.Provides
@@ -207,5 +208,13 @@ object AppModule {
     @Singleton
     fun provideTextEditorHelper(): TextEditorHelper {
         return TextEditorHelper()
+    }
+
+    @Provides
+    @Singleton
+    fun provideBrowserLauncher(
+        @ApplicationContext context: Context
+    ): BrowserLauncher {
+        return BrowserLauncher(context)
     }
 }

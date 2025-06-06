@@ -45,7 +45,8 @@ fun InfoBottomSheet(
     onDismiss: () -> Unit,
     onNavigateToWebPage: (String, String) -> Unit,
     bottomSheetState: ModalBottomSheetState,
-    appVersion: String
+    appVersion: String,
+    onOpenBrowser: (String) -> Unit
 ) {
     var showWebView by remember { mutableStateOf(false) }
     var currentPageTitle by remember { mutableStateOf("") }
@@ -72,11 +73,15 @@ fun InfoBottomSheet(
     }
 
     if (showWebView) {
-        WebViewScreen(
-            title = currentPageTitle,
-            url = currentPageUrl,
-            onBackPressed = { showWebView = false }
-        )
+        if (getPlatform().isAndroid) {
+            onOpenBrowser(currentPageUrl)
+        } else {
+            WebViewScreen(
+                title = currentPageTitle,
+                url = currentPageUrl,
+                onBackPressed = { showWebView = false }
+            )
+        }
     } else {
         Column(
             modifier = Modifier
