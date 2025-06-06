@@ -22,6 +22,7 @@ import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcFaq
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.web.ui.WebViewScreen
@@ -50,6 +51,7 @@ fun InfoBottomSheet(
     var showWebView by remember { mutableStateOf(false) }
     var currentPageTitle by remember { mutableStateOf("") }
     var currentPageUrl by remember { mutableStateOf("") }
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     val faq  = stringResource(Res.string.faq)
     val about  = stringResource(Res.string.about)
@@ -68,6 +70,7 @@ fun InfoBottomSheet(
                 if (sheetValue == ModalBottomSheetValue.Hidden) {
                     showWebView = false
                 }
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
             }
     }
 
@@ -166,6 +169,10 @@ fun InfoBottomSheet(
                     .padding(bottom = 16.dp)
             )
         }
+    }
+
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        onDismiss()
     }
 }
 

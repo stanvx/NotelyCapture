@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 
 val languageCodeMap = mapOf(
     "auto" to "Auto detect",
@@ -85,6 +86,7 @@ fun SettingsScreen(
     onLanguageClicked: (Pair<String, String>) -> Unit
 ) {
     var showLanguageScreen by remember { mutableStateOf(false) }
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     LaunchedEffect(bottomSheetState) {
         snapshotFlow { bottomSheetState.currentValue }
@@ -92,6 +94,7 @@ fun SettingsScreen(
                 if (sheetValue == ModalBottomSheetValue.Hidden) {
                     showLanguageScreen = false
                 }
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
             }
     }
 
@@ -101,7 +104,8 @@ fun SettingsScreen(
                 showLanguageScreen = false
             },
             onLanguageClicked = onLanguageClicked,
-            languageCodeMap = languageCodeMap
+            languageCodeMap = languageCodeMap,
+            bottomSheetState = bottomSheetState
         )
     } else {
         Column(
@@ -135,6 +139,10 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        onDismiss()
     }
 }
 
