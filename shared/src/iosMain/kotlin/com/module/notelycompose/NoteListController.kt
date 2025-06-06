@@ -77,8 +77,7 @@ fun NoteListController(
                     selectedTheme = platformState.selectedTheme,
                     selectedLanguage = platformState.selectedLanguage,
                     onLanguageClicked = {platformViewmodel.setDefaultTranscriptionLanguage(it.first)},
-                    onThemeSelected = platformViewmodel::changeTheme,
-                    onOpenBrowser = {}
+                    onThemeSelected = platformViewmodel::changeTheme
                 )
             }
         }

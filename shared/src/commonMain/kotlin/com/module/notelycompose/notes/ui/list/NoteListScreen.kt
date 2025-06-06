@@ -58,8 +58,7 @@ fun SharedNoteListScreen(
     selectedTheme: Theme,
     selectedLanguage: String,
     onThemeSelected: (Theme) -> Unit,
-    onLanguageClicked: (Pair<String, String>) -> Unit,
-    onOpenBrowser: (String) -> Unit
+    onLanguageClicked: (Pair<String, String>) -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -103,8 +102,7 @@ fun SharedNoteListScreen(
                     onDismiss = dismissBottomSheet,
                     onNavigateToWebPage = navigateToWebPage,
                     bottomSheetState = bottomSheetState,
-                    appVersion = appVersion,
-                    onOpenBrowser = onOpenBrowser
+                    appVersion = appVersion
                 )
             }
         },

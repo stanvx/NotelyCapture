@@ -1,7 +1,6 @@
 package com.module.notelycompose.android
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -11,9 +10,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -22,7 +18,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.module.notelycompose.Platform
 import com.module.notelycompose.android.di.AudioRecorderSpeechModule
 import com.module.notelycompose.android.presentation.AndroidAudioPlayerViewModel
 import com.module.notelycompose.android.presentation.AndroidAudioRecorderViewModel
@@ -44,8 +39,6 @@ import com.module.notelycompose.notes.ui.detail.TranscriptionActions
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
-import com.module.notelycompose.platform.presentation.PlatformViewModel
-import com.module.notelycompose.web.BrowserLauncher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -57,8 +50,6 @@ private const val ROUTE_SEPARATOR = "/"
 class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var permissionLauncherHolder: AudioRecorderSpeechModule.PermissionLauncherHolder
-    @Inject
-    lateinit var browserLauncher: BrowserLauncher
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +73,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             )
                         }
-                        is OnboardingState.Completed -> NoteAppRoot(onOpenBrowser = { browserLauncher.openUrl(it) })
+                        is OnboardingState.Completed -> NoteAppRoot()
                     }
                 }
             }
@@ -104,9 +95,7 @@ class MainActivity : AppCompatActivity() {
 }
 
 @Composable
-fun NoteAppRoot(
-    onOpenBrowser: (String) -> Unit
-) {
+fun NoteAppRoot() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
@@ -123,8 +112,7 @@ fun NoteAppRoot(
                 },
                 onNoteClicked = {
                     navController.navigate(Routes.DETAIL + ROUTE_SEPARATOR + it)
-                },
-                onOpenBrowser = onOpenBrowser
+                }
             )
         }
 
