@@ -74,6 +74,7 @@ import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.DownloaderUiState
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.transcription.TranscriptionDialog
@@ -259,7 +260,10 @@ fun NoteDetailScreen(
                 )
             },
             onRecognitionStopped = { onTranscriptionActions.stopRecognition() },
-            onDismiss = { showTranscriptionDialog = false },
+            onDismiss = {
+                onTranscriptionActions.stopRecognition()
+                showTranscriptionDialog = false
+            },
             onSummarizeContent = {
                 onTranscriptionActions.summarize()
             },
