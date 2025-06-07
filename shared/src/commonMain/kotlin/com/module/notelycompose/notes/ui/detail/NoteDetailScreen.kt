@@ -247,7 +247,10 @@ fun NoteDetailScreen(
 
     if (showRecordDialog) {
         RecordUiComponent(
-            onDismiss = { showRecordDialog = false },
+            onDismiss = {
+                onAudioActions.onStopRecord
+                showRecordDialog = false
+            },
             onAfterRecord = {
                 showRecordDialog = false
                 onAudioActions.onAfterRecord()
