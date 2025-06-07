@@ -24,4 +24,8 @@ class IOSModelDownloaderViewModel (
             viewModel.checkTranscriptionAvailability()
         }
 
+    fun startDownload(){
+        viewModel.startDownload()
+    }
+
 }

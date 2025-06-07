@@ -69,10 +69,10 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.audio.ui.recorder.RecordUiComponent
-import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.DownloaderUiState
+import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcRecorder
@@ -111,12 +111,14 @@ fun NoteDetailScreen(
 ) {
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    var showLoadingDialog by remember { mutableStateOf(false) }
     var showRecordDialog by remember { mutableStateOf(false) }
     var showTranscriptionDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
    // Setup when dialog appears
@@ -124,15 +126,28 @@ fun NoteDetailScreen(
     LaunchedEffect(Unit) {
         downloaderEffect.collect {
             when (it) {
-                is DownloaderEffect.DownloadEffect -> showDownloadDialog = true
+                is DownloaderEffect.DownloadEffect -> {
+                    showDownloadDialog = true
+                    showDownloadQuestionDialog = false
+                    showLoadingDialog = false
+                }
                 is DownloaderEffect.ErrorEffect -> {
                     showDownloadDialog = false
                     showErrorDialog = true
+                    showLoadingDialog = false
                 }
-
                 is DownloaderEffect.ModelsAreReady -> {
                     showDownloadDialog = false
                     showTranscriptionDialog = true
+                    showLoadingDialog = false
+                }
+                is DownloaderEffect.AskForUserAcceptance -> {
+                    showDownloadQuestionDialog = true
+                    showLoadingDialog = false
+                }
+
+                is DownloaderEffect.CheckingEffect -> {
+                    showLoadingDialog = true
                 }
             }
         }
@@ -298,6 +313,18 @@ fun NoteDetailScreen(
             }
         )
     }
+    if (showDownloadQuestionDialog) {
+        LocalSoftwareKeyboardController.current?.hide()
+        DownloadModelDialog(
+            onDownload = {
+                onDownloaderActions.startDownload()
+                showDownloadQuestionDialog = false
+            },
+            onCancel = {
+                showDownloadQuestionDialog = false
+            }
+        )
+    }
 
     if (showShareDialog) {
         ShareDialog(
@@ -312,6 +339,12 @@ fun NoteDetailScreen(
             onDismiss = { showShareDialog = false }
         )
     }
+
+    if(showLoadingDialog){
+        PreparingLoadingDialog()
+    }
+
+
 }
 
 
@@ -514,7 +547,8 @@ data class ShareActions(
 )
 
 data class DownloaderActions(
-    val checkModelAvailability: () -> Unit
+    val checkModelAvailability: () -> Unit,
+    val startDownload: () -> Unit
 )
 
 data class NoteActions(
