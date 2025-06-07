@@ -42,5 +42,6 @@ data class CustomColors(
     val languageListDividerColor: Color,
     val languageSearchUnfocusedColor: Color,
     val shareDialogBackgroundColor: Color,
-    val shareDialogButtonColor: Color
+    val shareDialogButtonColor: Color,
+    val statusBarBackgroundColor: Color
 )

@@ -46,8 +46,11 @@ import javax.inject.Inject
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import com.module.notelycompose.notes.ui.list.InfoBottomSheet
+import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.expect.StatusBarManager
 
 private const val NOTE_ID_PARAM = "noteId"
 private const val DEFAULT_NOTE_ID = "0"
@@ -62,6 +65,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         installSplashScreen()
         initializeAudioRecorder()
+        val statusBarManager = StatusBarManager(this)
+
         setContent {
             MyApplicationTheme {
                 Surface(
@@ -72,12 +77,17 @@ class MainActivity : AppCompatActivity() {
                     val onboardingState by viewmodel.state.collectAsState()
                     val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
                     val platformState by platformViewModel.state.collectAsState()
+                    val statusBgColor = LocalCustomColors.current.statusBarBackgroundColor.value.toLong()
 
                     when (onboardingState) {
                         is OnboardingState.Initial -> Unit
                         is OnboardingState.NotCompleted -> {
+                            LaunchedEffect(Unit) {
+                                statusBarManager.setStatusBarColor(statusBgColor)
+                            }
                             OnboardingWalkthrough(
                                 onFinish = {
+                                    statusBarManager.restoreDefaultStatusBarColor()
                                     viewmodel.onCompleteOnboarding()
                                 },
                                 platformState = platformState
@@ -91,11 +101,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializeAudioRecorder() {
-        val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {isGranted->
-
-        }
+        val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {isGranted-> }
         permissionLauncherHolder.permissionLauncher = permissionLauncher
-
     }
 
     override fun onDestroy() {
