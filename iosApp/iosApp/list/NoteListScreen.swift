@@ -13,22 +13,28 @@ private var selectedTabTitle:String
     private var onNoteClickedFun:(Int) -> Void
     private var onFilterTabClickedFun:(String) -> Void
     private var onNoteDeleteClickedFun:(Int) -> Void
+    private var onInfoClickedFun:() -> Void
+    private var onSettingsClickedFun:() -> Void
 
     init(
         selectedTabTitle: String = "",
         onFloatingButtonClicked: @escaping () -> Void,
         onNoteClicked:@escaping (Int) -> Void,
         onFilterTabClicked:@escaping (String) -> Void,
-        onNoteDeleteClicked:@escaping (Int) -> Void
+        onNoteDeleteClicked:@escaping (Int) -> Void,
+        onInfoClicked:@escaping () -> Void,
+        onSettingsClicked:@escaping () -> Void
     ) {
     self.selectedTabTitle = selectedTabTitle
         self.onFloatingButtonClicked = onFloatingButtonClicked
         self.onNoteClickedFun = onNoteClicked
         self.onFilterTabClickedFun = onFilterTabClicked
         self.onNoteDeleteClickedFun = onNoteDeleteClicked
+        self.onInfoClickedFun = onInfoClicked
+        self.onSettingsClickedFun = onSettingsClicked
     }
   
-   func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
     
     }
     
@@ -42,8 +48,14 @@ private var selectedTabTitle:String
                 onNoteClickedFun(Int(it))
             },
             onFilterTabClicked: { it in
-                            onFilterTabClickedFun(String(it))
-                        }
+                onFilterTabClickedFun(String(it))
+            },
+            onInfoClicked: {
+                onInfoClickedFun()
+            },
+            onSettingsClicked: {
+                onSettingsClickedFun()
+            }
         )
     }
 }

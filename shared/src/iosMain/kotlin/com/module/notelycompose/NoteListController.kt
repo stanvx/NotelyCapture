@@ -14,7 +14,9 @@ fun NoteListController(
     selectedTabTitle :String,
     onFloatingActionButtonClicked: () -> Unit,
     onNoteClicked: (Long) -> Unit,
-    onFilterTabClicked:(String) -> Unit
+    onFilterTabClicked:(String) -> Unit,
+    onInfoClicked:() -> Unit,
+    onSettingsClicked:() -> Unit
 ) = ComposeUIViewController {
     MyApplicationTheme {
         val appModule = remember { AppModule() }
@@ -73,8 +75,8 @@ fun NoteListController(
                     },
                     selectedTabTitle = state.value.selectedTabTitle,
                     showEmptyContent = state.value.showEmptyContent,
-                    onInfoClicked = {},
-                    onSettingsClicked = {}
+                    onInfoClicked = onInfoClicked,
+                    onSettingsClicked = onSettingsClicked
                 )
             }
         }
