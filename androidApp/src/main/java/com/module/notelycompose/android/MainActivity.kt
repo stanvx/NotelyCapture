@@ -248,7 +248,7 @@ fun NoteDetailWrapper(
         .let { audioRecorderViewModel.onGetUiState(it) }
 
     val transcriptionState = transcriptionViewModel.state.collectAsState().value
-
+    val platformState = platformViewModel.state.collectAsState().value
 
     val downloaderState = downloaderViewModel.state.collectAsState().value
     val downloaderEffect = downloaderViewModel.effect
@@ -326,6 +326,7 @@ fun NoteDetailWrapper(
         downloaderUiState = downloaderState,
         downloaderEffect = downloaderEffect,
         onDownloaderActions = downloaderActions,
-        onShareActions = shareActions
+        onShareActions = shareActions,
+        selectedLanguage = platformState.selectedLanguage
     )
 }

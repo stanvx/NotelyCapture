@@ -107,7 +107,8 @@ fun NoteDetailScreen(
     onDownloaderActions: DownloaderActions,
     onNoteActions: NoteActions,
     onShareActions: ShareActions,
-    isRecordPaused: Boolean
+    isRecordPaused: Boolean,
+    selectedLanguage: String
 ) {
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -288,7 +289,8 @@ fun NoteDetailScreen(
             onAppendContent = {
                 onUpdateContent(TextFieldValue("${editorState.content.text}\n$it"))
                 showTranscriptionDialog = false
-            }
+            },
+            selectedLanguage = selectedLanguage
         )
     }
 

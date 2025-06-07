@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.recorder.recordingUiComponentBackButton
 import com.module.notelycompose.getPlatform
+import com.module.notelycompose.notes.ui.settings.languageCodeMap
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcChevronLeft
@@ -64,8 +65,10 @@ fun TranscriptionDialog(
     onRecognitionStopped:()->Unit,
     onAppendContent:(String)->Unit,
     onSummarizeContent:()->Unit,
-    onDismiss:()->Unit
+    onDismiss:()->Unit,
+    selectedLanguage: String
 ) {
+    val transcriptLanguage = languageCodeMap[selectedLanguage] ?: "en"
 
     val scrollState = rememberScrollState()
     LaunchedEffect(transcriptionUiState.originalText) {
@@ -100,6 +103,14 @@ fun TranscriptionDialog(
                         }
                     )
                 }
+                Box(modifier = Modifier.align(Alignment.Start)
+                    .padding(start = 4.dp, bottom = 12.dp, top = 4.dp)) {
+                    Text(
+                        text = "Transcription Language: $transcriptLanguage",
+                        color = LocalCustomColors.current.bodyContentColor,
+                        modifier = Modifier.align(Alignment.Center).padding(4.dp)
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -125,24 +136,6 @@ fun TranscriptionDialog(
                 }else if(transcriptionUiState.progress in 1..99){
                    SmoothLinearProgressBar((transcriptionUiState.progress / 100f))
                 }
-//                FloatingActionButton(
-//                    modifier = Modifier.padding(vertical = 8.dp),
-//                    shape = CircleShape,
-//                    onClick = {
-//                        if (!transcriptionUiState.isListening) {
-//                            onRecognitionStart()
-//                        } else {
-//                            onRecognitionStopped()
-//                        }
-//                    },
-//                    backgroundColor = if (transcriptionUiState.isListening) Color.Red else Color.Green
-//                ) {
-//                    Icon(
-//                        imageVector = Images.Icons.IcRecorder,
-//                        contentDescription = stringResource(Res.string.note_detail_recorder),
-//                        tint = LocalCustomColors.current.bodyContentColor
-//                    )
-//                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

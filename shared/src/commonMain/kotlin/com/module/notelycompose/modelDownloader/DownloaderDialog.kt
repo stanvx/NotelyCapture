@@ -79,8 +79,9 @@ fun DownloaderDialog(
                     horizontalAlignment = Alignment.Start,
 
                     ) {
+                    // Hide file name: ${downloaderUiState.fileName}
                     Text(
-                        "Downloading Transcription model ${downloaderUiState.fileName}",
+                        "Downloading Transcription model",
                         color = LocalCustomColors.current.bodyContentColor
                     )
                     LinearProgressIndicator(

@@ -73,6 +73,7 @@ fun NoteDetailController(
         val downloadingState by modelDownloaderViewModel.state.collectAsState()
         val audioRecorderPresentationState by audioRecorderViewModel.state.collectAsState()
         val audioRecorderState = audioRecorderViewModel.onGetUiState(audioRecorderPresentationState)
+        val platformState = platformViewModel.state.collectAsState().value
 
         val appModule = AppModule()
         val editorViewModel = remember {
@@ -159,7 +160,8 @@ fun NoteDetailController(
             downloaderEffect = modelDownloaderViewModel.effect,
             onDownloaderActions = downloadActions,
             isRecordPaused = audioRecorderState.isRecordPaused,
-            onShareActions = onShareActions
+            onShareActions = onShareActions,
+            selectedLanguage = platformState.selectedLanguage
         )
     }
 }
