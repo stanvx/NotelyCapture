@@ -69,7 +69,8 @@ struct AppView: View {
                 }
 
             }
-        }.navigationViewStyle(.stack)
+        }
+        .navigationViewStyle(.stack)
     }
 }
 

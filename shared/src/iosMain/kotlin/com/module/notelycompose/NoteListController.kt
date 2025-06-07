@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.window.ComposeUIViewController
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
 import com.module.notelycompose.notes.ui.list.SharedNoteListScreen
+import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
@@ -16,7 +17,9 @@ fun NoteListController(
     onNoteClicked: (Long) -> Unit,
     onFilterTabClicked:(String) -> Unit,
     onInfoClicked:() -> Unit,
-    onSettingsClicked:() -> Unit
+    onSettingsClicked:() -> Unit,
+    onStartOnboarding: () -> Unit,
+    onCompleteOnboarding: () -> Unit
 ) = ComposeUIViewController {
     MyApplicationTheme {
         val appModule = remember { AppModule() }
@@ -51,8 +54,10 @@ fun NoteListController(
         when (onboardingState.value) {
             is OnboardingState.Initial -> Unit
             is OnboardingState.NotCompleted -> {
+                onStartOnboarding()
                 OnboardingWalkthrough(
                     onFinish = {
+                        onCompleteOnboarding()
                         onboardingViewmodel.onCompleteOnboarding()
                     },
                     platformState = platformState

@@ -8,13 +8,14 @@ import shared
 import SwiftUI
 
 struct NoteListScreen: UIViewControllerRepresentable {
-private var selectedTabTitle:String
+    private var selectedTabTitle:String
     private var onFloatingButtonClicked: () -> Void
     private var onNoteClickedFun:(Int) -> Void
     private var onFilterTabClickedFun:(String) -> Void
     private var onNoteDeleteClickedFun:(Int) -> Void
     private var onInfoClickedFun:() -> Void
     private var onSettingsClickedFun:() -> Void
+    private let statusBarUiColor: UIColor = UIColor(hex: 0xFFFAD0) // statusBarBackgroundColor
 
     init(
         selectedTabTitle: String = "",
@@ -39,7 +40,8 @@ private var selectedTabTitle:String
     }
     
     func makeUIViewController(context: Context) -> some UIViewController {
-        NoteListControllerKt.NoteListController(
+        
+        let controller = NoteListControllerKt.NoteListController(
         selectedTabTitle:selectedTabTitle,
             onFloatingActionButtonClicked: {
                 onFloatingButtonClicked()
@@ -55,7 +57,26 @@ private var selectedTabTitle:String
             },
             onSettingsClicked: {
                 onSettingsClickedFun()
+            },
+            onStartOnboarding: {
+                setupStatusBar(color: statusBarUiColor)
+            },
+            onCompleteOnboarding: {
+                resetStatusBar()
             }
         )
+        
+        return controller
+    }
+    
+    func setupStatusBar(color: UIColor) {
+        let statusBarColor = color
+        let statusbarView = UIApplication.shared.statusBarUIView
+        statusbarView?.backgroundColor = statusBarColor
+    }
+    
+    func resetStatusBar() {
+        let statusbarView = UIApplication.shared.statusBarUIView
+        statusbarView?.backgroundColor = UIColor.systemBackground
     }
 }

@@ -18,6 +18,8 @@
 		7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* NoteListScreenView.swift */; };
 		97F1AB9A2DF472A900DE3B38 /* InfoScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1AB992DF472A400DE3B38 /* InfoScreenController.swift */; };
 		97F1AB9D2DF47ADE00DE3B38 /* SettingScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */; };
+		97F1ABA32DF4BF4F00DE3B38 /* StatusBarHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1ABA22DF4BF3300DE3B38 /* StatusBarHelpers.swift */; };
+		97F1ABA62DF4C65200DE3B38 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */; };
 		B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D592A559CCC00E98168 /* AppView.swift */; };
 		B60F1D602A559F7E00E98168 /* NoteDetailScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D5F2A559F7E00E98168 /* NoteDetailScreenController.swift */; };
 		B63AA3CB2A54627E00EBFFB4 /* NoteListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63AA3CA2A54627E00EBFFB4 /* NoteListScreen.swift */; };
@@ -50,6 +52,8 @@
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		97F1AB992DF472A400DE3B38 /* InfoScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoScreenController.swift; sourceTree = "<group>"; };
 		97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingScreenController.swift; sourceTree = "<group>"; };
+		97F1ABA22DF4BF3300DE3B38 /* StatusBarHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarHelpers.swift; sourceTree = "<group>"; };
+		97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		B60F1D592A559CCC00E98168 /* AppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppView.swift; sourceTree = "<group>"; };
 		B60F1D5F2A559F7E00E98168 /* NoteDetailScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailScreenController.swift; sourceTree = "<group>"; };
 		B63AA3CA2A54627E00EBFFB4 /* NoteListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteListScreen.swift; sourceTree = "<group>"; };
@@ -95,6 +99,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				97F1ABA42DF4C64300DE3B38 /* Extensions */,
 				97F1AB9B2DF47AD100DE3B38 /* Settings */,
 				97F1AB982DF4727E00DE3B38 /* Info */,
 				B60F1D5E2A559F6700E98168 /* detail */,
@@ -107,6 +112,7 @@
 				0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */,
 				0B5B75222DECB40400DB5582 /* Theming.swift */,
 				0B5B75242DECF52500DB5582 /* SceneDelegate.swift */,
+				97F1ABA22DF4BF3300DE3B38 /* StatusBarHelpers.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -133,6 +139,14 @@
 				97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		97F1ABA42DF4C64300DE3B38 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 		B60F1D5B2A559EB500E98168 /* list */ = {
@@ -249,11 +263,13 @@
 				0B5B75232DECB40400DB5582 /* Theming.swift in Sources */,
 				B63AA3CB2A54627E00EBFFB4 /* NoteListScreen.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				97F1ABA32DF4BF4F00DE3B38 /* StatusBarHelpers.swift in Sources */,
 				B60F1D602A559F7E00E98168 /* NoteDetailScreenController.swift in Sources */,
 				97F1AB9D2DF47ADE00DE3B38 /* SettingScreenController.swift in Sources */,
 				B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */,
 				7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */,
 				0B5B75252DECF52500DB5582 /* SceneDelegate.swift in Sources */,
+				97F1ABA62DF4C65200DE3B38 /* Extensions.swift in Sources */,
 				97F1AB9A2DF472A900DE3B38 /* InfoScreenController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
