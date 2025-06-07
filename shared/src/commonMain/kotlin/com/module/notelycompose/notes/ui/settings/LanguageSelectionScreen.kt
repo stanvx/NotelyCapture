@@ -197,7 +197,7 @@ fun LanguageSelectionScreen(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = "Selected",
                                                 tint = LocalCustomColors.current.languageListTextColor,
-                                                modifier = Modifier.size(28.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
