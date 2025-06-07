@@ -30,6 +30,15 @@ fun NoteListController(
                 notesFilterMapper = appModule.notesFilterMapper
             )
         }
+        val platformViewmodel = remember {
+            IOSPlatformViewModel(
+                platformInfo = appModule.platformInfo,
+                platformUtils = appModule.platformUtils
+            )
+        }
+        val platformState by platformViewmodel.state.collectAsState()
+
+
         val state = viewmodel.state.collectAsState()
         val notes = viewmodel.onGetUiState(state.value)
 
