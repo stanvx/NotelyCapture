@@ -93,7 +93,8 @@ fun NoteDetailController(
         val editorState = editorViewModel.onGetUiState(editorPresentationState)
 
         val downloadActions = DownloaderActions(
-            checkModelAvailability = modelDownloaderViewModel::checkModelAvailability
+            checkModelAvailability = modelDownloaderViewModel::checkModelAvailability,
+            startDownload = modelDownloaderViewModel::startDownload
         )
         val formatActions = NoteFormatActions(
             onToggleBold = editorViewModel::onToggleBold,

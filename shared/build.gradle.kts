@@ -109,7 +109,6 @@ kotlin {
     }
 
     val whisperFrameworkPath = file("${projectDir}/../iosApp/whisper.xcframework")
-    println("========================================== ${whisperFrameworkPath}")
     iosSimulatorArm64 {
         compilations.getByName("main") {
             val whisper by cinterops.creating {

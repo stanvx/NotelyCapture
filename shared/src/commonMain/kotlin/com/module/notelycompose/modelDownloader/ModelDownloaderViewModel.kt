@@ -27,19 +27,26 @@ class ModelDownloaderViewModel(
 
     fun checkTranscriptionAvailability() {
         viewModelScope.launch {
+            _effects.emit(DownloaderEffect.CheckingEffect())
             if (downloader.hasRunningDownload()) {
                 trackDownload()
             } else {
                 if (!transcriber.doesModelExists() || !transcriber.isValidModel() ) {
-                    downloader.startDownload(
-                        "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
-                        _uiState.value.fileName
-                    )
-                    trackDownload()
+                    _effects.emit(DownloaderEffect.AskForUserAcceptance())
                 } else {
                     _effects.emit(DownloaderEffect.ModelsAreReady())
                 }
             }
+        }
+    }
+
+    fun startDownload() {
+        viewModelScope.launch {
+            downloader.startDownload(
+                "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
+                _uiState.value.fileName
+            )
+            trackDownload()
         }
     }
 
