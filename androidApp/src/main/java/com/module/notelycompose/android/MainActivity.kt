@@ -48,6 +48,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.module.notelycompose.notes.ui.list.InfoBottomSheet
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.expect.StatusBarManager
@@ -77,7 +78,7 @@ class MainActivity : AppCompatActivity() {
                     val onboardingState by viewmodel.state.collectAsState()
                     val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
                     val platformState by platformViewModel.state.collectAsState()
-                    val statusBgColor = LocalCustomColors.current.statusBarBackgroundColor.value.toLong()
+                    val statusBgColor = LocalCustomColors.current.statusBarBackgroundColor.toArgb()
 
                     when (onboardingState) {
                         is OnboardingState.Initial -> Unit
