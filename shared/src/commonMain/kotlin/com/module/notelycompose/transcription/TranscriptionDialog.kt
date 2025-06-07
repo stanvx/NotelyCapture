@@ -127,6 +127,7 @@ fun TranscriptionDialog(
                         if(transcriptionUiState.viewOriginalText) transcriptionUiState.originalText else transcriptionUiState.summarizedText,
                         color = LocalCustomColors.current.bodyContentColor
                     )
+                    Spacer(modifier = Modifier.padding(8.dp))
                 }
                 if(transcriptionUiState.progress == 0){
                     LinearProgressIndicator(
