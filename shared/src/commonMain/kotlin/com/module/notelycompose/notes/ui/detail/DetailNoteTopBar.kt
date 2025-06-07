@@ -114,7 +114,7 @@ fun DetailIOSNoteTopBar(
             }
         },
         contentColor = LocalCustomColors.current.iOSBackButtonColor,
-        backgroundColor = LocalCustomColors.current.transparentColor,
+        backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
         modifier = Modifier.padding(start = 0.dp),
         elevation = 0.dp
     )
