@@ -72,12 +72,9 @@ fun NoteListController(
                         viewmodel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
                     },
                     selectedTabTitle = state.value.selectedTabTitle,
-                    appVersion = platformViewmodel.state.value.appVersion,
                     showEmptyContent = state.value.showEmptyContent,
-                    selectedTheme = platformState.selectedTheme,
-                    selectedLanguage = platformState.selectedLanguage,
-                    onLanguageClicked = {platformViewmodel.setDefaultTranscriptionLanguage(it.first)},
-                    onThemeSelected = platformViewmodel::changeTheme
+                    onInfoClicked = {},
+                    onSettingsClicked = {}
                 )
             }
         }

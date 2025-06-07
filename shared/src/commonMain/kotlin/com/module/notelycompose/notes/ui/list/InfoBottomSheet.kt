@@ -43,15 +43,13 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun InfoBottomSheet(
-    onDismiss: () -> Unit,
+    onNavigateBack: () -> Unit,
     onNavigateToWebPage: (String, String) -> Unit,
-    bottomSheetState: ModalBottomSheetState,
     appVersion: String
 ) {
     var showWebView by remember { mutableStateOf(false) }
     var currentPageTitle by remember { mutableStateOf("") }
     var currentPageUrl by remember { mutableStateOf("") }
-    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     val faq  = stringResource(Res.string.faq)
     val about  = stringResource(Res.string.about)
@@ -64,16 +62,6 @@ fun InfoBottomSheet(
     val privacyUrl  = infoBaseUrl + stringResource(Res.string.privacy_url)
     val appVersionStr = "Version $appVersion"
 
-    LaunchedEffect(bottomSheetState) {
-        snapshotFlow { bottomSheetState.currentValue }
-            .collect { sheetValue ->
-                if (sheetValue == ModalBottomSheetValue.Hidden) {
-                    showWebView = false
-                }
-                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
-            }
-    }
-
     if (showWebView) {
         WebViewScreen(
             title = currentPageTitle,
@@ -85,15 +73,16 @@ fun InfoBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 0.dp)
+                .background(LocalCustomColors.current.bodyBackgroundColor)
         ) {
             if (getPlatform().isAndroid) {
                 AndroidNoteTopBar(
                     title = "",
-                    onNavigateBack = onDismiss
+                    onNavigateBack = onNavigateBack
                 )
             } else {
                 IOSNoteTopBar(
-                    onNavigateBack = onDismiss
+                    onNavigateBack = onNavigateBack
                 )
             }
 
@@ -171,9 +160,10 @@ fun InfoBottomSheet(
         }
     }
 
-    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
-        onDismiss()
+    HandlePlatformBackNavigation(enabled = true) {
+        onNavigateBack()
     }
+
 }
 
 @Composable

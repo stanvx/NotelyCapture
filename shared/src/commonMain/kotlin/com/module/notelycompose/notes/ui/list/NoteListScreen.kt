@@ -31,9 +31,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
-import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
@@ -49,16 +47,14 @@ fun SharedNoteListScreen(
     onFilterTabItemClicked: (String) -> Unit,
     onSearchByKeyword: (String) -> Unit,
     selectedTabTitle: String,
-    appVersion: String,
     showEmptyContent: Boolean,
-    selectedTheme: Theme,
-    selectedLanguage: String,
-    onThemeSelected: (Theme) -> Unit,
-    onLanguageClicked: (Pair<String, String>) -> Unit
+    onInfoClicked: () -> Unit,
+    onSettingsClicked: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     var isSettingsTapped by rememberSaveable { mutableStateOf(false) }
+    var isInfoTapped by rememberSaveable { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // State to control bottom sheet
@@ -67,39 +63,15 @@ fun SharedNoteListScreen(
         skipHalfExpanded = true
     )
 
-    // Function to handle bottom sheet dismissal
-    val dismissBottomSheet: () -> Unit = {
-        coroutineScope.launch {
-            bottomSheetState.hide()
-        }
-    }
+    if(isInfoTapped) onInfoClicked()
+    if(isSettingsTapped) onSettingsClicked()
 
-    val navigateToWebPage: (String, String) -> Unit = { title, url ->
-        // This function handles navigation to web pages
-        // The actual navigation is handled inside the SettingsBottomSheet
-    }
-
+    // TODO: remove bottom sheet as its no longer needed
     ModalBottomSheetLayout(
         sheetState = bottomSheetState,
         sheetShape = RectangleShape,
         sheetContent = {
-            if(isSettingsTapped) {
-                SettingsScreen(
-                    onDismiss = dismissBottomSheet,
-                    bottomSheetState = bottomSheetState,
-                    selectedTheme = selectedTheme,
-                    selectedLanguage = selectedLanguage,
-                    onThemeSelected = onThemeSelected,
-                    onLanguageClicked = onLanguageClicked
-                )
-            } else {
-                InfoBottomSheet(
-                    onDismiss = dismissBottomSheet,
-                    onNavigateToWebPage = navigateToWebPage,
-                    bottomSheetState = bottomSheetState,
-                    appVersion = appVersion
-                )
-            }
+
         },
         sheetElevation = 8.dp,
         sheetBackgroundColor = LocalCustomColors.current.backgroundViewColor,
@@ -113,24 +85,12 @@ fun SharedNoteListScreen(
                 TopBar(
                     onMenuClicked = {
                         isSettingsTapped = false
-                        coroutineScope.launch {
-                            if (bottomSheetState.isVisible) {
-                                bottomSheetState.hide()
-                            } else {
-                                bottomSheetState.show()
-                            }
-                        }
+                        isInfoTapped = true
                         keyboardController?.hide()
                     },
                     onSettingsClicked = {
                         isSettingsTapped = true
-                        coroutineScope.launch {
-                            if (bottomSheetState.isVisible) {
-                                bottomSheetState.hide()
-                            } else {
-                                bottomSheetState.show()
-                            }
-                        }
+                        isInfoTapped = false
                         keyboardController?.hide()
                     }
                 )

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -36,11 +37,16 @@ import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.detail.NoteFormatActions
 import com.module.notelycompose.notes.ui.detail.ShareActions
 import com.module.notelycompose.notes.ui.detail.TranscriptionActions
+import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.systemBarsPadding
+import com.module.notelycompose.notes.ui.list.InfoBottomSheet
 
 private const val NOTE_ID_PARAM = "noteId"
 private const val DEFAULT_NOTE_ID = "0"
@@ -58,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             MyApplicationTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().systemBarsPadding(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
@@ -103,15 +109,23 @@ fun NoteAppRoot() {
     ) {
         composable(route = Routes.LIST) {
             val viewmodel = hiltViewModel<AndroidNoteListViewModel>()
-            val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
             NoteListScreen(
                 androidNoteListViewModel = viewmodel,
-                platformViewModel = platformViewModel,
                 onFloatingActionButtonClicked = {
                     navController.navigate(Routes.DETAIL + ROUTE_SEPARATOR + DEFAULT_NOTE_ID)
                 },
                 onNoteClicked = {
                     navController.navigate(Routes.DETAIL + ROUTE_SEPARATOR + it)
+                },
+                onInfoClicked = {
+                    navController.navigate(Routes.INFO) {
+                        launchSingleTop = true
+                    }
+                },
+                onSettingsClicked = {
+                    navController.navigate(Routes.SETTINGS) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -131,6 +145,68 @@ fun NoteAppRoot() {
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
+        composable(
+            route = Routes.SETTINGS,
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            }
+        ) {
+            val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
+            val platformState by platformViewModel.state.collectAsState()
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.navigate(Routes.LIST) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                },
+                selectedTheme = platformState.selectedTheme,
+                selectedLanguage = platformState.selectedLanguage,
+                onThemeSelected = platformViewModel::changeTheme,
+                onLanguageClicked = {platformViewModel.setDefaultTranscriptionLanguage(it.first)}
+            )
+        }
+
+        composable(
+            route = Routes.INFO,
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            exitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            }
+        ) {
+            val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
+            val platformState by platformViewModel.state.collectAsState()
+            val navigateToWebPage: (String, String) -> Unit = { title, url -> }
+            InfoBottomSheet(
+                onNavigateBack = {
+                    navController.navigate(Routes.LIST) {
+                        popUpTo(0)
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToWebPage = navigateToWebPage,
+                appVersion = platformState.appVersion
+            )
+        }
+
     }
 }
 

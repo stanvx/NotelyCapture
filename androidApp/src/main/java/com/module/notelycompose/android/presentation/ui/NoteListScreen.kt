@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.module.notelycompose.android.presentation.AndroidNoteListViewModel
-import com.module.notelycompose.android.presentation.AndroidPlatformViewModel
-import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.presentation.list.NoteListIntent.OnNoteDeleted
 import com.module.notelycompose.notes.presentation.list.NoteListIntent.OnFilterNote
 import com.module.notelycompose.notes.presentation.list.NoteListIntent.OnSearchNote
@@ -14,13 +12,13 @@ import com.module.notelycompose.notes.ui.list.SharedNoteListScreen
 @Composable
 fun NoteListScreen(
     androidNoteListViewModel: AndroidNoteListViewModel,
-    platformViewModel: AndroidPlatformViewModel,
     onFloatingActionButtonClicked: () -> Unit,
-    onNoteClicked: (Long) -> Unit
+    onNoteClicked: (Long) -> Unit,
+    onInfoClicked: () -> Unit,
+    onSettingsClicked: () -> Unit
 ) {
     val state by androidNoteListViewModel.state.collectAsState()
     val notes = androidNoteListViewModel.onGetUiState(state)
-    val platformState by platformViewModel.state.collectAsState()
 
     SharedNoteListScreen(
         notes = notes,
@@ -40,11 +38,8 @@ fun NoteListScreen(
             androidNoteListViewModel.onProcessIntent(OnSearchNote(keyword))
         },
         selectedTabTitle = state.selectedTabTitle,
-        appVersion = platformState.appVersion,
         showEmptyContent = state.showEmptyContent,
-        selectedTheme = platformState.selectedTheme,
-        selectedLanguage = platformState.selectedLanguage,
-        onThemeSelected = platformViewModel::changeTheme,
-        onLanguageClicked = {platformViewModel.setDefaultTranscriptionLanguage(it.first)}
+        onInfoClicked = onInfoClicked,
+        onSettingsClicked = onSettingsClicked
     )
 }

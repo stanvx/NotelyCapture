@@ -30,12 +30,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,25 +76,13 @@ val languageCodeMap = mapOf(
 
 @Composable
 fun SettingsScreen(
-    onDismiss: () -> Unit,
-    bottomSheetState: ModalBottomSheetState,
+    onNavigateBack: () -> Unit,
     selectedTheme: Theme,
     selectedLanguage: String,
     onThemeSelected: (Theme) -> Unit,
     onLanguageClicked: (Pair<String, String>) -> Unit
 ) {
     var showLanguageScreen by remember { mutableStateOf(false) }
-    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
-
-    LaunchedEffect(bottomSheetState) {
-        snapshotFlow { bottomSheetState.currentValue }
-            .collect { sheetValue ->
-                if (sheetValue == ModalBottomSheetValue.Hidden) {
-                    showLanguageScreen = false
-                }
-                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
-            }
-    }
 
     if (showLanguageScreen) {
         LanguageSelectionScreen(
@@ -104,8 +90,7 @@ fun SettingsScreen(
                 showLanguageScreen = false
             },
             onLanguageClicked = onLanguageClicked,
-            languageCodeMap = languageCodeMap,
-            bottomSheetState = bottomSheetState
+            languageCodeMap = languageCodeMap
         )
     } else {
         Column(
@@ -115,7 +100,7 @@ fun SettingsScreen(
         ) {
             // Header
             SettingsHeader(
-                onDismiss = onDismiss
+                onDismiss = onNavigateBack
             )
 
             LazyColumn(
@@ -141,9 +126,10 @@ fun SettingsScreen(
         }
     }
 
-    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
-        onDismiss()
+    HandlePlatformBackNavigation(enabled = true) {
+        onNavigateBack()
     }
+
 }
 
 @Composable
