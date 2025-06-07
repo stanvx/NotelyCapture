@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.os.Environment
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import kotlinx.coroutines.delay
@@ -26,7 +27,7 @@ actual class Downloader(
                 Environment.DIRECTORY_DOWNLOADS,
                 fileName
             )
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
 
         val downloadManager =
             mainContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -149,7 +150,12 @@ actual class Downloader(
             }
         }
 
-        mainContext.registerReceiver(receiver, filter)
+        ContextCompat.registerReceiver(
+            mainContext,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun getErrorTextFromReason(reason: Int) = when (reason) {
