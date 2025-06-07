@@ -166,7 +166,8 @@ fun LanguageSelectionScreen(
                         text = "No languages found",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(16.dp)
+                            .background(LocalCustomColors.current.languageListBackgroundColor),
                         textAlign = TextAlign.Center,
                         color = LocalCustomColors.current.languageListTextColor
                     )
