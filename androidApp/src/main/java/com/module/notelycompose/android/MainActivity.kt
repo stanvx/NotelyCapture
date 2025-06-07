@@ -46,6 +46,7 @@ import javax.inject.Inject
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.graphics.Color
 import com.module.notelycompose.notes.ui.list.InfoBottomSheet
 
 private const val NOTE_ID_PARAM = "noteId"
@@ -65,7 +66,7 @@ class MainActivity : AppCompatActivity() {
             MyApplicationTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize().systemBarsPadding(),
-                    color = MaterialTheme.colorScheme.background
+                    color = Color.Transparent
                 ) {
                     val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
                     val onboardingState by viewmodel.state.collectAsState()
