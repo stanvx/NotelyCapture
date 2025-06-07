@@ -86,8 +86,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providePlatform(appVersion: String): Platform {
-        return AndroidPlatform(appVersion)
+    fun providePlatform(appVersion: String, @ApplicationContext context: Context): Platform {
+        return AndroidPlatform(appVersion, context)
     }
 
     @Provides

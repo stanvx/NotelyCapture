@@ -27,7 +27,9 @@ class PlatformViewModel (
         _state.value = _state.value.copy(
             appVersion = platformInfo.appVersion,
             platformName = platformInfo.name,
-            isAndroid = platformInfo.isAndroid
+            isAndroid = platformInfo.isAndroid,
+            isTablet = platformInfo.isTablet,
+            isLandscape = platformInfo.isLandscape
         )
     }
 
@@ -62,5 +64,7 @@ data class PlatformUiState(
     val platformName: String = "",
     val isAndroid: Boolean = false,
     val selectedTheme: Theme,
-    val selectedLanguage: String // Auto detect the language
+    val selectedLanguage: String,
+    val isTablet: Boolean = false,
+    val isLandscape: Boolean = false
 )

@@ -15,7 +15,8 @@ fun NoteListScreen(
     onFloatingActionButtonClicked: () -> Unit,
     onNoteClicked: (Long) -> Unit,
     onInfoClicked: () -> Unit,
-    onSettingsClicked: () -> Unit
+    onSettingsClicked: () -> Unit,
+    isTablet: Boolean
 ) {
     val state by androidNoteListViewModel.state.collectAsState()
     val notes = androidNoteListViewModel.onGetUiState(state)
@@ -40,6 +41,7 @@ fun NoteListScreen(
         selectedTabTitle = state.selectedTabTitle,
         showEmptyContent = state.showEmptyContent,
         onInfoClicked = onInfoClicked,
-        onSettingsClicked = onSettingsClicked
+        onSettingsClicked = onSettingsClicked,
+        isTablet = isTablet
     )
 }

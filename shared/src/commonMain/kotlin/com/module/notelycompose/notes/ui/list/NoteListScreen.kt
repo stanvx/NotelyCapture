@@ -49,7 +49,8 @@ fun SharedNoteListScreen(
     selectedTabTitle: String,
     showEmptyContent: Boolean,
     onInfoClicked: () -> Unit,
-    onSettingsClicked: () -> Unit
+    onSettingsClicked: () -> Unit,
+    isTablet: Boolean
 ) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
@@ -155,7 +156,7 @@ fun SharedNoteListScreen(
                         onNoteDeleteClicked(it)
                     }
                 )
-                if(showEmptyContent) EmptyNoteUi()
+                if(showEmptyContent) EmptyNoteUi(isTablet)
             }
         }
     }

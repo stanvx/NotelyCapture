@@ -90,7 +90,8 @@ fun SettingsScreen(
                 showLanguageScreen = false
             },
             onLanguageClicked = onLanguageClicked,
-            languageCodeMap = languageCodeMap
+            languageCodeMap = languageCodeMap,
+            previousSelectedLanguage = selectedLanguage
         )
     } else {
         Column(

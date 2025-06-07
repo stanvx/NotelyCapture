@@ -14,9 +14,21 @@ import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.ic_empty_notes
 import org.jetbrains.compose.resources.painterResource
+import notelycompose.shared.generated.resources.empty_list_title
+import notelycompose.shared.generated.resources.empty_list_description
+import notelycompose.shared.generated.resources.empty_list_description_tablet
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun EmptyNoteUi() {
+fun EmptyNoteUi(
+    isTablet: Boolean
+) {
+    val emptyNoteDescStr = if(isTablet) {
+        stringResource(Res.string.empty_list_description_tablet)
+    } else {
+        stringResource(Res.string.empty_list_description)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,7 +47,7 @@ fun EmptyNoteUi() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No Notes Yet",
+            text = stringResource(Res.string.empty_list_title),
             fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
             color = LocalCustomColors.current.bodyContentColor,
@@ -45,7 +57,7 @@ fun EmptyNoteUi() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Start capturing your thoughts and voice recordings. Tap the plus + icon at the bottom right corner to create your first note.",
+            text = emptyNoteDescStr,
             fontSize = 16.sp,
             color = Color(0xFF6B6B6B),
             textAlign = TextAlign.Center,

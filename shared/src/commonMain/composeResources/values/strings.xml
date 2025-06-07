@@ -102,5 +102,10 @@
     <string name="support_url">support.html</string>
     <string name="privacy_url">privacyupdated.html</string>
 
+    <!-- Empty List String -->
+    <string name="empty_list_title">No Notes Yet</string>
+    <string name="empty_list_description">Start capturing your thoughts and voice recordings. Tap the plus + icon at the bottom right corner to create your first note.</string>
+    <string name="empty_list_description_tablet">Start capturing your thoughts and voice recordings.\nTap the plus + icon at the bottom right corner to create your first note.</string>
+
 
 </resources>

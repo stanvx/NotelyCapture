@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
+import com.module.notelycompose.platform.presentation.PlatformUiState
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.onboarding_ios_one
@@ -45,7 +47,8 @@ data class OnboardingPage(
 
 @Composable
 fun OnboardingWalkthrough(
-    onFinish: () -> Unit = {}
+    onFinish: () -> Unit = {},
+    platformState: PlatformUiState
 ) {
     val pages = mutableListOf(
         OnboardingPage(
@@ -126,7 +129,9 @@ fun OnboardingWalkthrough(
                 contentPadding = PaddingValues(0.dp)
             ) { page ->
                 OnboardingPageContent(
-                    page = pages[page]
+                    page = pages[page],
+                    isTablet = platformState.isTablet,
+                    isLandscape = platformState.isLandscape
                 )
             }
 
@@ -179,7 +184,9 @@ fun OnboardingWalkthrough(
 
 @Composable
 fun OnboardingPageContent(
-    page: OnboardingPage
+    page: OnboardingPage,
+    isTablet: Boolean,
+    isLandscape: Boolean
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -189,12 +196,16 @@ fun OnboardingPageContent(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        VoiceNotePageContent(page)
+        VoiceNotePageContent(page, isTablet, isLandscape)
     }
 }
 
 @Composable
-fun VoiceNotePageContent(page: OnboardingPage) {
+fun VoiceNotePageContent(
+    page: OnboardingPage,
+    isTablet: Boolean,
+    isLandscape: Boolean
+) {
 
     val resource = if(getPlatform().isAndroid) {
         page.androidResources
@@ -215,8 +226,11 @@ fun VoiceNotePageContent(page: OnboardingPage) {
         lineHeight = 32.sp
     )
 
-    // TODO: Check if tablet, modify for better spacing
-    // Spacer(modifier = Modifier.height(88.dp))
+    if(isTablet) {
+        if(!isLandscape) {
+            Spacer(modifier = Modifier.height(200.dp))
+        }
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

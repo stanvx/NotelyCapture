@@ -38,7 +38,6 @@ fun NoteListController(
         }
         val platformState by platformViewmodel.state.collectAsState()
 
-
         val state = viewmodel.state.collectAsState()
         val notes = viewmodel.onGetUiState(state.value)
 
@@ -55,7 +54,8 @@ fun NoteListController(
                 OnboardingWalkthrough(
                     onFinish = {
                         onboardingViewmodel.onCompleteOnboarding()
-                    }
+                    },
+                    platformState = platformState
                 )
             }
             is OnboardingState.Completed -> {
@@ -76,7 +76,8 @@ fun NoteListController(
                     selectedTabTitle = state.value.selectedTabTitle,
                     showEmptyContent = state.value.showEmptyContent,
                     onInfoClicked = onInfoClicked,
-                    onSettingsClicked = onSettingsClicked
+                    onSettingsClicked = onSettingsClicked,
+                    isTablet = platformState.isTablet
                 )
             }
         }

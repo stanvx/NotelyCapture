@@ -70,6 +70,8 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val viewmodel = hiltViewModel<AndroidOnboardingViewModel>()
                     val onboardingState by viewmodel.state.collectAsState()
+                    val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
+                    val platformState by platformViewModel.state.collectAsState()
 
                     when (onboardingState) {
                         is OnboardingState.Initial -> Unit
@@ -77,7 +79,8 @@ class MainActivity : AppCompatActivity() {
                             OnboardingWalkthrough(
                                 onFinish = {
                                     viewmodel.onCompleteOnboarding()
-                                }
+                                },
+                                platformState = platformState
                             )
                         }
                         is OnboardingState.Completed -> NoteAppRoot()
@@ -109,6 +112,8 @@ fun NoteAppRoot() {
         startDestination = Routes.LIST
     ) {
         composable(route = Routes.LIST) {
+            val platformViewModel = hiltViewModel<AndroidPlatformViewModel>()
+            val platformState by platformViewModel.state.collectAsState()
             val viewmodel = hiltViewModel<AndroidNoteListViewModel>()
             NoteListScreen(
                 androidNoteListViewModel = viewmodel,
@@ -127,7 +132,8 @@ fun NoteAppRoot() {
                     navController.navigate(Routes.SETTINGS) {
                         launchSingleTop = true
                     }
-                }
+                },
+                isTablet = platformState.isTablet
             )
         }
 

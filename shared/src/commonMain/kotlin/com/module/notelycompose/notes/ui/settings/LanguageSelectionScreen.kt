@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -38,7 +39,8 @@ data class Language(
 fun LanguageSelectionScreen(
     onBackPressed: () -> Unit,
     onLanguageClicked: (Pair<String, String>) -> Unit,
-    languageCodeMap: Map<String, String>
+    languageCodeMap: Map<String, String>,
+    previousSelectedLanguage: String
 ) {
     var searchText by remember { mutableStateOf("") }
     val filteredLanguages by derivedStateOf {
@@ -189,6 +191,15 @@ fun LanguageSelectionScreen(
                                             fontSize = 16.sp,
                                             modifier = Modifier.weight(1f)
                                         )
+
+                                        if(languageEntry.key == previousSelectedLanguage) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = LocalCustomColors.current.languageListTextColor,
+                                                modifier = Modifier.size(28.dp)
+                                            )
+                                        }
                                     }
                                     if (index < filteredLanguages.size - 1) {
                                         Divider(
