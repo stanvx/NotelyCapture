@@ -31,14 +31,14 @@ A completely free modern, cross-platform note-taking application with powerful W
 🎙️ **Advanced Speech-to-Text** - Convert speech to text with high accuracy  
 🌐 **Offline Capability** - Speech recognition works without an internet connection  
 🔄 **Seamless Integration** - Dictate directly into notes or transcribe audio recordings  
-🎧 **Audio Recording** - Record voice notes and play them back within the app
+🎧 **Audio Recording** - Record voice notes and play them back within the app  
 🎧 **Unlimited Transcriptions** - Transcribe unlimited voice notes to multiple languages
 
 ### General
 🌓 **Theming** - Switch between dark and light themes based on your preference  
 💻 **Cross-Platform** - Seamless experience across Android & iOS  
-📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc
-   **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
+📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc  
+📱 **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
 
 ## Speech Recognition Technology
 
