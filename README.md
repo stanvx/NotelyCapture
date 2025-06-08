@@ -8,11 +8,11 @@ A completely free modern, cross-platform note-taking application with powerful W
 
 ## iOS Screenshots
 
-<img src="https://github.com/user-attachments/assets/fcb2176b-e89c-4aa6-b535-156cb2bfda24" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/52a47e2e-b1ff-4285-89be-828d6823325d" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/869ea65f-7c57-461a-84d9-63df45c16e17" alt="screenshot3" width="250">
+<img src="https://github.com/user-attachments/assets/fcb2176b-e89c-4aa6-b535-156cb2bfda24" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/52a47e2e-b1ff-4285-89be-828d6823325d" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/942a4eb1-04fb-439b-8b3c-937bb6470b98" alt="screenshot3" width="250">
 
 ## Android Screenshots
 
-<img src="https://github.com/user-attachments/assets/6f3d3686-a904-4214-bfe6-dab774a2c43b" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/f7ca46eb-4587-4890-8dd6-0dfff3764602" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/5d967347-ba97-404b-8fae-a257d677ca82" alt="screenshot3" width="250">
+<img src="https://github.com/user-attachments/assets/6f3d3686-a904-4214-bfe6-dab774a2c43b" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/f7ca46eb-4587-4890-8dd6-0dfff3764602" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/2205869b-2741-47f4-bdeb-98efadc203c8" alt="screenshot3" width="250">
 
 ## Features
 
@@ -31,14 +31,14 @@ A completely free modern, cross-platform note-taking application with powerful W
 🎙️ **Advanced Speech-to-Text** - Convert speech to text with high accuracy  
 🌐 **Offline Capability** - Speech recognition works without an internet connection  
 🔄 **Seamless Integration** - Dictate directly into notes or transcribe audio recordings  
-🎧 **Audio Recording** - Record voice notes and play them back within the app
+🎧 **Audio Recording** - Record voice notes and play them back within the app  
 🎧 **Unlimited Transcriptions** - Transcribe unlimited voice notes to multiple languages
 
 ### General
 🌓 **Theming** - Switch between dark and light themes based on your preference  
 💻 **Cross-Platform** - Seamless experience across Android & iOS  
-📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc
-   **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
+📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc  
+📱 **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
 
 ## Speech Recognition Technology
 
