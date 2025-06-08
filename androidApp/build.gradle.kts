@@ -55,6 +55,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // uncomment to run on release for testing
+            // signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

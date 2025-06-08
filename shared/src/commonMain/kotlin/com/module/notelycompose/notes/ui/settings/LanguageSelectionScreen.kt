@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -26,6 +28,7 @@ import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 
 data class Language(
     val name: String
@@ -35,8 +38,17 @@ data class Language(
 fun LanguageSelectionScreen(
     onBackPressed: () -> Unit,
     onLanguageClicked: (Pair<String, String>) -> Unit,
-    languageCodeMap: Map<String, String>
+    languageCodeMap: Map<String, String>,
+    bottomSheetState: ModalBottomSheetState
 ) {
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
+    LaunchedEffect(bottomSheetState) {
+        snapshotFlow { bottomSheetState.currentValue }
+            .collect { sheetValue ->
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
+            }
+    }
+
     var searchText by remember { mutableStateOf("") }
     val filteredLanguages by derivedStateOf {
         languageCodeMap.filter { (language, code) ->
@@ -183,9 +195,8 @@ fun LanguageSelectionScreen(
                                 }
                                 if (index < filteredLanguages.size - 1) {
                                     Divider(
-                                        modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                                        thickness = 1.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant
+                                        thickness = 0.5.dp,
+                                        color = LocalCustomColors.current.languageListDividerColor
                                     )
                                 }
                             }
@@ -194,5 +205,9 @@ fun LanguageSelectionScreen(
                 }
             }
         }
+    }
+
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        onBackPressed()
     }
 }

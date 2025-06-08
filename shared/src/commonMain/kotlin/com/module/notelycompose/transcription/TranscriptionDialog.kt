@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.recorder.recordingUiComponentBackButton
 import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
@@ -181,6 +182,10 @@ fun TranscriptionDialog(
 
             }
         }
+
+    HandlePlatformBackNavigation(enabled = true) {
+        onDismiss()
+    }
 
 }
 @Composable

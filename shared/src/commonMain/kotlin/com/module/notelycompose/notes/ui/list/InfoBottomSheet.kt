@@ -22,6 +22,7 @@ import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcFaq
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.web.ui.WebViewScreen
@@ -45,12 +46,12 @@ fun InfoBottomSheet(
     onDismiss: () -> Unit,
     onNavigateToWebPage: (String, String) -> Unit,
     bottomSheetState: ModalBottomSheetState,
-    appVersion: String,
-    onOpenBrowser: (String) -> Unit
+    appVersion: String
 ) {
     var showWebView by remember { mutableStateOf(false) }
     var currentPageTitle by remember { mutableStateOf("") }
     var currentPageUrl by remember { mutableStateOf("") }
+    var shouldUseCustomBackHandler by remember { mutableStateOf(true) }
 
     val faq  = stringResource(Res.string.faq)
     val about  = stringResource(Res.string.about)
@@ -69,19 +70,16 @@ fun InfoBottomSheet(
                 if (sheetValue == ModalBottomSheetValue.Hidden) {
                     showWebView = false
                 }
+                shouldUseCustomBackHandler = sheetValue != ModalBottomSheetValue.Hidden
             }
     }
 
     if (showWebView) {
-        if (getPlatform().isAndroid) {
-            onOpenBrowser(currentPageUrl)
-        } else {
-            WebViewScreen(
-                title = currentPageTitle,
-                url = currentPageUrl,
-                onBackPressed = { showWebView = false }
-            )
-        }
+        WebViewScreen(
+            title = currentPageTitle,
+            url = currentPageUrl,
+            onBackPressed = { showWebView = false }
+        )
     } else {
         Column(
             modifier = Modifier
@@ -171,6 +169,10 @@ fun InfoBottomSheet(
                     .padding(bottom = 16.dp)
             )
         }
+    }
+
+    HandlePlatformBackNavigation(enabled = shouldUseCustomBackHandler) {
+        onDismiss()
     }
 }
 
