@@ -4,7 +4,7 @@
 [![Compose](https://img.shields.io/badge/compose-1.8.0-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
-A modern, cross-platform note-taking application with powerful offline speech recognition capabilities built with Compose Multiplatform
+A completely free modern, cross-platform note-taking application with powerful Whisper AI speech recognition capabilities built with Compose Multiplatform
 
 ## iOS Screenshots
 
@@ -32,23 +32,27 @@ A modern, cross-platform note-taking application with powerful offline speech re
 🌐 **Offline Capability** - Speech recognition works without an internet connection  
 🔄 **Seamless Integration** - Dictate directly into notes or transcribe audio recordings  
 🎧 **Audio Recording** - Record voice notes and play them back within the app
+🎧 **Unlimited Transcriptions** - Transcribe unlimited voice notes to multiple languages
 
 ### General
 🌓 **Theming** - Switch between dark and light themes based on your preference  
 💻 **Cross-Platform** - Seamless experience across Android & iOS  
-📱 **Offline Functionality** - Full app functionality without an internet connection  
+📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc
+   **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
 
 ## Speech Recognition Technology
 
-- **Vosk-API** - Provides complete offline speech recognition capability
-  - Works on resource-constrained devices like Raspberry Pi and Android smartphones
-  - No internet connection required for speech-to-text functionality
-  - Perfect for taking notes in areas with poor connectivity
+- **OpenAI Whisper** - State-of-the-art open-source automatic speech recognition
+  - Robust multilingual speech recognition with support for over 50 languages
+  - Trained on 680,000 hours of multilingual and multitask supervised data
+  - Excellent performance across diverse audio conditions and accents
+  - Can run locally without internet dependency once model is downloaded
 
-- **iOS Integration** - Uses native iOS SFSpeechRecognizer
-  - Leverages Apple's speech recognition framework for optimal iOS performance
-  - Seamless integration with iOS audio systems
-  - Advanced audio speech transcription using SFSpeechRecognizer
+- **Cross-Platform Compatibility** - Designed for versatile deployment
+  - Consistent speech recognition quality across different operating systems
+  - Flexible model sizes from tiny (39 MB) to large (1550 MB) based on accuracy needs
+  - Advanced noise robustness and speaker independence
+  - Perfect for applications requiring high-quality transcription in various environments
 
 ## Built With 🛠
 
