@@ -6,6 +6,19 @@
 
 A completely free modern, cross-platform note-taking application with powerful Whisper AI speech recognition capabilities built with Compose Multiplatform
 
+## Download the app
+<div style="display:flex;" >
+<a href="https://f-droid.org/en/packages/com.module.notelycompose.android">
+    <img alt="Get it on F-Droid" height="64" src="https://raw.githubusercontent.com/anwilli5/coin-collection-android-US/main/images/fdroid-repo-badge.png" />
+</a>
+<a href="https://play.google.com/store/apps/details?id=com.module.notelycompose.android">
+    <img alt="Get it on Google Play" height="64" src="https://raw.githubusercontent.com/anwilli5/coin-collection-android-US/main/images/google-play-badge.png" />
+</a>
+<a href="https://apps.apple.com/us/app/notely-voice-speech-to-text/id6745835691">
+    <img alt="Available at Appstore" height="64" src="https://dbsqho33cgp4y.cloudfront.net/github/app-store-badge.png" />
+</a>
+</div><br/>
+
 ## iOS Screenshots
 
 <img src="https://github.com/user-attachments/assets/fcb2176b-e89c-4aa6-b535-156cb2bfda24" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/52a47e2e-b1ff-4285-89be-828d6823325d" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/942a4eb1-04fb-439b-8b3c-937bb6470b98" alt="screenshot3" width="250">
