@@ -154,7 +154,7 @@ actual class Downloader(
             mainContext,
             receiver,
             filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_EXPORTED
         )
     }
 
