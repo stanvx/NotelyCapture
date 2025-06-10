@@ -11,26 +11,41 @@ import shared
 import SwiftUI
 
 extension UIApplication {
-var statusBarUIView: UIView? {
-    if #available(iOS 13.0, *) {
-        let tag = 38482
-        let keyWindow = UIApplication.shared.windows.filter {$0.isKeyWindow}.first
-        
-        if let statusBar = keyWindow?.viewWithTag(tag) {
-            return statusBar
+    var keyWindowCompat: UIWindow? {
+        if #available(iOS 15.0, *) {
+            return UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }
+                .first { $0.isKeyWindow }
+        } else if #available(iOS 13.0, *) {
+            return UIApplication.shared.windows.first { $0.isKeyWindow }
         } else {
-            guard let statusBarFrame = keyWindow?.windowScene?.statusBarManager?.statusBarFrame else { return nil }
-            let statusBarView = UIView(frame: statusBarFrame)
-            statusBarView.tag = tag
-            keyWindow?.addSubview(statusBarView)
-            return statusBarView
+            return UIApplication.shared.keyWindow
         }
-    } else if responds(to: Selector(("statusBar"))) {
-        return value(forKey: "statusBar") as? UIView
-    } else {
-        return nil
     }
-  }
+    
+    func setStatusBarBackgroundColor(_ color: UIColor) {
+        guard let keyWindow = keyWindowCompat else { return }
+        
+        let statusBarHeight = keyWindow.safeAreaInsets.top
+        let statusBarFrame = CGRect(x: 0, y: 0, width: keyWindow.frame.width, height: statusBarHeight)
+        
+        let statusBarView = UIView(frame: statusBarFrame)
+        statusBarView.backgroundColor = color
+        statusBarView.tag = 12345 // Unique tag to identify our status bar view
+        statusBarView.layer.zPosition = 999999 // Ensure it's on top
+        
+        // Remove any existing status bar view
+        keyWindow.subviews.filter { $0.tag == 12345 }.forEach { $0.removeFromSuperview() }
+        
+        // Add the new status bar view
+        keyWindow.addSubview(statusBarView)
+    }
+    
+    func removeStatusBarBackgroundColor() {
+        guard let keyWindow = keyWindowCompat else { return }
+        keyWindow.subviews.filter { $0.tag == 12345 }.forEach { $0.removeFromSuperview() }
+    }
 }
 
 extension UIColor {

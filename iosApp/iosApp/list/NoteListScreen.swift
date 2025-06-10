@@ -70,13 +70,14 @@ struct NoteListScreen: UIViewControllerRepresentable {
     }
     
     func setupStatusBar(color: UIColor) {
-        let statusBarColor = color
-        let statusbarView = UIApplication.shared.statusBarUIView
-        statusbarView?.backgroundColor = statusBarColor
+        DispatchQueue.main.async {
+            UIApplication.shared.setStatusBarBackgroundColor(color)
+        }
     }
-    
+        
     func resetStatusBar() {
-        let statusbarView = UIApplication.shared.statusBarUIView
-        statusbarView?.backgroundColor = UIColor.systemBackground
+        DispatchQueue.main.async {
+            UIApplication.shared.removeStatusBarBackgroundColor()
+        }
     }
 }
