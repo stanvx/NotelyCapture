@@ -56,32 +56,56 @@ fun OnboardingWalkthrough(
             description = "Write and share your notes\ninstantly with ease",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_android_one),
-            iOSResources = painterResource(Res.drawable.onboarding_ios_one)
+            androidResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_one)
+                else -> painterResource(Res.drawable.onboarding_android_one)
+            },
+            iOSResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_one)
+                else -> painterResource(Res.drawable.onboarding_ios_one)
+            }
         ),
         OnboardingPage(
             title = "Record Voice\nNote and Share",
             description = "Capture and share voice notes\non the go.",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_android_two),
-            iOSResources = painterResource(Res.drawable.onboarding_ios_two)
+            androidResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_two)
+                else -> painterResource(Res.drawable.onboarding_android_two)
+            },
+            iOSResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_two)
+                else -> painterResource(Res.drawable.onboarding_ios_two)
+            }
         ),
         OnboardingPage(
             title = "Transcribe\nand Summarise",
             description = "Convert voice notes to text and\nsummaries without internet.",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_android_three),
-            iOSResources = painterResource(Res.drawable.onboarding_ios_three)
+            androidResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_three)
+                else -> painterResource(Res.drawable.onboarding_android_three)
+            },
+            iOSResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_three)
+                else -> painterResource(Res.drawable.onboarding_ios_three)
+            }
         ),
         OnboardingPage(
             title = "Supports\nOver 50 languages",
             description = "Create and transcribe notes in your preferred language.",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = painterResource(Res.drawable.onboarding_ios_four),
-            iOSResources = painterResource(Res.drawable.onboarding_ios_four)
+            androidResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_four)
+                else -> painterResource(Res.drawable.onboarding_ios_four)
+            },
+            iOSResources = when {
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_four)
+                else -> painterResource(Res.drawable.onboarding_ios_four)
+            }
         )
     )
 
