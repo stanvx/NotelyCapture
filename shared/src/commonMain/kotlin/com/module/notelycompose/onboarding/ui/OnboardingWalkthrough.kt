@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import com.module.notelycompose.platform.presentation.PlatformUiState
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.onboarding_ios_one
@@ -32,7 +31,16 @@ import notelycompose.shared.generated.resources.onboarding_ios_three
 import notelycompose.shared.generated.resources.onboarding_ios_two
 import notelycompose.shared.generated.resources.onboarding_ios_four
 import notelycompose.shared.generated.resources.onboarding_android_one
+import notelycompose.shared.generated.resources.onboarding_android_tablet_one
+import notelycompose.shared.generated.resources.onboarding_android_tablet_two
+import notelycompose.shared.generated.resources.onboarding_android_tablet_three
+import notelycompose.shared.generated.resources.onboarding_android_tablet_four
+import notelycompose.shared.generated.resources.onboarding_ios_tablet_one
+import notelycompose.shared.generated.resources.onboarding_ios_tablet_two
+import notelycompose.shared.generated.resources.onboarding_ios_tablet_three
+import notelycompose.shared.generated.resources.onboarding_ios_tablet_four
 import notelycompose.shared.generated.resources.onboarding_android_three
+import notelycompose.shared.generated.resources.onboarding_android_four
 import notelycompose.shared.generated.resources.onboarding_android_two
 import org.jetbrains.compose.resources.painterResource
 
@@ -57,53 +65,53 @@ fun OnboardingWalkthrough(
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
             androidResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_one)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_one)
                 else -> painterResource(Res.drawable.onboarding_android_one)
             },
             iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_one)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_one)
                 else -> painterResource(Res.drawable.onboarding_ios_one)
             }
         ),
         OnboardingPage(
             title = "Record Voice\nNote and Share",
-            description = "Capture and share voice notes\non the go.",
+            description = "Capture and share voice notes\non the go",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
             androidResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_two)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_two)
                 else -> painterResource(Res.drawable.onboarding_android_two)
             },
             iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_two)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_two)
                 else -> painterResource(Res.drawable.onboarding_ios_two)
             }
         ),
         OnboardingPage(
             title = "Transcribe\nand Summarise",
-            description = "Convert voice notes to text and\nsummaries without internet.",
+            description = "Convert voice notes to text and\nsummaries without internet",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
             androidResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_three)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_three)
                 else -> painterResource(Res.drawable.onboarding_android_three)
             },
             iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_three)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_three)
                 else -> painterResource(Res.drawable.onboarding_ios_three)
             }
         ),
         OnboardingPage(
             title = "Supports\nOver 50 languages",
-            description = "Create and transcribe notes in your preferred language.",
+            description = "Create and transcribe notes in your preferred language",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
             androidResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_four)
-                else -> painterResource(Res.drawable.onboarding_ios_four)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_four)
+                else -> painterResource(Res.drawable.onboarding_android_four)
             },
             iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_four)
+                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_four)
                 else -> painterResource(Res.drawable.onboarding_ios_four)
             }
         )
@@ -237,6 +245,9 @@ fun VoiceNotePageContent(
         page.iOSResources
     }
 
+    val descriptionFontSize = if(isTablet) 20.sp else 18.sp
+    val imageIllustrationWidth = if(isTablet) 800.dp else 360.dp
+
     Text(
         text = page.title,
         fontSize = 32.sp,
@@ -249,12 +260,6 @@ fun VoiceNotePageContent(
             .padding(bottom = 12.dp),
         lineHeight = 32.sp
     )
-
-    if(isTablet) {
-        if(!isLandscape) {
-            Spacer(modifier = Modifier.height(200.dp))
-        }
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -269,14 +274,14 @@ fun VoiceNotePageContent(
                 painter = resource,
                 contentDescription = "Image illustration",
                 modifier = Modifier
-                    .width(360.dp),
+                    .width(imageIllustrationWidth),
                 contentScale = ContentScale.FillWidth
             )
         }
 
         Text(
             text = page.description,
-            fontSize = 18.sp,
+            fontSize = descriptionFontSize,
             fontWeight = FontWeight.Medium,
             color = Color(0xFF333333),
             textAlign = TextAlign.Center,
