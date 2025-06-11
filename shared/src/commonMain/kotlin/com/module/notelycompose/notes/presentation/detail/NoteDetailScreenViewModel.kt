@@ -2,7 +2,6 @@ package com.module.notelycompose.notes.presentation.detail
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import com.module.notelycompose.core.toCommonStateFlow
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById

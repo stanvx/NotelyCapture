@@ -2,6 +2,8 @@ package com.module.notelycompose.core
 
 import kotlinx.coroutines.flow.Flow
 
-expect class CommonFlow<T>(flow: Flow<T>) : Flow<T>
+expect class CommonFlow<T>
 
-fun <T> Flow<T>.toCommonFlow() = CommonFlow(this)
+expect fun <T> Flow<T>.toCommonFlow(): CommonFlow<T>
+
+expect fun <T> CommonFlow<T>.asFlow(): Flow<T>

@@ -1,6 +1,7 @@
 package com.module.notelycompose.notes.presentation.list
 
 import com.module.notelycompose.audio.ui.expect.deleteFile
+import com.module.notelycompose.core.asFlow
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
@@ -76,9 +77,9 @@ class NoteListViewModel(
     private fun setupNoteFlow() {
         // Combine notes flow with filter and search
         combine(
-            getAllNotesUseCase.execute(),
+            getAllNotesUseCase.execute().asFlow(), // Convert to Flow
             _state.map { it.selectedTabTitle }.distinctUntilChanged(),
-            ) { notes, filter ->
+        ) { notes, filter ->
             Pair(notes, filter)
         }.onEach { (notes, filter) ->
             handleNotesUpdate(notes, filter, "")
