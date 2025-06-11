@@ -306,11 +306,12 @@ fun NoteDetailScreen(
     if (showErrorDialog) {
         LocalSoftwareKeyboardController.current?.hide()
         AlertDialog(
-            modifier = Modifier.height(100.dp),
+            modifier = Modifier.height(130.dp),
             title = { Text(stringResource(resource = Res.string.download_dialog_error)) },
             onDismissRequest = { showErrorDialog = false },
             buttons = {
                 Button(
+                    modifier = Modifier.padding(20.dp),
                     onClick = {
                         showErrorDialog = false
                     },
