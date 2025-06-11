@@ -103,7 +103,7 @@ fun OnboardingWalkthrough(
         ),
         OnboardingPage(
             title = "Supports\nOver 50 languages",
-            description = "Create and transcribe notes in your preferred language",
+            description = "Create and transcribe notes in\nyour preferred language",
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
             androidResources = when {
@@ -163,7 +163,7 @@ fun OnboardingWalkthrough(
                 OnboardingPageContent(
                     page = pages[page],
                     isTablet = platformState.isTablet,
-                    isLandscape = platformState.isLandscape
+                    isAndroid = platformState.isAndroid
                 )
             }
 
@@ -218,7 +218,7 @@ fun OnboardingWalkthrough(
 fun OnboardingPageContent(
     page: OnboardingPage,
     isTablet: Boolean,
-    isLandscape: Boolean
+    isAndroid: Boolean
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -228,7 +228,7 @@ fun OnboardingPageContent(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        VoiceNotePageContent(page, isTablet, isLandscape)
+        VoiceNotePageContent(page, isTablet, isAndroid)
     }
 }
 
@@ -236,10 +236,10 @@ fun OnboardingPageContent(
 fun VoiceNotePageContent(
     page: OnboardingPage,
     isTablet: Boolean,
-    isLandscape: Boolean
+    isAndroid: Boolean
 ) {
 
-    val resource = if(getPlatform().isAndroid) {
+    val resource = if(isAndroid) {
         page.androidResources
     } else {
         page.iOSResources

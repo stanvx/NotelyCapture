@@ -6,12 +6,18 @@ import platform.UIKit.UIApplication
 
 class IOSPlatform: Platform {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
-    override val isAndroid: Boolean = UIDevice.currentDevice.systemName.lowercase().contains("ios").not()
+    override val isAndroid: Boolean get() = isAndroid()
     override val appVersion: String get() {
         return NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "Unknown"
     }
     override val isTablet: Boolean get() = isTablet()
     override val isLandscape: Boolean get() = isDeviceLandscape()
+
+    private fun isAndroid(): Boolean {
+        val systemName = UIDevice.currentDevice.systemName.lowercase()
+        val keywords = listOf("ios", "ipados")
+        return keywords.any { systemName.contains(it) }.not()
+    }
 
     private fun isTablet(): Boolean {
         val idiom = UIDevice.currentDevice.userInterfaceIdiom
