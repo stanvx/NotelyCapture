@@ -127,4 +127,4 @@ Contributions are welcome! Please follow these steps:
 
 ### License
 
-[License: GPL-3.0-or-later](https://github.com/tosinonikute/NotelyVoice)
+[License: GPL-3.0-only](https://github.com/tosinonikute/NotelyVoice)
