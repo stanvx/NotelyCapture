@@ -76,8 +76,7 @@ A completely free modern, cross-platform note-taking application with powerful W
 - **[ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel)** - Stores and manages UI-related data
 - **[Dagger-Hilt](https://dagger.dev/hilt/)** - Dependency injection for Android
 - **[Material 3](https://m3.material.io/)** - Design system for modern UI
-- **[Vosk-API](https://alphacephei.com/vosk/)** - Offline speech recognition engine
-- **[SFSpeechRecognizer](https://developer.apple.com/documentation/speech/sfspeechrecognizer)** - iOS native speech recognition
+- **[Whisper AI](https://openai.com/index/whisper/)** - Human level robustness speech recognition
 - **Native Compose Navigation** - No third-party navigation libraries
 - **Custom Text Editor** - Built from scratch without external editing libraries
 
