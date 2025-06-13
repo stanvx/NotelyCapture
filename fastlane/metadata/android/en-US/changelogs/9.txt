@@ -1,0 +1,12 @@
+- Removed VOSK Offline Speech Recognition API
+- Implement WhisperAI Offline Model for transcription for Android
+- App sharing with custom theming
+- Android walkthrough tutorial for new users
+- Redesigned Android settings screens
+- Fixed Android back button behavior
+- Resolved transcription dialog issues
+- Fixed download notifications and filtering
+- Improved tablet screen layouts
+- English set as default transcription language
+- Improved navigation system
+- Updated app icon and status bar styling
