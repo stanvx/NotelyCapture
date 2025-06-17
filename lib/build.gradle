@@ -21,11 +21,6 @@ android {
                 // Reproducible build flags - ADDED
                 arguments "-DCMAKE_BUILD_TYPE=Release"
 
-                // Fixed timestamps for reproducible builds - ADDED
-                cppFlags "-D__DATE__=\"Jan  1 1970\"",
-                        "-D__TIME__=\"00:00:00\"",
-                        "-Wno-builtin-macro-redefined"
-
                 // When set, builds whisper.android against the version located
                 // at GGML_HOME instead of the copy bundled with whisper.cpp.
                 if (

@@ -5,10 +5,6 @@ project(whisper.cpp)
 set(CMAKE_CXX_STANDARD 17)
 set(WHISPER_LIB_DIR ${CMAKE_SOURCE_DIR}/..)
 
-# Reproducible build settings - ADDED
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__DATE__=\\\"Jan\\ \\ 1\\ 1970\\\" -D__TIME__=\\\"00:00:00\\\" -Wno-builtin-macro-redefined")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__DATE__=\\\"Jan\\ \\ 1\\ 1970\\\" -D__TIME__=\\\"00:00:00\\\" -Wno-builtin-macro-redefined")
-
 # Set consistent release flags - ADDED
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
