@@ -1,11 +1,12 @@
-
-name: Build Android APK
+name: Build Signed Release APK
 
 on:
+  release:
+    types: [published]
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  build:
+  build-signed:
     runs-on: ubuntu-latest
     
     steps:
@@ -24,13 +25,22 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x ./gradlew
       
-    - name: Build unsigned release APK
+    - name: Decode Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-keystore.jks
+        
+    - name: Build signed release APK
       run: ./gradlew assembleRelease
-      
-    - name: Upload APK artifact
+      env:
+        KEYSTORE_FILE: release-keystore.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        
+    - name: Upload signed release APK
       uses: actions/upload-artifact@v4
       with:
-        name: unsigned-release-apk
+        name: signed-release-apk
         path: |
           **/build/outputs/apk/release/*.apk
-        retention-days: 30
+        retention-days: 90
