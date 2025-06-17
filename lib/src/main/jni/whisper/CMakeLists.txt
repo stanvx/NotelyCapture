@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-
+add_link_options("LINKER:--build-id=none")
 project(whisper.cpp)
 
 set(CMAKE_CXX_STANDARD 17)
