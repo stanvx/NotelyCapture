@@ -21,13 +21,11 @@ Perfect for students capturing lectures, professionals documenting meetings, doc
 </a>
 </div><br/>
 
-## iOS Screenshots
+## Screenshots
 
-<img src="https://github.com/user-attachments/assets/fcb2176b-e89c-4aa6-b535-156cb2bfda24" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/52a47e2e-b1ff-4285-89be-828d6823325d" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/942a4eb1-04fb-439b-8b3c-937bb6470b98" alt="screenshot3" width="250">
+<img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="screenshot3" width="250">
 
-## Android Screenshots
-
-<img src="https://github.com/user-attachments/assets/6f3d3686-a904-4214-bfe6-dab774a2c43b" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/f7ca46eb-4587-4890-8dd6-0dfff3764602" alt="screenshot2" width="250"> <img src="https://github.com/user-attachments/assets/2205869b-2741-47f4-bdeb-98efadc203c8" alt="screenshot3" width="250">
+<img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="screenshot3" width="250">
 
 ## Features
 
