@@ -66,8 +66,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // uncomment to run on release for testing
-            // signingConfig = signingConfigs.getByName("debug")
+            // Apply signing config when keystore is available
+            val keystoreFile = System.getenv("KEYSTORE_FILE")
+            if (keystoreFile != null && file(keystoreFile).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     ndkVersion = "27.0.12077973"
