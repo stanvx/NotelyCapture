@@ -1,0 +1,2 @@
+- F-droid release
+- Change of App name to "Notely Voice: AI Voice to Text"
