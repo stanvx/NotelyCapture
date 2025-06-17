@@ -27,12 +27,28 @@ jobs:
       
     - name: Decode Keystore
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release-keystore.jks
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/release-keystore.jks
+        ls -la ${{ github.workspace }}/release-keystore.jks
+        echo "Keystore file created at: ${{ github.workspace }}/release-keystore.jks"
+        
+    - name: Debug environment variables
+      run: |
+        echo "KEYSTORE_FILE: $KEYSTORE_FILE"
+        echo "KEYSTORE_PASSWORD is set: $([[ -n "$KEYSTORE_PASSWORD" ]] && echo "yes" || echo "no")"
+        echo "KEY_ALIAS: $KEY_ALIAS"
+        echo "KEY_PASSWORD is set: $([[ -n "$KEY_PASSWORD" ]] && echo "yes" || echo "no")"
+        echo "Working directory: $(pwd)"
+        echo "Keystore exists: $(test -f "$KEYSTORE_FILE" && echo "yes" || echo "no")"
+      env:
+        KEYSTORE_FILE: ${{ github.workspace }}/release-keystore.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         
     - name: Build signed release APK
-      run: ./gradlew assembleRelease
+      run: ./gradlew assembleRelease --info
       env:
-        KEYSTORE_FILE: release-keystore.jks
+        KEYSTORE_FILE: ${{ github.workspace }}/release-keystore.jks
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
