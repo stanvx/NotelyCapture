@@ -5,6 +5,10 @@ project(whisper.cpp)
 set(CMAKE_CXX_STANDARD 17)
 set(WHISPER_LIB_DIR ${CMAKE_SOURCE_DIR}/..)
 
+# Remove file paths from debug info
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
+
 # Set consistent release flags - ADDED
 set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")

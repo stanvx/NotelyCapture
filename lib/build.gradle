@@ -21,6 +21,9 @@ android {
                 // Reproducible build flags - ADDED
                 arguments "-DCMAKE_BUILD_TYPE=Release"
 
+                cppFlags "-ffile-prefix-map=\${projectDir}=."
+                cFlags "-ffile-prefix-map=\${projectDir}=."
+
                 // When set, builds whisper.android against the version located
                 // at GGML_HOME instead of the copy bundled with whisper.cpp.
                 if (
