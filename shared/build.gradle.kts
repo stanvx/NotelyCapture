@@ -157,6 +157,7 @@ android {
     defaultConfig {
         minSdk = 24
     }
+    ndkVersion = "27.0.12077973"
 }
 java {
     toolchain {
