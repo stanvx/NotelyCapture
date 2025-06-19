@@ -1,7 +1,9 @@
 package com.module.notelycompose.audio.presentation
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
-import com.module.notelycompose.audio.ui.expect.AudioRecorder
+import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +28,8 @@ data class AudioRecorderPresentationState(
 
 class AudioRecorderViewModel(
     private val audioRecorder: AudioRecorder,
-    private val mapper: AudioRecorderPresentationToUiMapper,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+    private val mapper: AudioRecorderPresentationToUiMapper
+) :ViewModel(){
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     val audioRecorderPresentationState: StateFlow<AudioRecorderPresentationState> = _audioRecorderPresentationState
 
@@ -120,7 +120,7 @@ class AudioRecorderViewModel(
         counterJob = null
     }
 
-    fun onCleared() {
+    override fun onCleared() {
         stopCounter()
         if (audioRecorder.isRecording()) {
             audioRecorder.stopRecording()

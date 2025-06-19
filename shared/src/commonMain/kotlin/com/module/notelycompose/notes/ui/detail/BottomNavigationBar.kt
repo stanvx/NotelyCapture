@@ -32,6 +32,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.extensions.showKeyboard
 import com.module.notelycompose.resources.vectors.IcDetailList
@@ -57,10 +59,8 @@ fun BottomNavigationBar(
     isStarred: Boolean,
     showFormatBar: Boolean,
     textFieldFocusRequester: FocusRequester,
-    onFormatActions: NoteFormatActions,
     onShowTextFormatBar: (show: Boolean) -> Unit,
-    onDeleteNote: () -> Unit,
-    onStarNote: () -> Unit
+    editorViewModel: TextEditorViewModel
 ) {
 
 
@@ -81,7 +81,7 @@ fun BottomNavigationBar(
     DeleteConfirmationDialog(
         showDialog = showDeleteDialog,
         onDismiss = { showDeleteDialog = false },
-        onConfirm = onDeleteNote
+        onConfirm = editorViewModel::onDeleteNote
     )
 
     Box(
@@ -101,16 +101,16 @@ fun BottomNavigationBar(
                 onFormatSelected = {
                     selectedFormat = it
                     textSizeSelectedFormats(it) { textSize ->
-                        onFormatActions.onSelectTextSizeFormat(textSize)
+                        editorViewModel.setTextSize(textSize)
                     }
                 },
                 onClose = {
                     onShowTextFormatBar(false)
                 },
-                onToggleBold = onFormatActions.onToggleBold,
-                onToggleItalic = onFormatActions.onToggleItalic,
-                onToggleUnderline = onFormatActions.onToggleUnderline,
-                onSetAlignment = onFormatActions.onSetAlignment
+                onToggleBold = editorViewModel::onToggleBold,
+                onToggleItalic = editorViewModel::onToggleItalic,
+                onToggleUnderline = editorViewModel::onToggleUnderline,
+                onSetAlignment = editorViewModel::onSetAlignment
             )
         }
     }
@@ -134,14 +134,14 @@ fun BottomNavigationBar(
                     tint = LocalCustomColors.current.bodyContentColor
                 )
             }
-            IconButton(onClick = onFormatActions.onToggleBulletList) {
+            IconButton(onClick = editorViewModel::onToggleBulletList) {
                 Icon(
                     imageVector = Images.Icons.IcDetailList,
                     contentDescription = stringResource(Res.string.bottom_navigation_bullet_list),
                     tint = LocalCustomColors.current.bodyContentColor
                 )
             }
-            IconButton(onClick = onStarNote) {
+            IconButton(onClick = editorViewModel::onToggleStar) {
                 Icon(
                     imageVector = if(isStarred) {
                         Images.Icons.IcStarFilled

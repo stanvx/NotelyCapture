@@ -1,7 +1,7 @@
 package com.module.notelycompose
 
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
-import com.module.notelycompose.audio.ui.expect.PlatformAudioPlayer
+import com.module.notelycompose.platform.PlatformAudioPlayer
 
 class AudioPlayerModule {
 

@@ -1,8 +1,7 @@
 package com.module.notelycompose
 
-import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.PlatformUtils
-import com.module.notelycompose.audio.ui.expect.Transcriber
+import com.module.notelycompose.platform.IOSPlatform
+import com.module.notelycompose.platform.PlatformUtils
 
 class PlatformModule {
 

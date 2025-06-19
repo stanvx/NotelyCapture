@@ -1,7 +1,7 @@
 package com.module.notelycompose
 
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
-import com.module.notelycompose.audio.ui.expect.AudioRecorder
+import com.module.notelycompose.platform.AudioRecorder
 
 class AudioRecorderModule {
 

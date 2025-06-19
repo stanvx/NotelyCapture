@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
@@ -35,8 +35,28 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
+        androidMain.dependencies {
+            implementation(compose.preview)
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.compose.ui.preview)
+            implementation(libs.androidx.compose.ui.tooling)
+            implementation(libs.androidx.compose.ui.util)
+
+            implementation(libs.sqldelight.android.driver)
+            // Wav Recorder
+            implementation(libs.android.wave.recorder)
+
+            implementation(libs.kotlinx.serialization.json.v160)
+            implementation(project(":lib"))
+            implementation(libs.activity.compose)
+            // Refactor
+            implementation(libs.koin.android)
+            implementation(libs.core.splashscreen)
+        }
+
+
+        commonMain.dependencies {
                 implementation(libs.sqldelight.runtime)
                 implementation(libs.sqldelight.coroutines)
                 implementation(libs.kotlinx.datetime)
@@ -51,55 +71,33 @@ kotlin {
                 implementation(libs.compose.vectorize.core)
                 implementation(libs.kotlinx.serialization.json)
 
-                implementation(libs.multiplatform.settings)
-                implementation(libs.multiplatform.settings.coroutines)
+            // koin
+            implementation(libs.koin.core)
+            implementation(libs.koin.test)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
+            // logging
+            implementation(libs.napier)
+            // Data store
+            implementation(libs.datastore.preferences)
+            implementation(libs.datastore)
+
+
             }
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native.driver)
+                compileOnly(libs.jetbrains.atomicfu)
+                api(libs.jetbrains.atomicfu)
+
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.sqldelight.android.driver)
-                // Wav Recorder
-                implementation(libs.android.wave.recorder)
 
-                implementation(libs.kotlinx.serialization.json.v160)
-                implementation(libs.multiplatform.settings)
-                implementation(project(":lib"))
-                implementation(libs.activity.compose)
-            }
-        }
-        val iosX64Main by getting {
-            dependencies {
-                compileOnly(libs.jetbrains.atomicfu)
-                api(libs.jetbrains.atomicfu)
-            }
-        }
-        val iosArm64Main by getting {
-            dependencies {
-                compileOnly(libs.jetbrains.atomicfu)
-                api(libs.jetbrains.atomicfu)
-            }
-        }
-        val iosSimulatorArm64Main by getting {
-            dependencies {
-                compileOnly(libs.jetbrains.atomicfu)
-                api(libs.jetbrains.atomicfu)
-            }
-        }
-        val iosMain by getting {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
 
-            dependencies {
-                implementation(libs.sqldelight.native.driver)
-            }
-        }
     }
 
     targets.all {
@@ -154,8 +152,48 @@ sqldelight {
 android {
     namespace = "com.module.notelycompose"
     compileSdk = 35
+
+    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].res.srcDirs("src/androidMain/res")
+    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
     defaultConfig {
-        minSdk = 24
+        applicationId = "com.module.notelycompose"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 8
+        versionName = "1.0.7"
+    }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.6"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // uncomment to run on release for testing
+            // signingConfig = signingConfigs.getByName("debug")
+        }
     }
 }
 java {

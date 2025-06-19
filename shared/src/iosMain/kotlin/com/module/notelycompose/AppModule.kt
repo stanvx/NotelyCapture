@@ -1,7 +1,6 @@
 package com.module.notelycompose
 
-import com.module.notelycompose.audio.ui.expect.PlatformUtils
-import com.module.notelycompose.core.DatabaseDriverFactory
+import com.module.notelycompose.platform.PlatformUtils
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.notes.data.NoteSqlDelightDataSource
 import com.module.notelycompose.notes.domain.DeleteNoteById
@@ -21,7 +20,8 @@ import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.onboarding.data.PreferencesRepository
-import com.module.notelycompose.preferences.SettingsFactory
+import com.module.notelycompose.platform.SettingsFactory
+import com.module.notelycompose.platform.getPlatform
 
 class AppModule {
     val noteDataSource: NoteDataSource by lazy {

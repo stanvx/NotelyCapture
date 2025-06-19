@@ -1,7 +1,9 @@
 package com.module.notelycompose.modelDownloader
 
-import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.Transcriber
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.platform.Downloader
+import com.module.notelycompose.platform.Transcriber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,9 +17,7 @@ import kotlinx.coroutines.launch
 class ModelDownloaderViewModel(
     private val downloader: Downloader,
     private val transcriber: Transcriber,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+):ViewModel(){
     private val _uiState = MutableStateFlow(DownloaderUiState("ggml-base.bin"))
     val uiState: StateFlow<DownloaderUiState> = _uiState
 

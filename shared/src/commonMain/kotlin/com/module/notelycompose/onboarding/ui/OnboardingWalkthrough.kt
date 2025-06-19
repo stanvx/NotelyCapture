@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.module.notelycompose.getPlatform
+import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res

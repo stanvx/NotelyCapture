@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.module.notelycompose.getPlatform
+import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.Images

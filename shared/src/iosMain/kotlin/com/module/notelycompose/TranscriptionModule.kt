@@ -1,7 +1,7 @@
 package com.module.notelycompose
 
-import com.module.notelycompose.audio.ui.expect.Downloader
-import com.module.notelycompose.audio.ui.expect.Transcriber
+import com.module.notelycompose.platform.Downloader
+import com.module.notelycompose.platform.Transcriber
 
 class TranscriptionModule {
 

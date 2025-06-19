@@ -2,7 +2,8 @@ package com.module.notelycompose.notes.presentation.detail
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import com.module.notelycompose.core.toCommonStateFlow
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -25,10 +26,8 @@ class NoteDetailScreenViewModel(
     private val updateNoteUseCase: UpdateNoteUseCase,
     private val getLastNoteUseCase: GetLastNote,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
-    private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+    private val textAlignPresentationMapper: TextAlignPresentationMapper
+):ViewModel() {
 
     private fun getNoteById(id: String) = getNoteByIdUseCase.execute(id.toLong())
 

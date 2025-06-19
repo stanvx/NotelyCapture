@@ -37,6 +37,7 @@ import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,28 +59,27 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
-import com.module.notelycompose.audio.ui.recorder.RecordUiComponent
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
-import com.module.notelycompose.modelDownloader.DownloaderUiState
+import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
+import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
+import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.platform.HandlePlatformBackNavigation
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
-import com.module.notelycompose.transcription.TranscriptionDialog
-import com.module.notelycompose.transcription.TranscriptionUiState
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.confirmation_cancel
@@ -89,42 +89,50 @@ import notelycompose.shared.generated.resources.note_detail_recorder
 import notelycompose.shared.generated.resources.transcription_icon
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun NoteDetailScreen(
-    newNoteDateString: String,
-    editorState: EditorUiState,
-    audioPlayerUiState: AudioPlayerUiState,
-    transcriptionUiState: TranscriptionUiState,
-    downloaderUiState: DownloaderUiState,
-    downloaderEffect: SharedFlow<DownloaderEffect>,
-    recordCounterString: String,
-    onNavigateBack: () -> Unit,
-    onUpdateContent: (newContent: TextFieldValue) -> Unit,
-    onFormatActions: NoteFormatActions,
-    onAudioActions: NoteAudioActions,
-    onTranscriptionActions: TranscriptionActions,
-    onDownloaderActions: DownloaderActions,
-    onNoteActions: NoteActions,
-    onShareActions: ShareActions,
-    isRecordPaused: Boolean
+    noteId:String,
+    navigateBack: () -> Unit,
+    navigateToRecorder: () -> Unit,
+    navigateToTranscription: (String) -> Unit,
+    audioPlayerViewModel: AudioPlayerViewModel = koinViewModel(),
+    downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
+    platformViewModel: PlatformViewModel = koinViewModel(),
+    editorViewModel: TextEditorViewModel,
+    navController: NavController
 ) {
+    val recordingPath = navController.currentBackStackEntry
+        ?.savedStateHandle?.getStateFlow<String?>("recordingPath", null)?.collectAsState()
+    val downloaderUiState by downloaderViewModel.uiState.collectAsState()
+    val editorState = editorViewModel.editorPresentationState.collectAsState().value
+        .let { editorViewModel.onGetUiState(it) }
+
+    val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsState().value
+        .let { audioPlayerViewModel.onGetUiState(it) }
+
+
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     var showLoadingDialog by remember { mutableStateOf(false) }
-    var showRecordDialog by remember { mutableStateOf(false) }
-    var showTranscriptionDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
-    var showShareDialog by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
    // Setup when dialog appears
+    LaunchedEffect(recordingPath){
+        editorViewModel.onUpdateRecordingPath(recordingPath?.value?:"")
+    }
 
     LaunchedEffect(Unit) {
-        downloaderEffect.collect {
+        if(noteId.toLong() > 0L) {
+            editorViewModel.onGetNoteById(noteId)
+        }
+        downloaderViewModel.effects.collect {
             when (it) {
                 is DownloaderEffect.DownloadEffect -> {
                     showDownloadDialog = true
@@ -138,8 +146,8 @@ fun NoteDetailScreen(
                 }
                 is DownloaderEffect.ModelsAreReady -> {
                     showDownloadDialog = false
-                    showTranscriptionDialog = true
                     showLoadingDialog = false
+                    navigateToTranscription(recordingPath?.value?:"")
                 }
                 is DownloaderEffect.AskForUserAcceptance -> {
                     showDownloadQuestionDialog = true
@@ -156,12 +164,12 @@ fun NoteDetailScreen(
 // Setup when dialog appears
     DisposableEffect(Unit) {
         val job = coroutineScope.launch {
-            onAudioActions.setupRecorder()
+            audioPlayerViewModel.setupRecorder()
         }
         onDispose {
             coroutineScope.launch {
                 job.cancel()
-                onAudioActions.finishRecorder()
+                audioPlayerViewModel.finishRecorder()
             }
         }
     }
@@ -169,7 +177,7 @@ fun NoteDetailScreen(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         topBar = {
             DetailNoteTopBar(
-                onNavigateBack = onNavigateBack,
+                onNavigateBack = navigateBack,
                 onShare = {
                     showShareDialog = true
                 }
@@ -185,7 +193,7 @@ fun NoteDetailScreen(
                             shape = CircleShape
                         ),
                         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { onDownloaderActions.checkModelAvailability() }
+                        onClick = { downloaderViewModel.checkTranscriptionAvailability() }
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_transcription),
@@ -202,7 +210,7 @@ fun NoteDetailScreen(
                         shape = CircleShape
                     ),
                     backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                    onClick = { showRecordDialog = true }
+                    onClick = { navigateToRecorder() }
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,
@@ -220,74 +228,27 @@ fun NoteDetailScreen(
                 isStarred = editorState.isStarred,
                 showFormatBar = showFormatBar,
                 textFieldFocusRequester = focusRequester,
-                onFormatActions = onFormatActions,
                 onShowTextFormatBar = { showFormatBar = it },
-                onStarNote = onNoteActions.onStarNote,
-                onDeleteNote = onNoteActions.onDeleteNote
+                editorViewModel = editorViewModel
             )
         }
     ) { paddingValues ->
 
             NoteContent(
                 paddingValues = paddingValues,
-                newNoteDateString = newNoteDateString,
+                newNoteDateString = editorState.createdAt,
                 editorState = editorState,
                 showFormatBar = showFormatBar,
-                showRecordDialog = showRecordDialog,
                 focusRequester = focusRequester,
-                onUpdateContent = onUpdateContent,
                 audioPlayerUiState = audioPlayerUiState,
-                onAudioActions = onAudioActions,
+                textEditorViewModel = editorViewModel,
+                audioPlayerViewModel = audioPlayerViewModel,
                 onFocusChange = {
                     isTextFieldFocused = it
                 },
-
                 )
     }
 
-    if (showRecordDialog) {
-        RecordUiComponent(
-            onDismiss = { showRecordDialog = false },
-            onAfterRecord = {
-                showRecordDialog = false
-                onAudioActions.onAfterRecord()
-            },
-            recordCounterString = recordCounterString,
-            onStartRecord = onAudioActions.onStartRecord,
-            onStopRecord = onAudioActions.onStopRecord,
-            isRecordPaused = isRecordPaused,
-            onPauseRecording = onAudioActions.onPauseRecording,
-            onResumeRecording = onAudioActions.onResumeRecording
-        )
-    }
-
-    if (showTranscriptionDialog) {
-        LocalSoftwareKeyboardController.current?.hide()
-        TranscriptionDialog(
-            modifier = Modifier.fillMaxSize(),
-            transcriptionUiState,
-            onAskingForAudioPermission = { onTranscriptionActions.requestAudioPermission() },
-            onRecognitionInitialized = { onTranscriptionActions.initRecognizer() },
-            onRecognitionFinished = { onTranscriptionActions.finishRecognizer() },
-            onRecognitionStart = {
-                onTranscriptionActions.startRecognizer(
-                    editorState.recording.recordingPath
-                )
-            },
-            onRecognitionStopped = { onTranscriptionActions.stopRecognition() },
-            onDismiss = {
-                onTranscriptionActions.stopRecognition()
-                showTranscriptionDialog = false
-            },
-            onSummarizeContent = {
-                onTranscriptionActions.summarize()
-            },
-            onAppendContent = {
-                onUpdateContent(TextFieldValue("${editorState.content.text}\n$it"))
-                showTranscriptionDialog = false
-            }
-        )
-    }
 
     if (showDownloadDialog) {
         LocalSoftwareKeyboardController.current?.hide()
@@ -317,7 +278,7 @@ fun NoteDetailScreen(
         LocalSoftwareKeyboardController.current?.hide()
         DownloadModelDialog(
             onDownload = {
-                onDownloaderActions.startDownload()
+                downloaderViewModel.startDownload()
                 showDownloadQuestionDialog = false
             },
             onCancel = {
@@ -326,22 +287,21 @@ fun NoteDetailScreen(
         )
     }
 
+
+    if (showLoadingDialog) {
+        PreparingLoadingDialog()
+    }
+
     if (showShareDialog) {
         ShareDialog(
             onShareAudioRecording = {
-                onShareActions.shareRecording(editorState.recording.recordingPath)
-                showShareDialog = false
+                platformViewModel.shareRecording(editorState.recording.recordingPath)
             },
             onShareTexts = {
-                onShareActions.shareText(editorState.content.text)
-                showShareDialog = false
+                platformViewModel.shareText(editorState.content.text)
             },
             onDismiss = { showShareDialog = false }
         )
-    }
-
-    if(showLoadingDialog){
-        PreparingLoadingDialog()
     }
 
 
@@ -356,12 +316,11 @@ private fun NoteContent(
     newNoteDateString: String,
     editorState: EditorUiState,
     showFormatBar: Boolean,
-    showRecordDialog: Boolean,
     focusRequester: FocusRequester,
     onFocusChange:(Boolean)->Unit,
-    onUpdateContent: (TextFieldValue) -> Unit,
     audioPlayerUiState: AudioPlayerUiState,
-    onAudioActions: NoteAudioActions
+    textEditorViewModel: TextEditorViewModel,
+    audioPlayerViewModel: AudioPlayerViewModel
 ) {
     val scrollState = rememberScrollState()
     LaunchedEffect(editorState.content) {
@@ -387,7 +346,7 @@ private fun NoteContent(
 
                 if (dismissState.isDismissed(DismissDirection.EndToStart)) {
                     LaunchedEffect(Unit) {
-                        onAudioActions.onDeleteRecord()
+                        textEditorViewModel.onDeleteRecord()
                     }
                 }
 
@@ -416,10 +375,10 @@ private fun NoteContent(
                         PlatformAudioPlayerUi(
                             filePath = editorState.recording.recordingPath,
                             uiState = audioPlayerUiState,
-                            onLoadAudio = onAudioActions.onLoadAudio,
-                            onClear = onAudioActions.onClear,
-                            onSeekTo = onAudioActions.onSeekTo,
-                            onTogglePlayPause = onAudioActions.onTogglePlayPause
+                            onLoadAudio = audioPlayerViewModel::onLoadAudio,
+                            onClear = audioPlayerViewModel::onClear,
+                            onSeekTo = audioPlayerViewModel::onSeekTo,
+                            onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause
                         )
                     }
                 )
@@ -429,10 +388,9 @@ private fun NoteContent(
                 modifier= Modifier.fillMaxWidth().weight(1f),
                 editorState = editorState,
                 showFormatBar = showFormatBar,
-                showRecordDialog = showRecordDialog,
                 focusRequester = focusRequester,
                 onFocusChange = onFocusChange,
-                onUpdateContent = onUpdateContent,
+                textEditorViewModel = textEditorViewModel
             )
         }
     }
@@ -454,10 +412,9 @@ private fun NoteEditor(
     modifier: Modifier = Modifier,
     editorState: EditorUiState,
     showFormatBar: Boolean,
-    showRecordDialog: Boolean,
     focusRequester: FocusRequester,
     onFocusChange:(Boolean)->Unit,
-    onUpdateContent: (TextFieldValue) -> Unit
+    textEditorViewModel: TextEditorViewModel
 ) {
 
     val transformation = VisualTransformation { text ->
@@ -484,7 +441,7 @@ private fun NoteEditor(
 
     BasicTextField(
         value = editorState.content,
-        onValueChange = onUpdateContent,
+        onValueChange = textEditorViewModel::onUpdateContent,
         modifier =
             modifier
             .focusRequester(focusRequester)
@@ -498,7 +455,6 @@ private fun NoteEditor(
         ),
         cursorBrush = SolidColor(LocalCustomColors.current.bodyContentColor),
         readOnly = showFormatBar,
-        enabled = !showRecordDialog,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences
         ),
@@ -506,53 +462,5 @@ private fun NoteEditor(
     )
 }
 
-// Helper data classes to group related callbacks
-data class NoteFormatActions(
-    val onToggleBold: () -> Unit,
-    val onToggleItalic: () -> Unit,
-    val onToggleUnderline: () -> Unit,
-    val onSetAlignment: (TextAlign) -> Unit,
-    val onToggleBulletList: () -> Unit,
-    val onSelectTextSizeFormat: (Float) -> Unit
-)
 
-data class NoteAudioActions(
-    val onStartRecord: (()->Unit) -> Unit,
-    val onStopRecord: () -> Unit,
-    val onPauseRecording: () -> Unit,
-    val onResumeRecording: () -> Unit,
-    val setupRecorder: suspend () -> Unit,
-    val finishRecorder: suspend () -> Unit,
-    val onRequestAudioPermission: () -> Unit,
-    val onAfterRecord: () -> Unit,
-    val onDeleteRecord: () -> Unit,
-    val onLoadAudio: (String) -> Unit,
-    val onClear: () -> Unit,
-    val onSeekTo: (Int) -> Unit,
-    val onTogglePlayPause: () -> Unit
-)
-
-data class TranscriptionActions(
-    val requestAudioPermission: () -> Unit,
-    val initRecognizer: () -> Unit,
-    val finishRecognizer: () -> Unit,
-    val startRecognizer: (String) -> Unit,
-    val stopRecognition: () -> Unit,
-    val summarize: () -> Unit
-)
-
-data class ShareActions(
-    val shareText: (String) -> Unit,
-    val shareRecording: (String) -> Unit
-)
-
-data class DownloaderActions(
-    val checkModelAvailability: () -> Unit,
-    val startDownload: () -> Unit
-)
-
-data class NoteActions(
-    val onDeleteNote: () -> Unit,
-    val onStarNote: () -> Unit
-)
 

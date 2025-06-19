@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.domain
 
+
 import com.module.notelycompose.core.CommonFlow
 import com.module.notelycompose.core.toCommonFlow
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper

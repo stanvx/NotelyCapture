@@ -1,6 +1,8 @@
 package com.module.notelycompose.notes.presentation.list
 
-import com.module.notelycompose.audio.ui.expect.deleteFile
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.platform.deleteFile
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
@@ -31,15 +33,12 @@ const val CONTENT_LENGTH = 36
 private const val SEARCH_DEBOUNCE = 300L
 
 class NoteListViewModel(
-    private val selectedTabTitle:String,
     private val getAllNotesUseCase: GetAllNotesUseCase,
     private val deleteNoteById: DeleteNoteById,
     private val notePresentationMapper: NotePresentationMapper,
     private val notesFilterMapper: NotesFilterMapper,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
-    private val _state = MutableStateFlow(NoteListPresentationState(selectedTabTitle = selectedTabTitle))
+) :ViewModel(){
+    private val _state = MutableStateFlow(NoteListPresentationState())
     val state: StateFlow<NoteListPresentationState> = _state
 
     // Search query flow
