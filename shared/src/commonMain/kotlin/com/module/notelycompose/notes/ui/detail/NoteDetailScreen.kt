@@ -74,7 +74,6 @@ import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.DownloaderUiState
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.transcription.TranscriptionDialog
@@ -84,6 +83,7 @@ import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.confirmation_cancel
 import notelycompose.shared.generated.resources.download_dialog_error
+import notelycompose.shared.generated.resources.recording_replace_error
 import notelycompose.shared.generated.resources.ic_transcription
 import notelycompose.shared.generated.resources.note_detail_recorder
 import notelycompose.shared.generated.resources.transcription_icon
@@ -120,6 +120,7 @@ fun NoteDetailScreen(
     var isTextFieldFocused by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
+    var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
    // Setup when dialog appears
@@ -203,7 +204,13 @@ fun NoteDetailScreen(
                         shape = CircleShape
                     ),
                     backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                    onClick = { showRecordDialog = true }
+                    onClick = {
+                        if(!editorState.recording.isRecordingExist) {
+                            showRecordDialog = true
+                        } else {
+                            showExistingRecordConfirmDialog = true
+                        }
+                    }
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,
@@ -350,7 +357,15 @@ fun NoteDetailScreen(
         PreparingLoadingDialog()
     }
 
-
+    ReplaceRecordingConfirmationDialog(
+        showDialog = showExistingRecordConfirmDialog,
+        onDismiss = {
+            showExistingRecordConfirmDialog = false
+        },
+        onConfirm = {
+            showRecordDialog = true
+        }
+    )
 }
 
 

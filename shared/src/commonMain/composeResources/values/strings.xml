@@ -14,6 +14,8 @@
     <string name="recording_confirmation_text">Are you sure you want to delete the recording?</string>
     <string name="confirmation_delete">Delete</string>
     <string name="confirmation_cancel">Cancel</string>
+    <string name="recording_replace_error">You already have a recording saved. Creating a new recording will permanently replace it. Do you want to continue?</string>
+    <string name="recording_replace_continue">Continue</string>
 
     <!-- BottomNavigationBar -->
     <string name="bottom_navigation_letter">Letter Aa</string>
@@ -90,7 +92,7 @@
     <string name="transcription_dialog_original">Original</string>
 
     <!-- Download Dialog -->
-        <string name="download_dialog_error">Error while downloading</string>
+    <string name="download_dialog_error">Error while downloading</string>
 
     <!-- Information UI -->
     <string name="information_base_url">https://tosinonikute.com/notely/</string>
