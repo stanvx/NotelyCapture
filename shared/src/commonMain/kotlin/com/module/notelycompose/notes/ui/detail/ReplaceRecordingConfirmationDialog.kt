@@ -58,7 +58,8 @@ fun ReplaceRecordingConfirmationDialog(
             },
             dismissButton = {
                 TextButton(
-                    onClick = onDismiss
+                    onClick = onDismiss,
+                    shape = RectangleShape
                 ) {
                     Text(
                         text = stringResource(Res.string.confirmation_cancel),
