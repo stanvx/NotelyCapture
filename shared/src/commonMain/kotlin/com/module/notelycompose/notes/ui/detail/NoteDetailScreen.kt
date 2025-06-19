@@ -369,7 +369,10 @@ private fun NoteContent(
     audioPlayerUiState: AudioPlayerUiState,
     onAudioActions: NoteAudioActions
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    var showDeleteRecordingDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val dismissState = rememberDismissState()
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
@@ -389,11 +392,10 @@ private fun NoteContent(
             DateHeader(newNoteDateString)
 
             if (editorState.recording.isRecordingExist) {
-                val dismissState = rememberDismissState()
 
                 if (dismissState.isDismissed(DismissDirection.EndToStart)) {
                     LaunchedEffect(Unit) {
-                        onAudioActions.onDeleteRecord()
+                        showDeleteRecordingDialog = true
                     }
                 }
 
@@ -442,6 +444,19 @@ private fun NoteContent(
             )
         }
     }
+
+    DeleteRecordingConfirmationDialog(
+        showDialog = showDeleteRecordingDialog,
+        onDismiss = {
+            showDeleteRecordingDialog = false
+            coroutineScope.launch {
+                dismissState.reset()
+            }
+        },
+        onConfirm = {
+            onAudioActions.onDeleteRecord()
+        }
+    )
 }
 
 

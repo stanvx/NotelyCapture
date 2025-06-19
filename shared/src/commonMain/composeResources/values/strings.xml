@@ -11,6 +11,7 @@
     <!-- Delete Dialog -->
     <string name="confirmation">Confirm</string>
     <string name="confirmation_text">Do you want to delete the Note?</string>
+    <string name="recording_confirmation_text">Are you sure you want to delete the recording?</string>
     <string name="confirmation_delete">Delete</string>
     <string name="confirmation_cancel">Cancel</string>
 
