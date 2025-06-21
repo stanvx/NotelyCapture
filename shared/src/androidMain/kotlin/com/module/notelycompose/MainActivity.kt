@@ -1,7 +1,10 @@
 package com.module.notelycompose
 
+import android.graphics.Color
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +22,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
         installSplashScreen()
+        enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             KoinApplication(application = {

@@ -78,7 +78,6 @@ fun TranscriptionScreen(
         }
     }
         Card(
-            shape = RoundedCornerShape(8.dp),
             backgroundColor = LocalCustomColors.current.bodyBackgroundColor
         ) {
             Column(
@@ -156,8 +155,10 @@ fun TranscriptionScreen(
                         }, onClick = {
                             val result = if (transcriptionUiState.viewOriginalText) transcriptionUiState.originalText else transcriptionUiState.summarizedText
                             editorViewModel.onUpdateContent(TextFieldValue("${editorState.content.text}\n$result"))
+                            navigateBack()
                         }
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
                     OutlinedButton(
                         modifier = Modifier.weight(1f),

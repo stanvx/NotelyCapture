@@ -160,6 +160,7 @@ fun BottomNavigationBar(
                 )
             }
             IconButton(onClick = {
+                println("****************** ${imeHeight}")
                 textFieldFocusRequester.showKeyboard(imeHeight>0, keyboardController)
             }) {
                 Icon(

@@ -6,6 +6,7 @@ import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.Transcriber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -26,7 +27,7 @@ class ModelDownloaderViewModel(
 
 
     fun checkTranscriptionAvailability() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             _effects.emit(DownloaderEffect.CheckingEffect())
             if (downloader.hasRunningDownload()) {
                 trackDownload()
@@ -41,7 +42,7 @@ class ModelDownloaderViewModel(
     }
 
     fun startDownload() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             downloader.startDownload(
                 "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
                 _uiState.value.fileName

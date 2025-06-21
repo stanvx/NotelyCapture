@@ -1,7 +1,11 @@
 package com.module.notelycompose
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -56,7 +60,8 @@ fun App(
 
 
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
             color = MaterialTheme.colorScheme.background
         ) {
             val viewmodel = koinViewModel<OnboardingViewModel>()
@@ -136,8 +141,7 @@ fun NoteAppRoot() {
                     navigateToTranscription = {
                         navController.navigate(Routes.TRANSCRIPTION)
                     },
-                    editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
-                    navController = navController
+                    editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 )
             }
             composable(
@@ -154,12 +158,8 @@ fun NoteAppRoot() {
             composable(Routes.RECORDER) {
                 RecordingScreen(
                     navigateBack = { navController.popBackStack() },
-                    onRecordingFinished = {
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("recordingPath", it)
-                        navController.popBackStack()
-                    })
+                    editorViewModel = koinViewModel(viewModelStoreOwner = navController.getBackStackEntry(Routes.DETAILS_GRAPH))
+                )
             }
         }
 

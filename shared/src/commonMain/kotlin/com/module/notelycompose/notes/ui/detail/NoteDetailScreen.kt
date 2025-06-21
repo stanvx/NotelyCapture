@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -96,22 +97,18 @@ fun NoteDetailScreen(
     noteId:String,
     navigateBack: () -> Unit,
     navigateToRecorder: () -> Unit,
-    navigateToTranscription: (String) -> Unit,
+    navigateToTranscription: () -> Unit,
     audioPlayerViewModel: AudioPlayerViewModel = koinViewModel(),
     downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
     platformViewModel: PlatformViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel,
-    navController: NavController
+    editorViewModel: TextEditorViewModel
 ) {
-    val recordingPath = navController.currentBackStackEntry
-        ?.savedStateHandle?.getStateFlow<String?>("recordingPath", null)?.collectAsState()
     val downloaderUiState by downloaderViewModel.uiState.collectAsState()
     val editorState = editorViewModel.editorPresentationState.collectAsState().value
         .let { editorViewModel.onGetUiState(it) }
 
     val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsState().value
         .let { audioPlayerViewModel.onGetUiState(it) }
-
 
     var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
@@ -123,10 +120,6 @@ fun NoteDetailScreen(
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-   // Setup when dialog appears
-    LaunchedEffect(recordingPath){
-        editorViewModel.onUpdateRecordingPath(recordingPath?.value?:"")
-    }
 
     LaunchedEffect(Unit) {
         if(noteId.toLong() > 0L) {
@@ -147,7 +140,7 @@ fun NoteDetailScreen(
                 is DownloaderEffect.ModelsAreReady -> {
                     showDownloadDialog = false
                     showLoadingDialog = false
-                    navigateToTranscription(recordingPath?.value?:"")
+                    navigateToTranscription()
                 }
                 is DownloaderEffect.AskForUserAcceptance -> {
                     showDownloadQuestionDialog = true
@@ -156,6 +149,7 @@ fun NoteDetailScreen(
 
                 is DownloaderEffect.CheckingEffect -> {
                     showLoadingDialog = true
+                    showDownloadDialog = false
                 }
             }
         }
@@ -174,7 +168,6 @@ fun NoteDetailScreen(
         }
     }
     Scaffold(
-        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         topBar = {
             DetailNoteTopBar(
                 onNavigateBack = navigateBack,

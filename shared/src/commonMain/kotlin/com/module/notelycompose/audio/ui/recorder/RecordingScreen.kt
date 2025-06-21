@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
+import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
@@ -82,8 +83,8 @@ enum class ScreenState {
 @Composable
 fun RecordingScreen(
     navigateBack: () -> Unit,
-    onRecordingFinished: (String) -> Unit,
-    viewModel: AudioRecorderViewModel = koinViewModel()
+    viewModel: AudioRecorderViewModel = koinViewModel(),
+    editorViewModel: TextEditorViewModel
 ) {
     val recordingState by viewModel.audioRecorderPresentationState.collectAsState()
     var screenState by remember { mutableStateOf(ScreenState.Initial) }
@@ -121,7 +122,8 @@ fun RecordingScreen(
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     delay(2000)
-                    onRecordingFinished(recordingState.recordingPath)
+                    editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
+                    navigateBack()
                 }
             }
 
