@@ -1,0 +1,2 @@
+- Fix Swipe to Delete bug not asking for Confirmation
+- Fix warning to overwrite audio
