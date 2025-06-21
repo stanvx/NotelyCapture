@@ -96,6 +96,12 @@ function(build_library target_name)
         target_link_libraries(${target_name} ${LOG_LIB} android)
     endif()
 
+    # Strip .comment section for reproducible builds
+    add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${CMAKE_OBJCOPY} --remove-section .comment $<TARGET_FILE:${target_name}>
+            COMMENT "Removing .comment section from ${target_name} for reproducible builds"
+    )
+
 endfunction()
 
 if (${ANDROID_ABI} STREQUAL "arm64-v8a")
