@@ -10,38 +10,6 @@ import platform.UIKit.UIWindowScene
 
 
 actual class PlatformUtils{
-    private val userDefaults: NSUserDefaults = NSUserDefaults.standardUserDefaults
-
-    actual fun applyTheme(theme: Theme) {
-        userDefaults.setObject(theme.name, "theme")
-        val style = when (theme) {
-            Theme.LIGHT -> UIUserInterfaceStyle.UIUserInterfaceStyleLight
-            Theme.DARK -> UIUserInterfaceStyle.UIUserInterfaceStyleDark
-            Theme.SYSTEM -> UIUserInterfaceStyle.UIUserInterfaceStyleUnspecified
-        }
-
-
-        UIApplication.sharedApplication.connectedScenes
-            .filterIsInstance<UIWindowScene>()
-            .flatMap { (it.windows() as List<UIWindow>) }
-            .forEach { it.overrideUserInterfaceStyle = style }
-    }
-
-    actual fun setDefaultTranscriptionLanguage(languageCode: String) {
-        userDefaults.setObject(languageCode, "language")
-    }
-
-    actual fun getSelectedTheme(): Theme {
-        return when (userDefaults.stringForKey("theme")) {
-            "LIGHT" -> Theme.LIGHT
-            "DARK" -> Theme.DARK
-            else -> Theme.SYSTEM
-        }
-    }
-
-    actual fun getDefaultTranscriptionLanguage(): String {
-        return userDefaults.stringForKey("language") ?: "auto"
-    }
 
     actual fun shareText(text: String) {
         val activityViewController = UIActivityViewController(

@@ -110,6 +110,7 @@ fun RecordingScreen(
             ScreenState.Recording -> RecordingInProgressScreen(
                 counterTimeString = recordingState.recordCounterString,
                 onStopRecording = {
+                    println("onStop recording")
                     viewModel.onStopRecording()
                     screenState = ScreenState.Success
                 },
@@ -122,6 +123,7 @@ fun RecordingScreen(
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     delay(2000)
+                    println("%%%%%%%%%%% ${recordingState.recordingPath}")
                     editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
                     navigateBack()
                 }

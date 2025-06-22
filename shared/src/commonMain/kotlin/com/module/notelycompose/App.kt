@@ -26,6 +26,7 @@ import com.module.notelycompose.notes.ui.list.InfoScreen
 import com.module.notelycompose.notes.ui.list.NoteListScreen
 import com.module.notelycompose.notes.ui.settings.LanguageSelectionScreen
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
+import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
@@ -60,9 +61,8 @@ fun App(
 
 
         Surface(
-            modifier = Modifier.fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing),
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize(),
+            color = LocalCustomColors.current.bodyBackgroundColor
         ) {
             val viewmodel = koinViewModel<OnboardingViewModel>()
             val onboardingState by viewmodel.onboardingState.collectAsState()
@@ -87,7 +87,7 @@ fun App(
 @Composable
 fun NoteAppRoot() {
     val navController = rememberNavController()
-    NavHost(navController, startDestination = Routes.HOME) {
+    NavHost( navController, startDestination = Routes.HOME, modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
         navigation(startDestination = Routes.LIST, route = Routes.HOME) {
             composable(Routes.LIST) {
                 NoteListScreen(
