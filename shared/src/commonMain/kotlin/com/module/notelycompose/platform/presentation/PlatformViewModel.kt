@@ -3,12 +3,8 @@ package com.module.notelycompose.platform.presentation
 import androidx.lifecycle.ViewModel
 import com.module.notelycompose.platform.Platform
 import com.module.notelycompose.platform.PlatformUtils
-import com.module.notelycompose.platform.Theme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 
 class PlatformViewModel (
     private val platformInfo: Platform,
@@ -25,7 +21,9 @@ class PlatformViewModel (
         _state.value = _state.value.copy(
             appVersion = platformInfo.appVersion,
             platformName = platformInfo.name,
-            isAndroid = platformInfo.isAndroid
+            isAndroid = platformInfo.isAndroid,
+            isTablet = platformInfo.isTablet,
+            isLandscape = platformInfo.isLandscape
         )
     }
 
@@ -44,5 +42,7 @@ class PlatformViewModel (
 data class PlatformUiState(
     val appVersion: String = "",
     val platformName: String = "",
-    val isAndroid: Boolean = false
+    val isAndroid: Boolean = false,
+    val isTablet: Boolean = false,
+    val isLandscape: Boolean = false
 )

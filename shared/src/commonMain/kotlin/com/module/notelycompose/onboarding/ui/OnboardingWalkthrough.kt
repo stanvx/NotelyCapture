@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import com.module.notelycompose.platform.presentation.PlatformUiState
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.onboarding_ios_one
@@ -43,6 +44,7 @@ import notelycompose.shared.generated.resources.onboarding_android_three
 import notelycompose.shared.generated.resources.onboarding_android_four
 import notelycompose.shared.generated.resources.onboarding_android_two
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 
 data class OnboardingPage(
     val title: String,

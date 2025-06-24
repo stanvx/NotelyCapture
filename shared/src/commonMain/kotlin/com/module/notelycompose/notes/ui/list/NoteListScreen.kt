@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.presentation.PlatformUiState
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.note_list_add_note
@@ -38,6 +39,7 @@ fun NoteListScreen(
     navigateToMenu: () -> Unit,
     navigateToNoteDetails: (String) -> Unit,
     viewModel: NoteListViewModel = koinViewModel(),
+    platformUiState: PlatformUiState
 ) {
     val notesListState by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -107,7 +109,7 @@ fun NoteListScreen(
                         viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(it))
                     }
                 )
-                if(notesListState.showEmptyContent) EmptyNoteUi()
+                if(notesListState.showEmptyContent) EmptyNoteUi(platformUiState.isTablet)
             }
         }
 

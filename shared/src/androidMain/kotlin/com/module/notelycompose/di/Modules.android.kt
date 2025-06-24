@@ -21,18 +21,6 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 actual val platformModule = module {
-    single<Platform>{ AndroidPlatform("") }
-    single { PermissionLauncherHolder() }
-    factory { PermissionHandler(get()).requestPermission() }
-    single { AndroidPlatform(get(named("AppVersion"))) }
-    single { dataStore(get()) }
-    single { PlatformUtils(get()) }
-    single { BrowserLauncher(get()) }
-
-    single<SqlDriver> {
-        AndroidSqliteDriver(NoteDatabase.Schema, context = get(), "notes.db")
-    }
-
     single<String>(qualifier = named("AppVersion")) {
         val app: Application = get()
         try {
@@ -41,6 +29,16 @@ actual val platformModule = module {
         } catch (e: Exception) {
             "Unknown"
         }
+    }
+    single { PermissionLauncherHolder() }
+    factory { PermissionHandler(get()).requestPermission() }
+    single <Platform>{ AndroidPlatform(get(named("AppVersion")), get()) }
+    single { dataStore(get()) }
+    single { PlatformUtils(get()) }
+    single { BrowserLauncher(get()) }
+
+    single<SqlDriver> {
+        AndroidSqliteDriver(NoteDatabase.Schema, context = get(), "notes.db")
     }
 
     single { PlatformAudioPlayer() }

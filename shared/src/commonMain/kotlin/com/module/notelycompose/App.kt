@@ -3,10 +3,8 @@ package com.module.notelycompose
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,6 +31,8 @@ import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 import com.module.notelycompose.platform.Theme
+import com.module.notelycompose.platform.presentation.PlatformUiState
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.transcription.TranscriptionScreen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -65,7 +65,9 @@ fun App(
             color = LocalCustomColors.current.bodyBackgroundColor
         ) {
             val viewmodel = koinViewModel<OnboardingViewModel>()
+            val platformViewModel = koinViewModel<PlatformViewModel>()
             val onboardingState by viewmodel.onboardingState.collectAsState()
+            val platformUiState by platformViewModel.state.collectAsState()
 
             when (onboardingState) {
                 is OnboardingState.Initial -> Unit
@@ -73,11 +75,12 @@ fun App(
                     OnboardingWalkthrough(
                         onFinish = {
                             viewmodel.onCompleteOnboarding()
-                        }
+                        },
+                        platformState = platformUiState
                     )
                 }
 
-                is OnboardingState.Completed -> NoteAppRoot()
+                is OnboardingState.Completed -> NoteAppRoot(platformUiState)
             }
         }
     }
@@ -85,7 +88,7 @@ fun App(
 
 
 @Composable
-fun NoteAppRoot() {
+fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
     NavHost( navController, startDestination = Routes.HOME, modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
         navigation(startDestination = Routes.LIST, route = Routes.HOME) {
@@ -99,7 +102,8 @@ fun NoteAppRoot() {
                     },
                     navigateToNoteDetails = { noteId ->
                         navController.navigate("${Routes.DETAILS}/$noteId")
-                    }
+                    },
+                    platformUiState = platformUiState
                 )
             }
             composable(Routes.MENU) {
