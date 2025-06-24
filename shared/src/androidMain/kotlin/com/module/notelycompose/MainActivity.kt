@@ -30,7 +30,6 @@ class MainActivity : AppCompatActivity() {
                 init()
             }) {
                 initializePermissionLauncher()
-
                 App()
             }
         }
