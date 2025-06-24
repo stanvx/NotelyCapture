@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
@@ -30,10 +28,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,59 +38,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.module.notelycompose.audio.ui.expect.Theme
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.platform.HandlePlatformBackNavigation
+import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.platform.Theme
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
-val languageCodeMap = mapOf(
-    "auto" to "Auto detect",
-    "ar" to "Arabic",
-    "ca" to "Catalan",
-    "zh" to "Chinese",
-    "nl" to "Dutch",
-    "en" to "English",
-    "fi" to "Finnish",
-    "fr" to "French",
-    "gl" to "Galician",
-    "de" to "German",
-    "id" to "Indonesian",
-    "it" to "Italian",
-    "ja" to "Japanese",
-    "ko" to "Korean",
-    "ms" to "Malay",
-    "no" to "Norwegian",
-    "pl" to "Polish",
-    "pt" to "Portuguese",
-    "ru" to "Russian",
-    "es" to "Spanish",
-    "sv" to "Swedish",
-    "tl" to "Tagalog",
-    "th" to "Thai",
-    "tr" to "Turkish",
-    "uk" to "Ukrainian",
-    "vi" to "Vietnamese",
-)
 
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit,
-    selectedTheme: Theme,
-    selectedLanguage: String,
-    onThemeSelected: (Theme) -> Unit,
-    onLanguageClicked: (Pair<String, String>) -> Unit
+    navigateBack: () -> Unit,
+    navigateToLanguages: () -> Unit,
+    preferencesRepository: PreferencesRepository = koinInject()
 ) {
-    var showLanguageScreen by remember { mutableStateOf(false) }
+    val language by preferencesRepository.getDefaultTranscriptionLanguage()
+        .collectAsState(languageCodeMap.entries.first().key)
+    val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
+    val coroutineScope = rememberCoroutineScope()
 
-    if (showLanguageScreen) {
-        LanguageSelectionScreen(
-            onBackPressed = {
-                showLanguageScreen = false
-            },
-            onLanguageClicked = onLanguageClicked,
-            languageCodeMap = languageCodeMap,
-            previousSelectedLanguage = selectedLanguage
-        )
-    } else {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -101,7 +64,7 @@ fun SettingsScreen(
         ) {
             // Header
             SettingsHeader(
-                onDismiss = onNavigateBack
+                onDismiss = navigateBack
             )
 
             LazyColumn(
@@ -110,27 +73,24 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(32.dp)
             ) {
                 item {
-                    LanguageRegionSection(onShowLanguageScreen = { onShow ->
-                        showLanguageScreen = onShow
-                    },
-                        selectedLanguage = selectedLanguage
+                    LanguageRegionSection(
+                        navigateToLanguages = navigateToLanguages,
+                        selectedLanguage = language
                     )
                 }
 
                 item {
                     AppearanceSection(
-                        selectedTheme = selectedTheme,
-                        onThemeSelected = onThemeSelected
+                        selectedTheme = Theme.valueOf(uiMode),
+                        onThemeSelected = {
+                            coroutineScope.launch {
+                                preferencesRepository.setTheme(it.name)
+                            }
+                        }
                     )
                 }
             }
         }
-    }
-
-    HandlePlatformBackNavigation(enabled = true) {
-        onNavigateBack()
-    }
-
 }
 
 @Composable
@@ -179,7 +139,7 @@ private fun SettingsHeader(
 
 @Composable
 private fun LanguageRegionSection(
-    onShowLanguageScreen: (Boolean) -> Unit,
+    navigateToLanguages: () -> Unit,
     selectedLanguage: String
 ) {
     Column {
@@ -192,7 +152,7 @@ private fun LanguageRegionSection(
         )
 
         TranscriptionLanguageItem(
-            onShowLanguageScreen = onShowLanguageScreen,
+            navigateToLanguages = navigateToLanguages,
             selectedLanguage = selectedLanguage
         )
     }
@@ -200,7 +160,7 @@ private fun LanguageRegionSection(
 
 @Composable
 fun TranscriptionLanguageItem(
-    onShowLanguageScreen: (Boolean) -> Unit,
+    navigateToLanguages: () -> Unit,
     selectedLanguage: String
 ) {
     Column(
@@ -224,7 +184,7 @@ fun TranscriptionLanguageItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onShowLanguageScreen(true) }
+                .clickable { navigateToLanguages() }
                 .border(
                     2.dp,
                     LocalCustomColors.current.bodyContentColor,
@@ -264,7 +224,7 @@ fun TranscriptionLanguageItem(
                     }
 
                     Text(
-                        text = languageCodeMap[selectedLanguage] ?:"auto",
+                        text = languageCodeMap[selectedLanguage] ?:"en",
                         fontSize = 16.sp,
                         color = LocalCustomColors.current.bodyContentColor,
                         modifier = Modifier.padding(start = 12.dp)

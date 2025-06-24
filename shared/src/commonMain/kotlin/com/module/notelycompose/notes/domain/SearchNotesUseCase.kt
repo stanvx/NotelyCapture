@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.domain
 
+
 import com.module.notelycompose.core.CommonFlow
 import com.module.notelycompose.core.asFlow
 import com.module.notelycompose.core.toCommonFlow

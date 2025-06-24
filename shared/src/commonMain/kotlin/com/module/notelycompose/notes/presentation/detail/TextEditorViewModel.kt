@@ -2,7 +2,9 @@ package com.module.notelycompose.notes.presentation.detail
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import com.module.notelycompose.audio.ui.expect.deleteFile
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.platform.deleteFile
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -42,13 +44,11 @@ class TextEditorViewModel (
     private val editorPresentationToUiStateMapper: EditorPresentationToUiStateMapper,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    private val textEditorHelper: TextEditorHelper,
-    coroutineScope: CoroutineScope? = null
-) {
+    private val textEditorHelper: TextEditorHelper
+) :ViewModel(){
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
     val editorPresentationState: StateFlow<EditorPresentationState> = _editorPresentationState
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
     private var _currentNoteId = MutableStateFlow<Long?>(ID_NOT_SET)
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
 
