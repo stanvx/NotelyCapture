@@ -91,7 +91,7 @@ fun OnboardingWalkthrough(
             .background(pages[pagerState.currentPage].backgroundColor)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Status Bar Spacer

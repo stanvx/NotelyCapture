@@ -84,11 +84,12 @@ class AudioRecorderViewModel(
     }
 
     fun onStopRecording() {
+        println("inside stop recording ${audioRecorder.isRecording()}")
         if (audioRecorder.isRecording()) {
             audioRecorder.stopRecording()
             val recordingPath = audioRecorder.getRecordingFilePath()
+            println("%%%%%%%%%%% 2${recordingPath}")
             stopCounter()
-
             _audioRecorderPresentationState.update { current ->
                 current.copy(recordingPath = recordingPath)
             }

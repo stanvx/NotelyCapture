@@ -1,6 +1,7 @@
 package com.module.notelycompose.platform
 
 import kotlinx.cinterop.*
+import kotlinx.cinterop.nativeHeap.alloc
 import platform.Foundation.*
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AVFAudio.AVAudioQualityHigh
@@ -91,17 +92,16 @@ actual class AudioRecorder {
             AVNumberOfChannelsKey to 1,
             AVEncoderAudioQualityKey to AVAudioQualityHigh,
         )
+            audioRecorder = AVAudioRecorder(recordingURL, settings, null)
+            if (audioRecorder?.prepareToRecord() == true) {
+                audioRecorder?.record()
+                isCurrentlyPaused = false
+                println("Recording started successfully ")
+            } else {
+                println("Failed to prepare recording")
+                audioRecorder = null
+            }
 
-        audioRecorder = AVAudioRecorder(recordingURL, settings, null)
-
-        if (audioRecorder?.prepareToRecord() == true) {
-            audioRecorder?.record()
-            isCurrentlyPaused = false
-            println("Recording started successfully")
-        } else {
-            println("Failed to prepare recording")
-            audioRecorder = null
-        }
     }
 
     @OptIn(ExperimentalForeignApi::class)

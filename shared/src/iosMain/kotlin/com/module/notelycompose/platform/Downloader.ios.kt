@@ -11,7 +11,7 @@ actual class Downloader {
 
 
 
-    actual fun startDownload(url: String, fileName: String) {
+    actual suspend fun startDownload(url: String, fileName: String) {
         val (session, delegate) = createDownloadSession(fileName)
         backgroundSession = session
         downloadDelegate = delegate
@@ -19,7 +19,7 @@ actual class Downloader {
         task?.resume()
     }
 
-    actual fun hasRunningDownload(): Boolean {
+    actual suspend fun hasRunningDownload(): Boolean {
         return false
     }
 

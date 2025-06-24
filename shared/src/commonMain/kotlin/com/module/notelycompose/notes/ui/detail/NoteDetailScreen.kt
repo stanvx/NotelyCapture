@@ -121,6 +121,7 @@ fun NoteDetailScreen(
     val coroutineScope = rememberCoroutineScope()
 
 
+
     LaunchedEffect(Unit) {
         if(noteId.toLong() > 0L) {
             editorViewModel.onGetNoteById(noteId)
