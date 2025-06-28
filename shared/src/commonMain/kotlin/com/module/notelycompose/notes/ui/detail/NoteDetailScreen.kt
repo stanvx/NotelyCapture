@@ -92,6 +92,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteDetailScreen(
     noteId:String,
@@ -118,6 +119,7 @@ fun NoteDetailScreen(
     var showErrorDialog by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
+    var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
 
@@ -204,7 +206,13 @@ fun NoteDetailScreen(
                         shape = CircleShape
                     ),
                     backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                    onClick = { navigateToRecorder() }
+                    onClick = {
+                        if(!editorState.recording.isRecordingExist) {
+                            navigateToRecorder()
+                        } else {
+                            showExistingRecordConfirmDialog = true
+                        }
+                    }
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,
@@ -285,6 +293,15 @@ fun NoteDetailScreen(
     if (showLoadingDialog) {
         PreparingLoadingDialog()
     }
+    ReplaceRecordingConfirmationDialog(
+        showDialog = showExistingRecordConfirmDialog,
+        onDismiss = {
+            showExistingRecordConfirmDialog = false
+        },
+        onConfirm = {
+            navigateToRecorder()
+        }
+    )
 
     if (showShareDialog) {
         ShareDialog(
@@ -316,10 +333,15 @@ private fun NoteContent(
     textEditorViewModel: TextEditorViewModel,
     audioPlayerViewModel: AudioPlayerViewModel
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    var showDeleteRecordingDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val dismissState = rememberDismissState()
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -336,11 +358,10 @@ private fun NoteContent(
             DateHeader(newNoteDateString)
 
             if (editorState.recording.isRecordingExist) {
-                val dismissState = rememberDismissState()
 
                 if (dismissState.isDismissed(DismissDirection.EndToStart)) {
                     LaunchedEffect(Unit) {
-                        textEditorViewModel.onDeleteRecord()
+                        showDeleteRecordingDialog = true
                     }
                 }
 
@@ -388,6 +409,18 @@ private fun NoteContent(
             )
         }
     }
+    DeleteRecordingConfirmationDialog(
+        showDialog = showDeleteRecordingDialog,
+        onDismiss = {
+            showDeleteRecordingDialog = false
+            coroutineScope.launch {
+                dismissState.reset()
+            }
+        },
+        onConfirm = {
+            textEditorViewModel.onDeleteRecord()
+        }
+    )
 }
 
 
