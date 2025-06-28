@@ -157,19 +157,6 @@ fun NoteDetailScreen(
             }
         }
     }
-
-// Setup when dialog appears
-    DisposableEffect(Unit) {
-        val job = coroutineScope.launch {
-            audioPlayerViewModel.setupRecorder()
-        }
-        onDispose {
-            coroutineScope.launch {
-                job.cancel()
-                audioPlayerViewModel.finishRecorder()
-            }
-        }
-    }
     Scaffold(
         topBar = {
             DetailNoteTopBar(

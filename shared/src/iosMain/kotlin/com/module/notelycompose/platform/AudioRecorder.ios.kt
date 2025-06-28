@@ -94,9 +94,9 @@ actual class AudioRecorder {
         )
             audioRecorder = AVAudioRecorder(recordingURL, settings, null)
             if (audioRecorder?.prepareToRecord() == true) {
-                audioRecorder?.record()
+                val isRecording = audioRecorder?.record()
                 isCurrentlyPaused = false
-                println("Recording started successfully ")
+                println("Recording started successfully $isRecording")
             } else {
                 println("Failed to prepare recording")
                 audioRecorder = null

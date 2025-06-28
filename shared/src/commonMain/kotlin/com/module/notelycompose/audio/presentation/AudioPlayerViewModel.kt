@@ -75,12 +75,7 @@ class AudioPlayerViewModel(
         audioPlayer.seekTo(position)
         _uiState.update { it.copy(currentPosition = position) }
     }
-    fun setupRecorder() {
 
-    }
-    fun finishRecorder() {
-
-    }
 
     private fun onStartProgressUpdates() {
         progressUpdateJob?.cancel()

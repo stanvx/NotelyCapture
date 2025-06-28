@@ -7,6 +7,7 @@ import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,12 +97,16 @@ class AudioRecorderViewModel(
         }
     }
 
-    suspend fun setupRecorder(){
-        audioRecorder.setup()
+     fun setupRecorder(){
+         viewModelScope.launch(Dispatchers.IO) {
+             audioRecorder.setup()
+         }
     }
 
-    suspend fun finishRecorder(){
-        audioRecorder.teardown()
+     fun finishRecorder(){
+         viewModelScope.launch(Dispatchers.IO) {
+             audioRecorder.teardown()
+         }
     }
 
     fun onPauseRecording() {
