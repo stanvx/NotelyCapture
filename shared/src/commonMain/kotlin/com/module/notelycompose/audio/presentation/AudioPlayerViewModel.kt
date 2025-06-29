@@ -1,7 +1,9 @@
 package com.module.notelycompose.audio.presentation
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
-import com.module.notelycompose.audio.ui.expect.PlatformAudioPlayer
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,9 +22,7 @@ import kotlinx.coroutines.launch
 class AudioPlayerViewModel(
     private val audioPlayer: PlatformAudioPlayer,
     private val mapper: AudioPlayerPresentationToUiMapper,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+):ViewModel(){
     private var progressUpdateJob: Job? = null
 
     private val _uiState = MutableStateFlow(AudioPlayerPresentationState())
@@ -75,12 +75,7 @@ class AudioPlayerViewModel(
         audioPlayer.seekTo(position)
         _uiState.update { it.copy(currentPosition = position) }
     }
-    fun setupRecorder() {
 
-    }
-    fun finishRecorder() {
-
-    }
 
     private fun onStartProgressUpdates() {
         progressUpdateJob?.cancel()
@@ -109,14 +104,18 @@ class AudioPlayerViewModel(
         progressUpdateJob = null
     }
 
+    fun onClear(){
+        onStopProgressUpdates()
+        audioPlayer.release()
+        viewModelScope.cancel()
+    }
+
     /**
      * Call this method when the ViewModel is no longer needed
      * to clean up resources and cancel ongoing jobs
      */
-    fun onClear() {
-        onStopProgressUpdates()
-        audioPlayer.release()
-        viewModelScope.cancel()
+    override fun onCleared() {
+      onClear()
     }
 }
 

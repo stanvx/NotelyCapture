@@ -1,0 +1,88 @@
+package com.module.notelycompose.di
+
+
+import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
+import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
+import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
+import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
+import com.module.notelycompose.database.NoteDatabase
+import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
+import com.module.notelycompose.notes.data.NoteSqlDelightDataSource
+import com.module.notelycompose.notes.domain.DeleteNoteById
+import com.module.notelycompose.notes.domain.GetAllNotesUseCase
+import com.module.notelycompose.notes.domain.GetLastNote
+import com.module.notelycompose.notes.domain.GetNoteById
+import com.module.notelycompose.notes.domain.InsertNoteUseCase
+import com.module.notelycompose.notes.domain.NoteDataSource
+import com.module.notelycompose.notes.domain.SearchNotesUseCase
+import com.module.notelycompose.notes.domain.UpdateNoteUseCase
+import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
+import com.module.notelycompose.notes.domain.mapper.TextFormatMapper
+import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
+import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.notes.presentation.helpers.TextEditorHelper
+import com.module.notelycompose.notes.presentation.list.NoteListViewModel
+import com.module.notelycompose.notes.presentation.list.mapper.NotesFilterMapper
+import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUiStateMapper
+import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
+import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
+import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
+import com.module.notelycompose.platform.presentation.PlatformViewModel
+import com.module.notelycompose.transcription.TranscriptionViewModel
+import org.koin.compose.viewmodel.dsl.viewModel
+import org.koin.core.module.Module
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.module
+
+
+internal expect val platformModule: Module
+
+val appModule = module {
+
+    single<NoteDataSource> {
+        NoteSqlDelightDataSource(
+            database = NoteDatabase(get())
+        )
+    }
+
+}
+
+val mapperModule = module {
+    single { EditorPresentationToUiStateMapper() }
+    single { AudioPlayerPresentationToUiMapper() }
+    single { AudioRecorderPresentationToUiMapper() }
+    single { NoteDomainMapper(get()) }
+    single { TextFormatMapper() }
+    single { NotesFilterMapper() }
+    single { NotePresentationMapper() }
+    single { TextFormatPresentationMapper() }
+    single { TextAlignPresentationMapper() }
+    single { TextEditorHelper() }
+}
+val repositoryModule = module {
+    singleOf(::PreferencesRepository)
+}
+
+val viewModelModule = module {
+    viewModel { OnboardingViewModel(get()) }
+    viewModel { NoteListViewModel(get(), get(), get(), get()) }
+    viewModel { PlatformViewModel(get(), get()) }
+    viewModel { TranscriptionViewModel(get(), get()) }
+    viewModel { TextEditorViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { NoteDetailScreenViewModel(get(), get(),get(), get(), get(), get(), get()) }
+    viewModel { ModelDownloaderViewModel(get(), get()) }
+    viewModel { AudioRecorderViewModel(get(), get()) }
+    viewModel { AudioPlayerViewModel(get(), get()) }
+}
+
+val useCaseModule = module {
+    factory { DeleteNoteById(get()) }
+    factory { GetAllNotesUseCase(get(), get()) }
+    factory { GetLastNote(get(), get()) }
+    factory { GetNoteById(get(), get()) }
+    factory { InsertNoteUseCase(get(), get(), get()) }
+    factory { SearchNotesUseCase(get(), get()) }
+    factory { UpdateNoteUseCase(get(), get(), get()) }
+}
