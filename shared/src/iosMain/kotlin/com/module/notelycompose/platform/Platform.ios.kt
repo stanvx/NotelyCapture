@@ -31,3 +31,9 @@ class IOSPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = IOSPlatform()
+
+actual fun isDebugMode(): Boolean {
+    // TODO: use correct implementation
+    // return platform.Foundation.DEBUG != 0
+    return false
+}

@@ -1,5 +1,6 @@
 package com.module.notelycompose.platform
 
+import com.module.notelycompose.core.debugPrintln
 import kotlinx.cinterop.*
 import kotlinx.cinterop.nativeHeap.alloc
 import platform.Foundation.*
@@ -42,7 +43,7 @@ actual class AudioRecorder {
             )
             recordingSession.setActive(true, null)
         } catch (e: Exception) {
-            println("Audio session setup failed: ${e.message}")
+            debugPrintln{"Audio session setup failed: ${e.message}"}
         }
     }
 
@@ -60,7 +61,7 @@ actual class AudioRecorder {
         try {
             recordingSession.setActive(false, null)
         } catch (e: Exception) {
-            println("Audio session teardown failed: ${e.message}")
+            debugPrintln{"Audio session teardown failed: ${e.message}"}
         }
     }
 
@@ -68,21 +69,21 @@ actual class AudioRecorder {
     actual fun startRecording() {
         // 1. Request permissions early
         if (!hasRecordingPermission()) {
-            println("Recording permission not granted")
+            debugPrintln{"Recording permission not granted"}
             return
         }
 
         val randomNumber = Random.nextInt(100000, 999999)
         val fileName = "$RECORDING_PREFIX$randomNumber$RECORDING_EXTENSION"
 
-        println("Start Recording: $fileName")
+        debugPrintln{"Start Recording: $fileName"}
         val documentsDirectory = NSFileManager.defaultManager.URLsForDirectory(
             NSDocumentDirectory,
             NSUserDomainMask
         ).first() as NSURL
 
         this.recordingURL = documentsDirectory.URLByAppendingPathComponent(fileName) ?: run {
-            println("Failed to create recording URL")
+            debugPrintln{"Failed to create recording URL"}
             return
         }
 
@@ -96,9 +97,9 @@ actual class AudioRecorder {
             if (audioRecorder?.prepareToRecord() == true) {
                 val isRecording = audioRecorder?.record()
                 isCurrentlyPaused = false
-                println("Recording started successfully $isRecording")
+                debugPrintln{"Recording started successfully $isRecording"}
             } else {
-                println("Failed to prepare recording")
+                debugPrintln{"Failed to prepare recording"}
                 audioRecorder = null
             }
 
@@ -143,7 +144,7 @@ actual class AudioRecorder {
             audioRecorder?.let { recorder ->
                 recorder.pause()
                 isCurrentlyPaused = true
-                println("Recording paused successfully")
+                debugPrintln{"Recording paused successfully"}
             }
         }
     }
@@ -153,7 +154,7 @@ actual class AudioRecorder {
             audioRecorder?.let { recorder ->
                 recorder.record()
                 isCurrentlyPaused = false
-                println("Recording resumed successfully")
+                debugPrintln{"Recording resumed successfully"}
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.module.notelycompose.platform
 
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.whisper.WhisperCallback
 import com.module.notelycompose.whisper.WhisperContext
 import kotlinx.cinterop.ByteVar
@@ -35,7 +36,7 @@ actual class Transcriber{
 
 
     actual suspend fun initialize() {
-        println("speech: initialize model")
+        debugPrintln{"speech: initialize model"}
         if(!isModelLoaded)
         loadBaseModel()
     }
@@ -43,15 +44,15 @@ actual class Transcriber{
     private fun loadBaseModel(){
         try {
             whisperContext = null
-            println("Loading model...")
+            debugPrintln{"Loading model..."}
             val modelPath = getModelPath()
             whisperContext = WhisperContext.createContext(modelPath)
-            println("Loaded model ${modelPath.substringAfterLast("/")}")
+            debugPrintln{"Loaded model ${modelPath.substringAfterLast("/")}"}
             isModelLoaded = true
             canTranscribe = true
 
         } catch (e: Throwable) {
-            println("========================== ${e.message}")
+            debugPrintln{"========================== ${e.message}"}
             e.printStackTrace()
         }
     }
@@ -86,17 +87,17 @@ actual class Transcriber{
         onComplete : () -> Unit
     ) {
         if (!canTranscribe) {
-            println("Model not loaded yet")
+            debugPrintln{"Model not loaded yet"}
             return
         }
 
         canTranscribe = false
 
         try {
-            println("Reading wave samples... ")
+            debugPrintln{"Reading wave samples... "}
             val data = decodeWaveFile(filePath)
-            println("${data.size / (16000 / 1000)} ms\n")
-            println("Transcribing data...\n")
+            debugPrintln{"${data.size / (16000 / 1000)} ms\n"}
+            debugPrintln{"Transcribing data...\n"}
            whisperContext?.fullTranscribe(data, language, object : WhisperCallback{
                 override fun onProgress(progress: Int) {
                     onProgress(progress)
@@ -113,7 +114,7 @@ actual class Transcriber{
             })
         } catch (e: Exception) {
             e.printStackTrace()
-            println("${e.message}\n")
+            debugPrintln{"${e.message}\n"}
         }
 
         canTranscribe = true

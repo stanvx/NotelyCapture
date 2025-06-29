@@ -1,5 +1,6 @@
 package com.module.notelycompose.whisper
 
+import com.module.notelycompose.core.debugPrintln
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSError
@@ -49,7 +50,7 @@ class DownloadDelegate(
         downloadTask: NSURLSessionDownloadTask,
         didFinishDownloadingToURL: NSURL
     ) {
-        println("Download finished at: ${didFinishDownloadingToURL.path}")
+        debugPrintln{"Download finished at: ${didFinishDownloadingToURL.path}"}
 
             try {
                 val fileManager = NSFileManager.defaultManager
@@ -60,11 +61,11 @@ class DownloadDelegate(
 
                 documentsDirectory.URLByAppendingPathComponent(fileName)?.let {
                     fileManager.copyItemAtURL(didFinishDownloadingToURL, it, null)
-                    println("Writing to $it completed")
+                    debugPrintln{"Writing to $it completed"}
                     onSuccess?.invoke()
                 }
             } catch (e: Exception) {
-                println("Error: ${e.message}")
+                debugPrintln{"Error: ${e.message}"}
             }
     }
 
@@ -74,7 +75,7 @@ class DownloadDelegate(
         task: NSURLSessionTask,
         didCompleteWithError: NSError?
     ) {
-        println("Error --------------- ${didCompleteWithError?.description}")
+        debugPrintln{"Error --------------- ${didCompleteWithError?.description}"}
         if(didCompleteWithError != null)
         onFailed?.invoke(didCompleteWithError.description?:"Error")
     }

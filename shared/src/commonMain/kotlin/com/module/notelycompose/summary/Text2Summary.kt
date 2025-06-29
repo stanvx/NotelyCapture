@@ -16,6 +16,7 @@
 
 package com.module.notelycompose.summary
 
+import com.module.notelycompose.core.debugPrintln
 import kotlin.jvm.JvmStatic
 
 // The Text2Summary API for Android.
@@ -30,7 +31,7 @@ class Text2Summary {
             compressionRate: Float,
         ): String {
             val sentences = Tokenizer.textToSentences(Tokenizer.removeLineBreaks(text))
-            println("Sentences : ${sentences.size}")
+            debugPrintln{"Sentences : ${sentences.size}"}
             val tfidfSummarizer = TFIDFSummarizer()
             val summarySentenceIndices = tfidfSummarizer.compute(text, compressionRate)
             return buildString(sentences, summarySentenceIndices).trim()

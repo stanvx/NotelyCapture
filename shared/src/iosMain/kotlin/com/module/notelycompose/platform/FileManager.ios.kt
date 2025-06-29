@@ -1,5 +1,6 @@
 package com.module.notelycompose.platform
 
+import com.module.notelycompose.core.debugPrintln
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
@@ -16,10 +17,10 @@ actual fun deleteFile(filePath: String): Boolean {
         val success = NSFileManager.defaultManager.removeItemAtPath(filePath, error.ptr)
 
         if (!success) {
-            println("Failed to delete file at path: $filePath")
-            println("Error: ${error.value?.localizedDescription}")
+            debugPrintln{"Failed to delete file at path: $filePath"}
+            debugPrintln{"Error: ${error.value?.localizedDescription}"}
         } else {
-            println("File deleted successfully at path: $filePath")
+            debugPrintln{"File deleted successfully at path: $filePath"}
         }
 
         return success

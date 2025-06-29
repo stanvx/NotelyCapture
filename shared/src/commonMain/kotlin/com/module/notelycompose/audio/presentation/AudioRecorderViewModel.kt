@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
+import com.module.notelycompose.core.debugPrintln
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -85,11 +86,11 @@ class AudioRecorderViewModel(
     }
 
     fun onStopRecording() {
-        println("inside stop recording ${audioRecorder.isRecording()}")
+        debugPrintln{"inside stop recording ${audioRecorder.isRecording()}"}
         if (audioRecorder.isRecording()) {
             audioRecorder.stopRecording()
             val recordingPath = audioRecorder.getRecordingFilePath()
-            println("%%%%%%%%%%% 2${recordingPath}")
+            debugPrintln{"%%%%%%%%%%% 2${recordingPath}"}
             stopCounter()
             _audioRecorderPresentationState.update { current ->
                 current.copy(recordingPath = recordingPath)

@@ -3,6 +3,7 @@ package com.module.notelycompose.platform
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
+import io.github.aakira.napier.BuildConfig
 
 class AndroidPlatform(
     private val version: String,
@@ -32,3 +33,5 @@ actual fun getPlatform(): Platform = AndroidPlatform(
     version = "",
     context = null
 )
+
+actual fun isDebugMode(): Boolean = BuildConfig.DEBUG

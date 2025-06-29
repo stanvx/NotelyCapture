@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Environment
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.utils.decodeWaveFile
 import com.whispercpp.whisper.WhisperCallback
 import com.whispercpp.whisper.WhisperContext
@@ -56,12 +57,12 @@ actual class Transcriber(
 
 
     actual suspend fun initialize() {
-        println("speech: initialize model")
+        debugPrintln{"speech: initialize model"}
         loadBaseModel()
     }
 
     private fun loadBaseModel(){
-        println("Loading model...\n")
+        debugPrintln{"Loading model...\n"}
         val firstModel = File(modelsPath, "ggml-base.bin")
         whisperContext = WhisperContext.createContextFromFile(firstModel.absolutePath)
         canTranscribe = true
@@ -103,11 +104,11 @@ actual class Transcriber(
         canTranscribe = false
 
         try {
-            println("Reading wave samples... ")
+            debugPrintln{"Reading wave samples... "}
             val file = File(filePath)
             val data = decodeWaveFile(file)
-            println("${data.size / (16000 / 1000)} ms\n")
-            println("Transcribing data...\n")
+            debugPrintln{"${data.size / (16000 / 1000)} ms\n"}
+            debugPrintln{"Transcribing data...\n"}
             val start = System.currentTimeMillis()
             val text = whisperContext?.transcribeData(data, language, callback = object : WhisperCallback{
                 override fun onNewSegment(startMs: Long, endMs: Long, text: String) {
@@ -124,10 +125,10 @@ actual class Transcriber(
 
             })
             val elapsed = System.currentTimeMillis() - start
-            println("Done ($elapsed ms): \n$text\n")
+            debugPrintln{"Done ($elapsed ms): \n$text\n"}
         } catch (e: Exception) {
             e.printStackTrace()
-            println("${e.localizedMessage}\n")
+            debugPrintln{"${e.localizedMessage}\n"}
         }
 
         canTranscribe = true

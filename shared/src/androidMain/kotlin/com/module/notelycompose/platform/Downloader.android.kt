@@ -11,6 +11,7 @@ import android.os.Environment
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -137,13 +138,13 @@ actual class Downloader(
                                         cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)
                                     )
                                     val uri = uriString.toUri()
-                                    println("Download complete: $uri")
+                                    debugPrintln {"Download complete: $uri"}
                                     onSuccess()
                                 } else {
                                     // Handle failed download
                                     val reason =
                                         cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
-                                    println("Download failed: $reason")
+                                    debugPrintln{"Download failed: $reason"}
                                     onFailed(getErrorTextFromReason(reason))
                                 }
                             }
@@ -152,7 +153,7 @@ actual class Downloader(
 
                         DownloadManager.ACTION_NOTIFICATION_CLICKED -> {
                             // User clicked on download notification
-                            println("Opening downloads...")
+                            debugPrintln{"Opening downloads..."}
                         }
                     }
                     mainContext.unregisterReceiver(this)

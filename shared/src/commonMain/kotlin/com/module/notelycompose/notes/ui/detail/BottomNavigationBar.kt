@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.extensions.showKeyboard
@@ -160,7 +161,7 @@ fun BottomNavigationBar(
                 )
             }
             IconButton(onClick = {
-                println("****************** ${imeHeight}")
+                debugPrintln{"****************** ${imeHeight}"}
                 textFieldFocusRequester.showKeyboard(imeHeight>0, keyboardController)
             }) {
                 Icon(

@@ -1,5 +1,6 @@
 package com.module.notelycompose.platform
 
+import com.module.notelycompose.core.debugPrintln
 import platform.AVFAudio.AVAudioPlayer
 import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
@@ -28,7 +29,7 @@ actual class PlatformAudioPlayer actual constructor() {
         return try {
             val fileManager = NSFileManager.defaultManager
             if (!fileManager.fileExistsAtPath(filePath)) {
-                println("Error: File does not exist at path: $filePath")
+                debugPrintln{"Error: File does not exist at path: $filePath"}
                 return ERROR_DURATION
             }
             val url = NSURL.fileURLWithPath(filePath)
@@ -38,7 +39,7 @@ actual class PlatformAudioPlayer actual constructor() {
 
                 if (player == null) {
                     val error = errorPtr.value
-                    println("Error creating audio player: ${error?.localizedDescription ?: "Unknown error"}")
+                    debugPrintln{"Error creating audio player: ${error?.localizedDescription ?: "Unknown error"}"}
                     return ERROR_DURATION
                 }
 
@@ -48,7 +49,7 @@ actual class PlatformAudioPlayer actual constructor() {
             }
 
         } catch (e: Exception) {
-            println("Exception preparing audio player: ${e.message ?: "Unknown error"}")
+            debugPrintln{"Exception preparing audio player: ${e.message ?: "Unknown error"}"}
             e.printStackTrace()
             0
         }

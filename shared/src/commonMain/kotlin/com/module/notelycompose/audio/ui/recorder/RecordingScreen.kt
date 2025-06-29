@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
@@ -119,7 +120,7 @@ fun RecordingScreen(
             ScreenState.Recording -> RecordingInProgressScreen(
                 counterTimeString = recordingState.recordCounterString,
                 onStopRecording = {
-                    println("onStop recording")
+                    debugPrintln{"onStop recording"}
                     viewModel.onStopRecording()
                     screenState = ScreenState.Success
                 },
@@ -132,7 +133,7 @@ fun RecordingScreen(
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     delay(2000)
-                    println("%%%%%%%%%%% ${recordingState.recordingPath}")
+                    debugPrintln{"%%%%%%%%%%% ${recordingState.recordingPath}"}
                     editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
                     navigateBack()
                 }

@@ -2,6 +2,7 @@ package com.module.notelycompose.transcription
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.platform.Transcriber
 import com.module.notelycompose.summary.Text2Summary
@@ -34,7 +35,7 @@ class TranscriptionViewModel(
 
 
     fun startRecognizer(filePath: String) {
-        println("startRecognizer =========================")
+        debugPrintln{"startRecognizer ========================="}
         viewModelScope.launch(Dispatchers.Default) {
             if (transcriber.hasRecordingPermission()) {
                 _uiState.update { current ->
@@ -42,7 +43,7 @@ class TranscriptionViewModel(
                 }
                 transcriber.start(
                     filePath, preferencesRepository.getDefaultTranscriptionLanguage().first(), onProgress = { progress ->
-                        println("progress ========================= $progress")
+                        debugPrintln{"progress ========================= $progress"}
                         _uiState.update { current ->
                             current.copy(
                                 progress = progress
@@ -51,7 +52,7 @@ class TranscriptionViewModel(
                     }, onNewSegment = { _, _, text ->
                         
                         val delimiter = if(_uiState.value.originalText.endsWith(".")) "\n\n" else ""
-                        println("\n text ========================= $text")
+                        debugPrintln{"\n text ========================= $text"}
                         _uiState.update { current ->
                             current.copy(
                                 originalText = "${_uiState.value.originalText}$delimiter${text.trim()}".trim(),
@@ -61,7 +62,7 @@ class TranscriptionViewModel(
 
                     },
                     onComplete = {
-                        println("\n completed ========================= ")
+                        debugPrintln{"\n completed ========================= "}
                         _uiState.update {current ->
                             current.copy(
                                 inTranscription = false
