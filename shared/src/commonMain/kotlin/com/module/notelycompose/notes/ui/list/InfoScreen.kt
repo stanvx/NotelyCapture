@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,14 +13,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LifecycleEventObserver
 import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.resources.vectors.IcFaq
 import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.web.ui.WebViewScreen
@@ -39,7 +41,10 @@ import notelycompose.shared.generated.resources.privacy
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.qualifier.named
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
 
 /**
  * A settings bottom sheet that displays a list of options and can navigate to web content
@@ -48,8 +53,11 @@ import org.koin.core.qualifier.named
 fun InfoScreen(
     navigateBack: () -> Unit,
     onNavigateToWebPage: (String, String) -> Unit,
-    appVersion: String = getKoin().get(named("AppVersion"))
+    appVersion: String = getKoin().get(named("AppVersion")),
+    platformViewModel: PlatformViewModel = koinViewModel(),
+    browserLauncher: BrowserLauncher = koinInject()
 ) {
+    val isAndroid = platformViewModel.state.value.isAndroid
     var showWebView by remember { mutableStateOf(false) }
     var currentPageTitle by remember { mutableStateOf("") }
     var currentPageUrl by remember { mutableStateOf("") }
@@ -66,13 +74,33 @@ fun InfoScreen(
     val privacyUrl  = infoBaseUrl + stringResource(Res.string.privacy_url)
     val appVersionStr = "Version $appVersion"
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Reset any problematic state when returning to the app
+                    showWebView = false
+                }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     if (showWebView) {
-        WebViewScreen(
-            title = currentPageTitle,
-            url = currentPageUrl,
-            onBackPressed = { showWebView = false }
-        )
+        if(isAndroid) {
+            browserLauncher.openUrl(currentPageUrl)
+        } else {
+            WebViewScreen(
+                title = currentPageTitle,
+                url = currentPageUrl,
+                onBackPressed = { showWebView = false }
+            )
+        }
     } else {
         Column(
             modifier = Modifier
