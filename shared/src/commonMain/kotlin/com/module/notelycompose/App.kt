@@ -37,6 +37,9 @@ import com.module.notelycompose.transcription.TranscriptionScreen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
 
 private const val NOTE_ID_PARAM = "noteId"
 private const val DEFAULT_NOTE_ID = "0"
@@ -47,10 +50,7 @@ private const val ROUTE_SEPARATOR = "/"
 fun App(
     preferencesRepository: PreferencesRepository = koinInject()
 ) {
-
     val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
-
-
     MyApplicationTheme(
         darkTheme = when (uiMode) {
             Theme.DARK.name -> true
@@ -58,8 +58,6 @@ fun App(
             else -> isSystemInDarkTheme()
         }
     ) {
-
-
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = LocalCustomColors.current.bodyBackgroundColor
@@ -106,7 +104,11 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     platformUiState = platformUiState
                 )
             }
-            composable(Routes.MENU) {
+            composable(
+                route = Routes.MENU,
+                enterTransition = { transitionSlideInVertically() },
+                exitTransition = { transitionSlideOutVertically() }
+            ) {
                 InfoScreen(
                     navigateBack = { navController.popBackStack() },
                     onNavigateToWebPage = { title, url ->
@@ -114,7 +116,11 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     }
                 )
             }
-            composable(Routes.SETTINGS) {
+            composable(
+                route = Routes.SETTINGS,
+                enterTransition = { transitionSlideInVertically() },
+                exitTransition = { transitionSlideOutVertically() }
+            ) {
                 SettingsScreen(
                     navigateBack = { navController.popBackStack() },
                     navigateToLanguages = { navController.navigate(Routes.LANGUAGE) }
@@ -159,17 +165,24 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
                 )
             }
-            composable(Routes.RECORDER) {
+            composable(
+                route = Routes.RECORDER
+            ) {
                 RecordingScreen(
                     navigateBack = { navController.popBackStack() },
                     editorViewModel = koinViewModel(viewModelStoreOwner = navController.getBackStackEntry(Routes.DETAILS_GRAPH))
                 )
             }
         }
-
-
     }
-
-
-
 }
+
+fun transitionSlideInVertically() = slideInVertically(
+    initialOffsetY = { it },
+    animationSpec = tween(durationMillis = 300)
+)
+
+fun transitionSlideOutVertically() = slideOutVertically(
+    targetOffsetY = { it },
+    animationSpec = tween(durationMillis = 300)
+)
