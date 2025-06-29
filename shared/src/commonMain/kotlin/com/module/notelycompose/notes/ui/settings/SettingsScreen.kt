@@ -44,7 +44,6 @@ import com.module.notelycompose.platform.Theme
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
-
 @Composable
 fun SettingsScreen(
     navigateBack: () -> Unit,
@@ -56,41 +55,40 @@ fun SettingsScreen(
     val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
     val coroutineScope = rememberCoroutineScope()
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalCustomColors.current.bodyBackgroundColor)
+    ) {
+        // Header
+        SettingsHeader(
+            onDismiss = navigateBack
+        )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(LocalCustomColors.current.bodyBackgroundColor)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            // Header
-            SettingsHeader(
-                onDismiss = navigateBack
-            )
+            item {
+                LanguageRegionSection(
+                    navigateToLanguages = navigateToLanguages,
+                    selectedLanguage = language
+                )
+            }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(24.dp),
-                verticalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-                item {
-                    LanguageRegionSection(
-                        navigateToLanguages = navigateToLanguages,
-                        selectedLanguage = language
-                    )
-                }
-
-                item {
-                    AppearanceSection(
-                        selectedTheme = Theme.valueOf(uiMode),
-                        onThemeSelected = {
-                            coroutineScope.launch {
-                                preferencesRepository.setTheme(it.name)
-                            }
+            item {
+                AppearanceSection(
+                    selectedTheme = Theme.valueOf(uiMode),
+                    onThemeSelected = {
+                        coroutineScope.launch {
+                            preferencesRepository.setTheme(it.name)
                         }
-                    )
-                }
+                    }
+                )
             }
         }
+    }
 }
 
 @Composable

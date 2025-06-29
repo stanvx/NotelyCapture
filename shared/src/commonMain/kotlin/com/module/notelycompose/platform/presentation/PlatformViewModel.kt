@@ -27,15 +27,16 @@ class PlatformViewModel (
         )
     }
 
-
-     fun shareText(text: String) {
-         if (text.isNotBlank())
+    fun shareText(text: String) {
+         if (text.isNotBlank()) {
              platformUtils.shareText(text)
+         }
     }
 
-     fun shareRecording(path: String) {
-         if (path.isNotBlank())
-         platformUtils.shareRecording(path)
+    fun shareRecording(path: String) {
+         if (path.isNotBlank()) {
+             platformUtils.shareRecording(path)
+         }
     }
 }
 

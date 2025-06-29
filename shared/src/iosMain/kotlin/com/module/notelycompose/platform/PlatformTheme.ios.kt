@@ -8,7 +8,6 @@ import platform.UIKit.UIUserInterfaceStyle
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 
-
 actual class PlatformUtils{
 
     actual fun shareText(text: String) {

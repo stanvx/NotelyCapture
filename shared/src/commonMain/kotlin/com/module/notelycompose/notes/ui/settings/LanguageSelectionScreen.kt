@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Divider
@@ -27,6 +28,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,13 +79,14 @@ val languageCodeMap = mapOf(
     "vi" to "Vietnamese",
 )
 
-
 @Composable
 fun LanguageSelectionScreen(
     navigateBack: () -> Unit,
     preferencesRepository: PreferencesRepository = koinInject()
 ) {
-
+    // TODO: move this implementation to a ViewModel
+    val previousSelectedLanguage by preferencesRepository.getDefaultTranscriptionLanguage()
+        .collectAsState(languageCodeMap.entries.first().key)
     val coroutineScope = rememberCoroutineScope()
     var searchText by remember { mutableStateOf("") }
     val filteredLanguages by derivedStateOf {
@@ -93,149 +96,164 @@ fun LanguageSelectionScreen(
         }
     }
 
-    if (getPlatform().isAndroid) {
-        AndroidNoteTopBar(
-            title = "",
-            onNavigateBack = navigateBack
-        )
-    } else {
-        IOSNoteTopBar(
-            onNavigateBack = navigateBack
-        )
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(LocalCustomColors.current.bodyBackgroundColor)
-            .padding(16.dp)
     ) {
-        // Title
-        Text(
-            text = "Select Language",
-            color = LocalCustomColors.current.bodyContentColor,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium,
+        if (getPlatform().isAndroid) {
+            AndroidNoteTopBar(
+                title = "",
+                onNavigateBack = navigateBack
+            )
+        } else {
+            IOSNoteTopBar(
+                onNavigateBack = navigateBack
+            )
+        }
+        // content
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
-
-        // Search Bar
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = { searchText = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            placeholder = {
-                Text(
-                    text = "Search",
-                    color = LocalCustomColors.current.languageSearchBorderColor
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = LocalCustomColors.current.languageSearchBorderColor
-                )
-            },
-            trailingIcon = {
-                if (searchText.isNotEmpty()) {
-                    IconButton(
-                        onClick = { searchText = "" },
-                        modifier = Modifier
-                            .size(20.dp)
-                            .background(
-                                LocalCustomColors.current.languageSearchCancelButtonColor.copy(alpha = 0.3f),
-                                CircleShape
-                            )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear",
-                            tint = LocalCustomColors.current.languageSearchCancelIconTintColor,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = LocalCustomColors.current.languageSearchUnfocusedColor,
-                unfocusedTextColor = LocalCustomColors.current.languageSearchUnfocusedColor,
-                focusedBorderColor = LocalCustomColors.current.languageSearchBorderColor,
-                unfocusedBorderColor = LocalCustomColors.current.languageSearchBorderColor,
-                cursorColor = LocalCustomColors.current.languageSearchUnfocusedColor
-            ),
-            shape = RoundedCornerShape(48.dp),
-            singleLine = true
-        )
-
-        // Language List
-        Text(
-            text = "SUPPORTED LANGUAGES",
-            color = LocalCustomColors.current.languageListHeaderColor,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp)
-        )
-
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp))
+                .fillMaxSize()
+                .background(LocalCustomColors.current.bodyBackgroundColor)
+                .padding(16.dp)
         ) {
-            if (filteredLanguages.isEmpty()) {
-                Text(
-                    text = "No languages found",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    color = LocalCustomColors.current.languageListTextColor
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    itemsIndexed(filteredLanguages.entries.toList()) { index, languageEntry ->
-                        Surface(
+            // Title
+            Text(
+                text = "Select Language",
+                color = LocalCustomColors.current.bodyContentColor,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            // Search Bar
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                placeholder = {
+                    Text(
+                        text = "Search",
+                        color = LocalCustomColors.current.languageSearchBorderColor
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = LocalCustomColors.current.languageSearchBorderColor
+                    )
+                },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(
+                            onClick = { searchText = "" },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    coroutineScope.launch {
-                                        preferencesRepository.setDefaultTranscriptionLanguage(languageEntry.key)
-                                    }
-                                    navigateBack()
-                                },
-                            color = LocalCustomColors.current.languageListBackgroundColor,
+                                .size(20.dp)
+                                .background(
+                                    LocalCustomColors.current.languageSearchCancelButtonColor.copy(alpha = 0.3f),
+                                    CircleShape
+                                )
                         ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = languageEntry.value,
-                                        color = LocalCustomColors.current.languageListTextColor,
-                                        fontSize = 16.sp,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                                if (index < filteredLanguages.size - 1) {
-                                    Divider(
-                                        thickness = 0.5.dp,
-                                        color = LocalCustomColors.current.languageListDividerColor
-                                    )
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = LocalCustomColors.current.languageSearchCancelIconTintColor,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = LocalCustomColors.current.languageSearchUnfocusedColor,
+                    unfocusedTextColor = LocalCustomColors.current.languageSearchUnfocusedColor,
+                    focusedBorderColor = LocalCustomColors.current.languageSearchBorderColor,
+                    unfocusedBorderColor = LocalCustomColors.current.languageSearchBorderColor,
+                    cursorColor = LocalCustomColors.current.languageSearchUnfocusedColor
+                ),
+                shape = RoundedCornerShape(48.dp),
+                singleLine = true
+            )
+
+            // Language List
+            Text(
+                text = "SUPPORTED LANGUAGES",
+                color = LocalCustomColors.current.languageListHeaderColor,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 4.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(LocalCustomColors.current.languageListBackgroundColor)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = RoundedCornerShape(12.dp))
+            ) {
+                if (filteredLanguages.isEmpty()) {
+                    Text(
+                        text = "No languages found",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .background(LocalCustomColors.current.languageListBackgroundColor),
+                        textAlign = TextAlign.Center,
+                        color = LocalCustomColors.current.languageListTextColor
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        itemsIndexed(filteredLanguages.entries.toList()) { index, languageEntry ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        coroutineScope.launch {
+                                            preferencesRepository.setDefaultTranscriptionLanguage(languageEntry.key)
+                                        }
+                                        navigateBack()
+                                    },
+                                color = LocalCustomColors.current.languageListBackgroundColor,
+                            ) {
+                                Column {
+                                    Row(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = languageEntry.value,
+                                            color = LocalCustomColors.current.languageListTextColor,
+                                            fontSize = 16.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if(languageEntry.key == previousSelectedLanguage) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = LocalCustomColors.current.languageListTextColor,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                    if (index < filteredLanguages.size - 1) {
+                                        Divider(
+                                            thickness = 0.5.dp,
+                                            color = LocalCustomColors.current.languageListDividerColor
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -8,11 +8,11 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.datastore.core.DataStore
 import com.module.notelycompose.onboarding.data.PreferencesRepository
+import kotlinx.coroutines.flow.first
 import java.io.File
 
-
 actual class PlatformUtils(
-    private val context:Context
+    private val context: Context
 ) {
 
     actual fun shareText(text: String) {
@@ -43,5 +43,4 @@ actual class PlatformUtils(
         context.startActivity(chooser)
 
     }
-
 }
