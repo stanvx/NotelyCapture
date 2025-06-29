@@ -1,5 +1,7 @@
 package com.module.notelycompose.onboarding.presentation
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
 import kotlinx.coroutines.CoroutineScope
@@ -11,9 +13,7 @@ import kotlinx.coroutines.launch
 
 class OnboardingViewModel(
     private val preferencesRepository: PreferencesRepository,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.Main)
+) : ViewModel(){
     private val _onboardingState = MutableStateFlow<OnboardingState>(OnboardingState.Completed)
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
@@ -45,9 +45,5 @@ class OnboardingViewModel(
                 // Handle error if needed
             }
         }
-    }
-
-    fun onCleared() {
-        // Clean up if needed
     }
 }

@@ -6,93 +6,52 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.module.notelycompose.notes.ui.list.model.NoteUiModel
+import com.module.notelycompose.notes.presentation.list.NoteListIntent
+import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.presentation.PlatformUiState
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.note_list_add_note
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun SharedNoteListScreen(
-    notes: List<NoteUiModel>,
-    onFloatingActionButtonClicked: () -> Unit,
-    onNoteClicked: (Long) -> Unit,
-    onNoteDeleteClicked: (NoteUiModel) -> Unit,
-    onFilterTabItemClicked: (String) -> Unit,
-    onSearchByKeyword: (String) -> Unit,
-    selectedTabTitle: String,
-    showEmptyContent: Boolean,
-    onInfoClicked: () -> Unit,
-    onSettingsClicked: () -> Unit,
-    isTablet: Boolean
+fun NoteListScreen(
+    navigateToSettings: () -> Unit,
+    navigateToMenu: () -> Unit,
+    navigateToNoteDetails: (String) -> Unit,
+    viewModel: NoteListViewModel = koinViewModel(),
+    platformUiState: PlatformUiState
 ) {
+    val notesListState by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
-    val coroutineScope = rememberCoroutineScope()
-    var isSettingsTapped by rememberSaveable { mutableStateOf(false) }
-    var isInfoTapped by rememberSaveable { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
 
-    // State to control bottom sheet
-    val bottomSheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        skipHalfExpanded = true
-    )
-
-    if(isInfoTapped) onInfoClicked()
-    if(isSettingsTapped) onSettingsClicked()
-
-    // TODO: remove bottom sheet as its no longer needed
-    ModalBottomSheetLayout(
-        sheetState = bottomSheetState,
-        sheetShape = RectangleShape,
-        sheetContent = {
-
-        },
-        sheetElevation = 8.dp,
-        sheetBackgroundColor = LocalCustomColors.current.backgroundViewColor,
-        // Full screen option
-        sheetContentColor = LocalCustomColors.current.bodyContentColor,
-        scrimColor = Color.Black.copy(alpha = 0.5f),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Scaffold(
+    Scaffold(
             topBar = {
                 TopBar(
                     onMenuClicked = {
-                        isSettingsTapped = false
-                        isInfoTapped = true
-                        keyboardController?.hide()
+                       navigateToMenu()
                     },
                     onSettingsClicked = {
-                        isSettingsTapped = true
-                        isInfoTapped = false
-                        keyboardController?.hide()
+                      navigateToSettings()
                     }
                 )
             },
@@ -101,7 +60,7 @@ fun SharedNoteListScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
-                        onFloatingActionButtonClicked()
+                        navigateToNoteDetails("0")
                     },
                     backgroundColor = LocalCustomColors.current.backgroundViewColor
                 ) {
@@ -127,37 +86,31 @@ fun SharedNoteListScreen(
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = {
                             focusManager.clearFocus()
-                            // Additionally, consider hiding the bottom sheet when tapping elsewhere
-                            if (bottomSheetState.isVisible) {
-                                coroutineScope.launch {
-                                    bottomSheetState.hide()
-                                }
-                            }
                         })
                     }
             ) {
                 SearchBar(
                     onSearchByKeyword = { keyword ->
-                        onSearchByKeyword(keyword)
+                        viewModel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
                     }
                 )
                 FilterTabBar(
-                    selectedTabTitle = selectedTabTitle,
+                    selectedTabTitle = notesListState.selectedTabTitle,
                     onFilterTabItemClicked = { title ->
-                        onFilterTabItemClicked(title)
+                        viewModel.onProcessIntent(NoteListIntent.OnFilterNote(title))
                     }
                 )
                 NoteList(
-                    noteList = notes,
+                    noteList = viewModel.onGetUiState(notesListState),
                     onNoteClicked = { id ->
-                        onNoteClicked(id)
+                        navigateToNoteDetails("$id")
                     },
                     onNoteDeleteClicked = {
-                        onNoteDeleteClicked(it)
+                        viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(it))
                     }
                 )
-                if(showEmptyContent) EmptyNoteUi(isTablet)
+                if(notesListState.showEmptyContent) EmptyNoteUi(platformUiState.isTablet)
             }
         }
-    }
+
 }

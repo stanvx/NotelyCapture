@@ -12,16 +12,8 @@
 		0B3BA2942DE7BC4400C7AE76 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */; };
 		0B3BA2952DE7BC4400C7AE76 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0B574A782DB5A93700D72FF5 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */; };
-		0B5B75232DECB40400DB5582 /* Theming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5B75222DECB40400DB5582 /* Theming.swift */; };
-		0B5B75252DECF52500DB5582 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B5B75242DECF52500DB5582 /* SceneDelegate.swift */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
-		7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* NoteListScreenView.swift */; };
-		97F1AB9A2DF472A900DE3B38 /* InfoScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1AB992DF472A400DE3B38 /* InfoScreenController.swift */; };
-		97F1AB9D2DF47ADE00DE3B38 /* SettingScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */; };
-		97F1ABA62DF4C65200DE3B38 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */; };
-		B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D592A559CCC00E98168 /* AppView.swift */; };
-		B60F1D602A559F7E00E98168 /* NoteDetailScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D5F2A559F7E00E98168 /* NoteDetailScreenController.swift */; };
-		B63AA3CB2A54627E00EBFFB4 /* NoteListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B63AA3CA2A54627E00EBFFB4 /* NoteListScreen.swift */; };
+		B60F1D5A2A559CCC00E98168 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60F1D592A559CCC00E98168 /* ContentView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -43,18 +35,10 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = whisper.xcframework; sourceTree = "<group>"; };
 		0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = SplashScreen.storyboard; sourceTree = "<group>"; };
-		0B5B75222DECB40400DB5582 /* Theming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theming.swift; sourceTree = "<group>"; };
-		0B5B75242DECF52500DB5582 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Notely Voice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Notely Voice.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		7555FF82242A565900829871 /* NoteListScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteListScreenView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		97F1AB992DF472A400DE3B38 /* InfoScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoScreenController.swift; sourceTree = "<group>"; };
-		97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingScreenController.swift; sourceTree = "<group>"; };
-		97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
-		B60F1D592A559CCC00E98168 /* AppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppView.swift; sourceTree = "<group>"; };
-		B60F1D5F2A559F7E00E98168 /* NoteDetailScreenController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailScreenController.swift; sourceTree = "<group>"; };
-		B63AA3CA2A54627E00EBFFB4 /* NoteListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteListScreen.swift; sourceTree = "<group>"; };
+		B60F1D592A559CCC00E98168 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,19 +81,12 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				97F1ABA42DF4C64300DE3B38 /* Extensions */,
-				97F1AB9B2DF47AD100DE3B38 /* Settings */,
-				97F1AB982DF4727E00DE3B38 /* Info */,
-				B60F1D5E2A559F6700E98168 /* detail */,
-				B60F1D5B2A559EB500E98168 /* list */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
-				B60F1D592A559CCC00E98168 /* AppView.swift */,
+				B60F1D592A559CCC00E98168 /* ContentView.swift */,
 				0B574A772DB5A93700D72FF5 /* SplashScreen.storyboard */,
-				0B5B75222DECB40400DB5582 /* Theming.swift */,
-				0B5B75242DECF52500DB5582 /* SceneDelegate.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -120,47 +97,6 @@
 				0B3BA2922DE7BC3D00C7AE76 /* whisper.xcframework */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		97F1AB982DF4727E00DE3B38 /* Info */ = {
-			isa = PBXGroup;
-			children = (
-				97F1AB992DF472A400DE3B38 /* InfoScreenController.swift */,
-			);
-			path = Info;
-			sourceTree = "<group>";
-		};
-		97F1AB9B2DF47AD100DE3B38 /* Settings */ = {
-			isa = PBXGroup;
-			children = (
-				97F1AB9C2DF47AD700DE3B38 /* SettingScreenController.swift */,
-			);
-			path = Settings;
-			sourceTree = "<group>";
-		};
-		97F1ABA42DF4C64300DE3B38 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				97F1ABA52DF4C64F00DE3B38 /* Extensions.swift */,
-			);
-			path = Extensions;
-			sourceTree = "<group>";
-		};
-		B60F1D5B2A559EB500E98168 /* list */ = {
-			isa = PBXGroup;
-			children = (
-				B63AA3CA2A54627E00EBFFB4 /* NoteListScreen.swift */,
-				7555FF82242A565900829871 /* NoteListScreenView.swift */,
-			);
-			path = list;
-			sourceTree = "<group>";
-		};
-		B60F1D5E2A559F6700E98168 /* detail */ = {
-			isa = PBXGroup;
-			children = (
-				B60F1D5F2A559F7E00E98168 /* NoteDetailScreenController.swift */,
-			);
-			path = detail;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,16 +193,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0B5B75232DECB40400DB5582 /* Theming.swift in Sources */,
-				B63AA3CB2A54627E00EBFFB4 /* NoteListScreen.swift in Sources */,
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
-				B60F1D602A559F7E00E98168 /* NoteDetailScreenController.swift in Sources */,
-				97F1AB9D2DF47ADE00DE3B38 /* SettingScreenController.swift in Sources */,
-				B60F1D5A2A559CCC00E98168 /* AppView.swift in Sources */,
-				7555FF83242A565900829871 /* NoteListScreenView.swift in Sources */,
-				0B5B75252DECF52500DB5582 /* SceneDelegate.swift in Sources */,
-				97F1ABA62DF4C65200DE3B38 /* Extensions.swift in Sources */,
-				97F1AB9A2DF472A900DE3B38 /* InfoScreenController.swift in Sources */,
+				B60F1D5A2A559CCC00E98168 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,7 +325,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 3DA8M4D5WU;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -434,7 +362,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 3DA8M4D5WU;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

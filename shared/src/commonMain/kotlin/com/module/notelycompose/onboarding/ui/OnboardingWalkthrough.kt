@@ -21,9 +21,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.module.notelycompose.getPlatform
+import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
 import com.module.notelycompose.platform.presentation.PlatformUiState
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import kotlinx.coroutines.launch
 import notelycompose.shared.generated.resources.Res
 import notelycompose.shared.generated.resources.onboarding_ios_one
@@ -43,6 +44,7 @@ import notelycompose.shared.generated.resources.onboarding_android_three
 import notelycompose.shared.generated.resources.onboarding_android_four
 import notelycompose.shared.generated.resources.onboarding_android_two
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.viewmodel.koinViewModel
 
 data class OnboardingPage(
     val title: String,
@@ -126,7 +128,7 @@ fun OnboardingWalkthrough(
             .background(pages[pagerState.currentPage].backgroundColor)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Status Bar Spacer

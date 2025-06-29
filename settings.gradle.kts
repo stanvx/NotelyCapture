@@ -28,6 +28,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "NotelyCompose"
-include(":androidApp")
 include(":shared")
 include(":lib")

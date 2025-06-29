@@ -1,10 +1,10 @@
 package com.module.notelycompose.web.ui
 
-import com.module.notelycompose.web.WebViewContent
+import com.module.notelycompose.platform.WebViewContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.module.notelycompose.getPlatform
+import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 

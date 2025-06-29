@@ -1,23 +1,22 @@
 package com.module.notelycompose.transcription
 
-import com.module.notelycompose.audio.ui.expect.PlatformUtils
-import com.module.notelycompose.audio.ui.expect.Transcriber
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.platform.Transcriber
 import com.module.notelycompose.summary.Text2Summary
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 class TranscriptionViewModel(
     private val transcriber: Transcriber,
-    private val platformUtils: PlatformUtils,
-    coroutineScope: CoroutineScope? = null
-) {
-    private val viewModelScope = coroutineScope ?: CoroutineScope(Dispatchers.IO)
+    private val preferencesRepository: PreferencesRepository
+) :ViewModel(){
     private val _uiState = MutableStateFlow(TranscriptionUiState())
     val uiState: StateFlow<TranscriptionUiState> = _uiState
 
@@ -42,7 +41,7 @@ class TranscriptionViewModel(
                     current.copy(inTranscription = true)
                 }
                 transcriber.start(
-                    filePath, platformUtils.getDefaultTranscriptionLanguage(), onProgress = { progress ->
+                    filePath, preferencesRepository.getDefaultTranscriptionLanguage().first(), onProgress = { progress ->
                         println("progress ========================= $progress")
                         _uiState.update { current ->
                             current.copy(
@@ -116,7 +115,7 @@ class TranscriptionViewModel(
 
     }
 
-    fun onCleared() {
+    override fun onCleared() {
         stopRecognizer()
     }
 }
