@@ -42,8 +42,8 @@ kotlin {
             implementation(libs.androidx.compose.ui.preview)
             implementation(libs.androidx.compose.ui.tooling)
             implementation(libs.androidx.compose.ui.util)
-
             implementation(libs.sqldelight.android.driver)
+
             // Wav Recorder
             implementation(libs.android.wave.recorder)
 
@@ -55,21 +55,21 @@ kotlin {
             implementation(libs.core.splashscreen)
         }
 
-
         commonMain.dependencies {
-                implementation(libs.sqldelight.runtime)
-                implementation(libs.sqldelight.coroutines)
-                implementation(libs.kotlinx.datetime)
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                implementation(compose.material3)
-                implementation(libs.material.icons.core)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
+            implementation(libs.kotlinx.datetime)
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.material3)
+            implementation(libs.material.icons.core)
+            implementation(compose.components.resources)
 
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
-                implementation(libs.compose.vectorize.core)
-                implementation(libs.kotlinx.serialization.json)
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.components.resources)
+            implementation(libs.compose.vectorize.core)
+            implementation(libs.kotlinx.serialization.json)
 
             // koin
             implementation(libs.koin.core)
@@ -81,14 +81,12 @@ kotlin {
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
+        }
 
-
-            }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
-                compileOnly(libs.jetbrains.atomicfu)
-                api(libs.jetbrains.atomicfu)
-
+            compileOnly(libs.jetbrains.atomicfu)
+            api(libs.jetbrains.atomicfu)
         }
 
         val commonTest by getting {
@@ -96,8 +94,6 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-
-
     }
 
     targets.all {
@@ -141,7 +137,11 @@ kotlin {
             }
         }
     }
-
+}
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.module.notelycompose.resources"
+    generateResClass = always
 }
 sqldelight {
     database("NoteDatabase") {
