@@ -28,8 +28,8 @@ import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformUiState
 import kotlinx.coroutines.launch
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.note_list_add_note
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.note_list_add_note
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

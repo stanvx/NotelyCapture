@@ -41,10 +41,10 @@ import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.style.LayoutGuide
 import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.player_ui_initial_time
-import notelycompose.shared.generated.resources.player_ui_pause
-import notelycompose.shared.generated.resources.player_ui_play
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.player_ui_initial_time
+import com.module.notelycompose.resources.player_ui_pause
+import com.module.notelycompose.resources.player_ui_play
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

@@ -20,9 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.format_bar_text
-import notelycompose.shared.generated.resources.format_bar_close
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.format_bar_text
+import com.module.notelycompose.resources.format_bar_close
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

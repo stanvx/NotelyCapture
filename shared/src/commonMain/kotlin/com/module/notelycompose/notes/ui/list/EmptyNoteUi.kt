@@ -11,12 +11,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.ic_empty_notes
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.ic_empty_notes
 import org.jetbrains.compose.resources.painterResource
-import notelycompose.shared.generated.resources.empty_list_title
-import notelycompose.shared.generated.resources.empty_list_description
-import notelycompose.shared.generated.resources.empty_list_description_tablet
+import com.module.notelycompose.resources.empty_list_title
+import com.module.notelycompose.resources.empty_list_description
+import com.module.notelycompose.resources.empty_list_description_tablet
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

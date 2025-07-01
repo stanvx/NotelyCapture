@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.top_bar_notes
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.top_bar_notes
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

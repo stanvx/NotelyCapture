@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.note_detail_more_options
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.note_detail_more_options
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

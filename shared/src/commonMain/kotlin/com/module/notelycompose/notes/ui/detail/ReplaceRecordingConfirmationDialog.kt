@@ -9,11 +9,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.confirmation
-import notelycompose.shared.generated.resources.recording_replace_continue
-import notelycompose.shared.generated.resources.confirmation_cancel
-import notelycompose.shared.generated.resources.recording_replace_error
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.confirmation
+import com.module.notelycompose.resources.recording_replace_continue
+import com.module.notelycompose.resources.confirmation_cancel
+import com.module.notelycompose.resources.recording_replace_error
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
