@@ -8,6 +8,9 @@ A completely free modern, cross-platform note-taking application with powerful W
 
 Perfect for students capturing lectures, professionals documenting meetings, doctors recording patient notes, researchers transcribing interviews, and anyone needing accessible hands-free note-taking across all their devices.
 
+## Translations
+This project uses [Weblate](https://hosted.weblate.org/projects/notelyvoice/) for translation management. Help us translate NotelyVoice into your language!
+
 ## Download the app
 <div style="display:flex;" >
 <a href="https://f-droid.org/en/packages/com.module.notelycompose.android">
