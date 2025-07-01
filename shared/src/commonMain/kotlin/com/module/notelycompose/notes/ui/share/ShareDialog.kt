@@ -12,7 +12,13 @@ import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.share_options
+import com.module.notelycompose.resources.share_text
+import com.module.notelycompose.resources.share_audio_recording
+import com.module.notelycompose.resources.close
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ShareDialog(
@@ -24,7 +30,7 @@ fun ShareDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Share Options",
+                text = stringResource(Res.string.share_options),
                 style = MaterialTheme.typography.h6
             )
         },
@@ -44,7 +50,7 @@ fun ShareDialog(
                         contentColor = LocalCustomColors.current.bodyBackgroundColor
                     )
                 ) {
-                    Text("Share Audio Recording")
+                    Text(stringResource(Res.string.share_audio_recording))
                 }
 
                 Button(
@@ -58,7 +64,7 @@ fun ShareDialog(
                         contentColor = LocalCustomColors.current.bodyBackgroundColor
                     )
                 ) {
-                    Text("Share Texts")
+                    Text(stringResource(Res.string.share_text))
                 }
             }
         },
@@ -71,7 +77,7 @@ fun ShareDialog(
                 )
             ) {
                 Text(
-                    text = "Close"
+                    text = stringResource(Res.string.close)
                 )
             }
         },
