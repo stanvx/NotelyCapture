@@ -1,0 +1,10 @@
+[weblate]
+url = https://hosted.weblate.org/api/
+translation_component_slug = compose-resources
+
+[shared]
+file_format = aresource
+source_language = en
+new_lang = add
+base_file = shared/src/commonMain/composeResources/values/strings.xml
+file_mask = shared/src/commonMain/composeResources/values-*/strings.xml
