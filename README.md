@@ -26,10 +26,6 @@ Perfect for students capturing lectures, professionals documenting meetings, doc
 This project uses [Weblate](https://hosted.weblate.org/projects/notelyvoice/) for translation management. Help us translate NotelyVoice into your language!
 <br/>
 
-## Translations
-This project uses [Weblate](https://hosted.weblate.org/projects/notelyvoice/) for translation management. Help us translate NotelyVoice into your language!
-<br/>
-
 ## Screenshots
 
 <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="screenshot3" width="250">
