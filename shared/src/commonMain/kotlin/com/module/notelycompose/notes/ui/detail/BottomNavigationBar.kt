@@ -61,9 +61,9 @@ fun BottomNavigationBar(
     showFormatBar: Boolean,
     textFieldFocusRequester: FocusRequester,
     onShowTextFormatBar: (show: Boolean) -> Unit,
-    editorViewModel: TextEditorViewModel
+    editorViewModel: TextEditorViewModel,
+    navigateBack: () -> Unit
 ) {
-
 
     var selectedFormat by remember { mutableStateOf(FormatOptionTextFormat.Body) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -82,7 +82,10 @@ fun BottomNavigationBar(
     DeleteConfirmationDialog(
         showDialog = showDeleteDialog,
         onDismiss = { showDeleteDialog = false },
-        onConfirm = editorViewModel::onDeleteNote
+        onConfirm = {
+            editorViewModel.onDeleteNote()
+            navigateBack()
+        }
     )
 
     Box(

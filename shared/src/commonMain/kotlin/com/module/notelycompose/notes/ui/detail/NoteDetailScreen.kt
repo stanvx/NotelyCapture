@@ -218,7 +218,8 @@ fun NoteDetailScreen(
                 showFormatBar = showFormatBar,
                 textFieldFocusRequester = focusRequester,
                 onShowTextFormatBar = { showFormatBar = it },
-                editorViewModel = editorViewModel
+                editorViewModel = editorViewModel,
+                navigateBack = navigateBack
             )
         }
     ) { paddingValues ->
