@@ -1,9 +1,10 @@
 package com.module.notelycompose.di
 
 
-
+import com.module.notelycompose.audio.presentation.AudioRecorderInteractor
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.AudioRecorder
+import com.module.notelycompose.platform.AudioRecorderInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.IOSPlatform
@@ -20,7 +21,7 @@ import platform.Foundation.NSBundle
 
 
 actual val platformModule = module {
-    single<Platform>{ IOSPlatform() }
+    single<Platform> { IOSPlatform() }
     single { PlatformUtils() }
     single { BrowserLauncher() }
     single { dataStore() }
@@ -30,7 +31,8 @@ actual val platformModule = module {
     }
 
     single<String>(qualifier = named("AppVersion")) {
-        NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "Unknown"
+        NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String
+            ?: "Unknown"
     }
 
 
@@ -41,4 +43,5 @@ actual val platformModule = module {
     single { Transcriber() }
     single { AudioRecorder() }
 
+    single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get()) }
 }
