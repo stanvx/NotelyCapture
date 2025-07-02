@@ -1,12 +1,13 @@
 package com.module.notelycompose.di
 
 import android.app.Application
-import androidx.activity.result.ActivityResultLauncher
 import com.module.notelycompose.PermissionHandler
 import com.module.notelycompose.PermissionLauncherHolder
+import com.module.notelycompose.audio.presentation.AudioRecorderInteractor
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.AndroidPlatform
 import com.module.notelycompose.platform.AudioRecorder
+import com.module.notelycompose.platform.AudioRecorderInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.Platform
@@ -16,7 +17,6 @@ import com.module.notelycompose.platform.Transcriber
 import com.module.notelycompose.platform.dataStore
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
-import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -48,4 +48,5 @@ actual val platformModule = module {
     single {Transcriber(get(), get())}
     single {AudioRecorder(get(), get())}
 
+    single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get(), get()) }
 }
