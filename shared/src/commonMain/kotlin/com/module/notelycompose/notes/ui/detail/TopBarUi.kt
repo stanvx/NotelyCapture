@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.top_bar_back
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.top_bar_back
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

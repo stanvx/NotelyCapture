@@ -44,11 +44,11 @@ import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.top_bar_back
-import notelycompose.shared.generated.resources.transcription_dialog_append
-import notelycompose.shared.generated.resources.transcription_dialog_original
-import notelycompose.shared.generated.resources.transcription_dialog_summarize
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.top_bar_back
+import com.module.notelycompose.resources.transcription_dialog_append
+import com.module.notelycompose.resources.transcription_dialog_original
+import com.module.notelycompose.resources.transcription_dialog_summarize
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

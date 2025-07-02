@@ -22,13 +22,13 @@ import com.module.notelycompose.resources.vectors.IcDetailBold
 import com.module.notelycompose.resources.vectors.IcDetailItalic
 import com.module.notelycompose.resources.vectors.IcDetailUnderline
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.editing_bold
-import notelycompose.shared.generated.resources.editing_italic
-import notelycompose.shared.generated.resources.editing_underline
-import notelycompose.shared.generated.resources.editing_align_left
-import notelycompose.shared.generated.resources.editing_align_center
-import notelycompose.shared.generated.resources.editing_align_right
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.editing_bold
+import com.module.notelycompose.resources.editing_italic
+import com.module.notelycompose.resources.editing_underline
+import com.module.notelycompose.resources.editing_align_left
+import com.module.notelycompose.resources.editing_align_center
+import com.module.notelycompose.resources.editing_align_right
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

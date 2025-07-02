@@ -8,11 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.confirmation
-import notelycompose.shared.generated.resources.recording_confirmation_text
-import notelycompose.shared.generated.resources.confirmation_delete
-import notelycompose.shared.generated.resources.confirmation_cancel
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.confirmation
+import com.module.notelycompose.resources.recording_confirmation_text
+import com.module.notelycompose.resources.confirmation_delete
+import com.module.notelycompose.resources.confirmation_cancel
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

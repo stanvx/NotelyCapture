@@ -43,12 +43,12 @@ import com.module.notelycompose.resources.vectors.IcLetterAa
 import com.module.notelycompose.resources.vectors.IcStar
 import com.module.notelycompose.resources.vectors.IcStarFilled
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.bottom_navigation_letter
-import notelycompose.shared.generated.resources.bottom_navigation_bullet_list
-import notelycompose.shared.generated.resources.bottom_navigation_delete
-import notelycompose.shared.generated.resources.bottom_navigation_hide_keyboard
-import notelycompose.shared.generated.resources.bottom_navigation_starred
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.bottom_navigation_letter
+import com.module.notelycompose.resources.bottom_navigation_bullet_list
+import com.module.notelycompose.resources.bottom_navigation_delete
+import com.module.notelycompose.resources.bottom_navigation_hide_keyboard
+import com.module.notelycompose.resources.bottom_navigation_starred
 import org.jetbrains.compose.resources.stringResource
 
 private const val ZERO_DENSITY = 0

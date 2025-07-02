@@ -13,10 +13,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.note_item_starred
-import notelycompose.shared.generated.resources.note_item_voice
-import notelycompose.shared.generated.resources.note_item_note
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.note_item_starred
+import com.module.notelycompose.resources.note_item_voice
+import com.module.notelycompose.resources.note_item_note
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

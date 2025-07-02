@@ -61,18 +61,18 @@ import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.recording_ui_checkmark
+import com.module.notelycompose.resources.recording_ui_microphone
+import com.module.notelycompose.resources.recording_ui_tap_start_record
+import com.module.notelycompose.resources.recording_ui_tap_stop_record
+import com.module.notelycompose.resources.top_bar_back
+import com.module.notelycompose.resources.transcription_icon
 import com.module.notelycompose.resources.vectors.IcChevronLeft
 import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import kotlinx.coroutines.delay
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.recording_ui_checkmark
-import notelycompose.shared.generated.resources.recording_ui_microphone
-import notelycompose.shared.generated.resources.recording_ui_tap_start_record
-import notelycompose.shared.generated.resources.recording_ui_tap_stop_record
-import notelycompose.shared.generated.resources.top_bar_back
-import notelycompose.shared.generated.resources.transcription_icon
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 

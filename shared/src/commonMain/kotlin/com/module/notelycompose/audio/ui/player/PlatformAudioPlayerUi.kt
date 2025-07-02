@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,13 +37,12 @@ import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.audio.ui.uicomponents.Thumb
 import com.module.notelycompose.audio.ui.uicomponents.Track
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.resources.style.LayoutGuide
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.player_ui_initial_time
+import com.module.notelycompose.resources.player_ui_pause
+import com.module.notelycompose.resources.player_ui_play
 import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.Images
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.player_ui_initial_time
-import notelycompose.shared.generated.resources.player_ui_pause
-import notelycompose.shared.generated.resources.player_ui_play
 import org.jetbrains.compose.resources.stringResource
 
 @Composable

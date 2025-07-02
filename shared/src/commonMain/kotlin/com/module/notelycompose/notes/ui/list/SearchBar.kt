@@ -32,9 +32,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import notelycompose.shared.generated.resources.Res
-import notelycompose.shared.generated.resources.search_bar_search_description
-import notelycompose.shared.generated.resources.search_bar_search_text
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.search_bar_search_description
+import com.module.notelycompose.resources.search_bar_search_text
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
