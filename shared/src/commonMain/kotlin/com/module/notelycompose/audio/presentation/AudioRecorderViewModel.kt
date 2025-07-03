@@ -14,11 +14,12 @@ class AudioRecorderViewModel(
         interactor.state
 
     fun onStartRecording(updateUI: () -> Unit) {
+        interactor.initState()
         interactor.onStartRecording(viewModelScope, updateUI)
     }
 
     fun onStopRecording() {
-        interactor.onStopRecording()
+        interactor.onStopRecording(viewModelScope)
     }
 
     fun setupRecorder() {
@@ -47,9 +48,5 @@ class AudioRecorderViewModel(
 
     fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState {
         return interactor.onGetUiState(presentationState)
-    }
-
-    fun release() {
-        interactor.release()
     }
 }

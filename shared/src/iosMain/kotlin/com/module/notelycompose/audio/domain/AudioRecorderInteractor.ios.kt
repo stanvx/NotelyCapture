@@ -5,6 +5,8 @@ import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.platform.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +20,10 @@ class AudioRecorderInteractorImpl(
 ) : AudioRecorderInteractor {
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     override val state = _audioRecorderPresentationState
+
+    override fun initState() {
+        _audioRecorderPresentationState.value = AudioRecorderPresentationState()
+    }
 
     private var counterJob: Job? = null
     private var recordingTimeSeconds = INITIAL_SECOND
@@ -69,27 +75,29 @@ class AudioRecorderInteractorImpl(
         }
     }
 
-    override fun onStopRecording() {
-        debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
-        if (audioRecorder.isRecording()) {
-            audioRecorder.stopRecording()
-            val recordingPath = audioRecorder.getRecordingFilePath()
-            debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
-            stopCounter()
-            _audioRecorderPresentationState.update { current ->
-                current.copy(recordingPath = recordingPath)
+    override fun onStopRecording(coroutineScope: CoroutineScope) {
+        coroutineScope.launch {
+            debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
+            if (audioRecorder.isRecording()) {
+                audioRecorder.stopRecording()
+                val recordingPath = audioRecorder.getRecordingFilePath()
+                debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
+                stopCounter()
+                _audioRecorderPresentationState.update { current ->
+                    current.copy(recordingPath = recordingPath)
+                }
             }
         }
     }
 
     override fun setupRecorder(coroutineScope: CoroutineScope) {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             audioRecorder.setup()
         }
     }
 
     override fun finishRecorder(coroutineScope: CoroutineScope) {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             audioRecorder.teardown()
         }
     }
@@ -158,13 +166,5 @@ class AudioRecorderInteractorImpl(
 
     override fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState {
         return mapper.mapToUiState(presentationState)
-    }
-
-    override fun release() {
-        stopCounter()
-        _audioRecorderPresentationState.value = AudioRecorderPresentationState()
-        if (audioRecorder.isRecording()) {
-            audioRecorder.stopRecording()
-        }
     }
 }

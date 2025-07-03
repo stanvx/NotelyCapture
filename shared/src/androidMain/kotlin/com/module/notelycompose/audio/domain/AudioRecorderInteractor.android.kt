@@ -23,6 +23,11 @@ class AudioRecorderInteractorImpl(
 ) : AudioRecorderInteractor {
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     override val state = _audioRecorderPresentationState
+
+    override fun initState() {
+        _audioRecorderPresentationState.value = AudioRecorderPresentationState()
+    }
+
     private var counterJob: Job? = null
     private var recordingTimeSeconds = INITIAL_SECOND
     private var elapsedTimeBeforePause = 0
@@ -39,7 +44,7 @@ class AudioRecorderInteractorImpl(
             if (!audioRecorder.isRecording()) {
 //                audioRecorder.startRecording()
                 context.startRecordingService(AudioRecordingService.ACTION_START)
-
+                delay(100L)
                 updateUI()
                 startCounter(coroutineScope)
             }
@@ -75,16 +80,19 @@ class AudioRecorderInteractorImpl(
         }
     }
 
-    override fun onStopRecording() {
-        debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
-        if (audioRecorder.isRecording()) {
+    override fun onStopRecording(coroutineScope: CoroutineScope) {
+        coroutineScope.launch {
+            debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
+            if (audioRecorder.isRecording()) {
 //            audioRecorder.stopRecording()
-            context.startRecordingService(AudioRecordingService.ACTION_STOP)
-            val recordingPath = audioRecorder.getRecordingFilePath()
-            debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
-            stopCounter()
-            _audioRecorderPresentationState.update { current ->
-                current.copy(recordingPath = recordingPath)
+                context.startRecordingService(AudioRecordingService.ACTION_STOP)
+                delay(100L)
+                val recordingPath = audioRecorder.getRecordingFilePath()
+                debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
+                stopCounter()
+                _audioRecorderPresentationState.update { current ->
+                    current.copy(recordingPath = recordingPath)
+                }
             }
         }
     }
@@ -131,7 +139,6 @@ class AudioRecorderInteractorImpl(
         if (audioRecorder.isRecording()) {
 //            audioRecorder.stopRecording()
             context.startRecordingService(AudioRecordingService.ACTION_STOP)
-
         }
     }
 
@@ -175,15 +182,6 @@ class AudioRecorderInteractorImpl(
 
     override fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState {
         return mapper.mapToUiState(presentationState)
-    }
-
-    override fun release() {
-        stopCounter()
-        _audioRecorderPresentationState.value = AudioRecorderPresentationState()
-        if (audioRecorder.isRecording()) {
-//            audioRecorder.stopRecording()
-            context.startRecordingService(AudioRecordingService.ACTION_STOP)
-        }
     }
 }
 

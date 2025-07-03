@@ -11,14 +11,15 @@ const val INITIAL_SECOND = 0
 
 interface AudioRecorderInteractor {
     val state: StateFlow<AudioRecorderPresentationState>
+
+    fun initState()
     fun setupRecorder(coroutineScope: CoroutineScope)
     fun onStartRecording(coroutineScope: CoroutineScope, updateUI: () -> Unit)
     fun onPauseRecording(coroutineScope: CoroutineScope)
     fun onResumeRecording(coroutineScope: CoroutineScope)
-    fun onStopRecording()
+    fun onStopRecording(coroutineScope: CoroutineScope)
     fun onCleared()
     fun onRequestAudioPermission(coroutineScope: CoroutineScope)
     fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState
-    fun release()
     fun finishRecorder(coroutineScope: CoroutineScope)
 }
