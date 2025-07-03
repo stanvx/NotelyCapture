@@ -1,46 +1,28 @@
-package com.module.notelycompose.audio.presentation
+package com.module.notelycompose.audio.domain
 
+import android.content.Context
+import android.content.Intent
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.platform.AudioRecorder
+import com.module.notelycompose.service.AudioRecordingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
-const val RECORD_COUNTER_START = "00:00"
-const val SECONDS_IN_MINUTE = 60
-const val LEADING_ZERO_THRESHOLD = 10
-const val INITIAL_SECOND = 0
-
-interface AudioRecorderInteractor {
-    val state: StateFlow<AudioRecorderPresentationState>
-    fun setupRecorder(coroutineScope: CoroutineScope)
-    fun onStartRecording(coroutineScope: CoroutineScope, updateUI: () -> Unit)
-    fun onPauseRecording(coroutineScope: CoroutineScope)
-    fun onResumeRecording(coroutineScope: CoroutineScope)
-    fun onStopRecording()
-    fun onCleared()
-    fun onRequestAudioPermission(coroutineScope: CoroutineScope)
-    fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState
-    fun release()
-    fun finishRecorder(coroutineScope: CoroutineScope)
-}
-
 class AudioRecorderInteractorImpl(
+    private val context: Context,
     private val audioRecorder: AudioRecorder,
     private val mapper: AudioRecorderPresentationToUiMapper,
 ) : AudioRecorderInteractor {
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     override val state = _audioRecorderPresentationState
-
     private var counterJob: Job? = null
     private var recordingTimeSeconds = INITIAL_SECOND
     private var elapsedTimeBeforePause = 0
@@ -55,7 +37,9 @@ class AudioRecorderInteractorImpl(
             }
 
             if (!audioRecorder.isRecording()) {
-                audioRecorder.startRecording()
+//                audioRecorder.startRecording()
+                context.startRecordingService(AudioRecordingService.ACTION_START)
+
                 updateUI()
                 startCounter(coroutineScope)
             }
@@ -94,7 +78,8 @@ class AudioRecorderInteractorImpl(
     override fun onStopRecording() {
         debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
         if (audioRecorder.isRecording()) {
-            audioRecorder.stopRecording()
+//            audioRecorder.stopRecording()
+            context.startRecordingService(AudioRecordingService.ACTION_STOP)
             val recordingPath = audioRecorder.getRecordingFilePath()
             debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
             stopCounter()
@@ -117,15 +102,23 @@ class AudioRecorderInteractorImpl(
     }
 
     override fun onPauseRecording(coroutineScope: CoroutineScope) {
-        audioRecorder.pauseRecording()
-        updatePausedState()
-        pauseCounter()
+//        audioRecorder.pauseRecording()
+        context.startRecordingService(AudioRecordingService.ACTION_PAUSE)
+        coroutineScope.launch {
+            delay(100L)
+            updatePausedState()
+            pauseCounter()
+        }
     }
 
     override fun onResumeRecording(coroutineScope: CoroutineScope) {
-        audioRecorder.resumeRecording()
-        updatePausedState()
-        resumeCounter(coroutineScope)
+//        audioRecorder.resumeRecording()
+        context.startRecordingService(AudioRecordingService.ACTION_RESUME)
+        coroutineScope.launch {
+            delay(100L)
+            updatePausedState()
+            resumeCounter(coroutineScope)
+        }
     }
 
     private fun stopCounter() {
@@ -136,7 +129,9 @@ class AudioRecorderInteractorImpl(
     override fun onCleared() {
         stopCounter()
         if (audioRecorder.isRecording()) {
-            audioRecorder.stopRecording()
+//            audioRecorder.stopRecording()
+            context.startRecordingService(AudioRecordingService.ACTION_STOP)
+
         }
     }
 
@@ -186,7 +181,15 @@ class AudioRecorderInteractorImpl(
         stopCounter()
         _audioRecorderPresentationState.value = AudioRecorderPresentationState()
         if (audioRecorder.isRecording()) {
-            audioRecorder.stopRecording()
+//            audioRecorder.stopRecording()
+            context.startRecordingService(AudioRecordingService.ACTION_STOP)
         }
     }
+}
+
+private fun Context.startRecordingService(recordingAction: String){
+    val intent = Intent(this, AudioRecordingService::class.java).apply {
+        action = recordingAction
+    }
+    startForegroundService(intent)
 }

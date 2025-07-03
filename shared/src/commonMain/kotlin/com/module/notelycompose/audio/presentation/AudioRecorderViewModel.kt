@@ -3,6 +3,8 @@ package com.module.notelycompose.audio.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
+import com.module.notelycompose.audio.domain.AudioRecorderInteractor
+import com.module.notelycompose.audio.domain.AudioRecorderPresentationState
 import kotlinx.coroutines.flow.StateFlow
 
 class AudioRecorderViewModel(

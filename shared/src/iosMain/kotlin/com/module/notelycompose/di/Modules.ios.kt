@@ -1,10 +1,10 @@
 package com.module.notelycompose.di
 
 
-import com.module.notelycompose.audio.presentation.AudioRecorderInteractor
+import com.module.notelycompose.audio.domain.AudioRecorderInteractor
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.AudioRecorder
-import com.module.notelycompose.platform.AudioRecorderInteractorImpl
+import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.IOSPlatform
@@ -43,5 +43,6 @@ actual val platformModule = module {
     single { Transcriber() }
     single { AudioRecorder() }
 
+    // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get()) }
 }

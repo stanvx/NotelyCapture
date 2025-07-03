@@ -3,11 +3,11 @@ package com.module.notelycompose.di
 import android.app.Application
 import com.module.notelycompose.PermissionHandler
 import com.module.notelycompose.PermissionLauncherHolder
-import com.module.notelycompose.audio.presentation.AudioRecorderInteractor
+import com.module.notelycompose.audio.domain.AudioRecorderInteractor
 import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.AndroidPlatform
 import com.module.notelycompose.platform.AudioRecorder
-import com.module.notelycompose.platform.AudioRecorderInteractorImpl
+import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.Platform
@@ -48,5 +48,6 @@ actual val platformModule = module {
     single {Transcriber(get(), get())}
     single {AudioRecorder(get(), get())}
 
+    // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get(), get()) }
 }
