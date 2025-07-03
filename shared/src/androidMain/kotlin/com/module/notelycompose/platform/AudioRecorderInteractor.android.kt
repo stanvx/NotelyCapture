@@ -29,6 +29,7 @@ class AudioRecorderInteractorImpl(
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     override val state = _audioRecorderPresentationState
 
+    private val isPaused = MutableStateFlow(false)
     private var counterJob: Job? = null
     private var recordingTimeSeconds = INITIAL_SECOND
     private var elapsedTimeBeforePause = 0
@@ -110,15 +111,21 @@ class AudioRecorderInteractorImpl(
     override fun onPauseRecording(coroutineScope: CoroutineScope) {
 //        audioRecorder.pauseRecording()
         context.startRecordingService(AudioRecordingService.ACTION_PAUSE)
-        updatePausedState()
-        pauseCounter()
+        coroutineScope.launch {
+            delay(100L)
+            updatePausedState()
+            pauseCounter()
+        }
     }
 
     override fun onResumeRecording(coroutineScope: CoroutineScope) {
 //        audioRecorder.resumeRecording()
         context.startRecordingService(AudioRecordingService.ACTION_RESUME)
-        updatePausedState()
-        resumeCounter(coroutineScope)
+        coroutineScope.launch {
+            delay(100L)
+            updatePausedState()
+            resumeCounter(coroutineScope)
+        }
     }
 
     private fun stopCounter() {
