@@ -11,7 +11,10 @@ import com.module.notelycompose.extensions.startRecordingService
 class RecordingTileService : TileService() {
 
     override fun onClick() {
-        if (qsTile.state != Tile.STATE_ACTIVE) return
+        if (qsTile.state != Tile.STATE_ACTIVE) {
+            this.startMainActivity(recordingAction = null)
+            return
+        }
         stopRecording()
     }
 
