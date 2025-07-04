@@ -1,10 +1,10 @@
 package com.module.notelycompose.audio.domain
 
 import android.content.Context
-import android.content.Intent
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.extensions.startRecordingService
 import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.service.AudioRecordingService
 import kotlinx.coroutines.CoroutineScope
@@ -183,11 +183,4 @@ class AudioRecorderInteractorImpl(
     override fun onGetUiState(presentationState: AudioRecorderPresentationState): AudioRecorderUiState {
         return mapper.mapToUiState(presentationState)
     }
-}
-
-private fun Context.startRecordingService(recordingAction: String){
-    val intent = Intent(this, AudioRecordingService::class.java).apply {
-        action = recordingAction
-    }
-    startForegroundService(intent)
 }
