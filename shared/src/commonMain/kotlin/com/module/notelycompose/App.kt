@@ -20,6 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.module.notelycompose.Arguments.DEFAULT_NOTE_ID
+import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.audio.ui.recorder.RecordingScreen
 import com.module.notelycompose.core.Routes
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
@@ -41,9 +43,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 
-private const val NOTE_ID_PARAM = "noteId"
-private const val DEFAULT_NOTE_ID = "0"
-private const val ROUTE_SEPARATOR = "/"
+object Arguments {
+    const val NOTE_ID_PARAM = "noteId"
+    const val DEFAULT_NOTE_ID = "0"
+    const val ROUTE_SEPARATOR = "/"
+}
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable

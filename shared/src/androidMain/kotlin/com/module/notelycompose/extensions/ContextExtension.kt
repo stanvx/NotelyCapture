@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.service.quicksettings.TileService
+import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.MainActivity
 import com.module.notelycompose.service.AudioRecordingService
 
@@ -12,7 +13,7 @@ internal fun Context.startRecordingService(recordingAction: String, noteId: Long
     val intent = Intent(this, AudioRecordingService::class.java).apply {
         action = recordingAction
         if (noteId != null) {
-            putExtra("id", noteId)
+            putExtra(NOTE_ID_PARAM, noteId)
         }
     }
     startForegroundService(intent)
