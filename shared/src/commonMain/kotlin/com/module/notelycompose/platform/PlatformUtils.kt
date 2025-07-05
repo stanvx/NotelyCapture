@@ -10,4 +10,6 @@ enum class Theme(val displayName: String) {
 expect class PlatformUtils {
     fun shareText(text: String)
     fun shareRecording(path: String)
+    fun exportRecording(sourcePath: String, fileName: String): Boolean
+    fun requestStoragePermission(): Boolean
 }
