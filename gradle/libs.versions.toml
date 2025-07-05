@@ -33,6 +33,8 @@ datastore = "1.1.1"
 napier = "2.5.0"
 androidx-activityCompose = "1.9.3"
 compose-ui-tooling = "1.6.4"
+navigation-compose = "2.7.0-alpha07"
+
 [libraries]
 # Non-UI dependencies
 accompanist-navigation-material = { module = "com.google.accompanist:accompanist-navigation-material", version.ref = "accompanistNavigationMaterial" }
@@ -50,7 +52,7 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "multiplatformSettings" }
-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navCompose" }
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 sqldelight-runtime = { group = "com.squareup.sqldelight", name = "runtime", version.ref = "sqldelight" }
 sqldelight-coroutines = { group = "com.squareup.sqldelight", name = "coroutines-extensions", version.ref = "sqldelightCoroutines" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }

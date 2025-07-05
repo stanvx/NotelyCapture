@@ -14,7 +14,11 @@ interface AudioRecorderInteractor {
 
     fun initState()
     fun setupRecorder(coroutineScope: CoroutineScope)
-    fun onStartRecording(coroutineScope: CoroutineScope, updateUI: () -> Unit)
+    fun onStartRecording(
+        noteId: Long?,
+        coroutineScope: CoroutineScope,
+        updateUI: () -> Unit
+    )
     fun onPauseRecording(coroutineScope: CoroutineScope)
     fun onResumeRecording(coroutineScope: CoroutineScope)
     fun onStopRecording(coroutineScope: CoroutineScope)

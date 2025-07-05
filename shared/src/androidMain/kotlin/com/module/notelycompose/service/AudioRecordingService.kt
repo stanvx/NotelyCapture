@@ -7,10 +7,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.module.notelycompose.notes.domain.InsertNoteUseCase
-import com.module.notelycompose.notes.presentation.detail.model.EditorPresentationState
-import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
-import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
 import com.module.notelycompose.platform.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,10 +16,9 @@ import org.koin.android.ext.android.inject
 
 class AudioRecordingService : Service() {
     private val audioRecorder by inject<AudioRecorder>()
-    private val insertNoteUseCase by inject<InsertNoteUseCase>()
-    private val textFormatPresentationMapper by inject<TextFormatPresentationMapper>()
-    private val textAlignPresentationMapper by inject<TextAlignPresentationMapper>()
+    private val saveAudioNoteInteractor by inject<SaveAudioNoteInteractor>()
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private var noteId: Long? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -38,7 +34,10 @@ class AudioRecordingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startRecording()
+            ACTION_START -> {
+                noteId = intent.extras?.getLong("id")
+                startRecording()
+            }
             ACTION_PAUSE -> pauseRecording()
             ACTION_RESUME -> resumeRecording()
             ACTION_STOP -> stopRecording()
@@ -79,21 +78,10 @@ class AudioRecordingService : Service() {
 
     private fun stopRecorderAndInsertNote() {
         audioRecorder.stopRecording()
-        val noteState = EditorPresentationState()
         coroutineScope.launch {
-            insertNoteUseCase.execute(
-                title = noteState.content.text,
-                content = noteState.content.text,
-                starred = noteState.starred,
-                formatting = noteState.formats.map {
-                    textFormatPresentationMapper.mapToDomainModel(
-                        it
-                    )
-                },
-                textAlign = textAlignPresentationMapper.mapToDomainModel(noteState.textAlign),
-                recordingPath = audioRecorder.getRecordingFilePath(),
-            )
+            saveAudioNoteInteractor.save(noteId)
             stoppedFromQuicSettings = true
+            noteId = null
             stopSelf()
         }
     }

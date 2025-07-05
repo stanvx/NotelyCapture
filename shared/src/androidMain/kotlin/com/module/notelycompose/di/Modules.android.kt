@@ -8,6 +8,8 @@ import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.AndroidPlatform
 import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
+import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
+import com.module.notelycompose.audio.domain.SaveAudioNoteInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.Platform
@@ -32,7 +34,7 @@ actual val platformModule = module {
     }
     single { PermissionLauncherHolder() }
     factory { PermissionHandler(get()).requestPermission() }
-    single <Platform>{ AndroidPlatform(get(named("AppVersion")), get()) }
+    single<Platform> { AndroidPlatform(get(named("AppVersion")), get()) }
     single { dataStore(get()) }
     single { PlatformUtils(get()) }
     single { BrowserLauncher(get()) }
@@ -45,9 +47,18 @@ actual val platformModule = module {
 
     single { Downloader(get(), get()) }
 
-    single {Transcriber(get(), get())}
-    single {AudioRecorder(get(), get())}
+    single { Transcriber(get(), get()) }
+    single { AudioRecorder(get(), get()) }
 
     // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get(), get()) }
+    single<SaveAudioNoteInteractor> {
+        SaveAudioNoteInteractorImpl(
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
 }

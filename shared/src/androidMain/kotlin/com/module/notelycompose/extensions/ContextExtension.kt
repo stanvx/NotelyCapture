@@ -8,9 +8,12 @@ import android.service.quicksettings.TileService
 import com.module.notelycompose.MainActivity
 import com.module.notelycompose.service.AudioRecordingService
 
-internal fun Context.startRecordingService(recordingAction: String) {
+internal fun Context.startRecordingService(recordingAction: String, noteId: Long? = null) {
     val intent = Intent(this, AudioRecordingService::class.java).apply {
         action = recordingAction
+        if (noteId != null) {
+            putExtra("id", noteId)
+        }
     }
     startForegroundService(intent)
 }

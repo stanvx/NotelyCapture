@@ -13,9 +13,9 @@ class AudioRecorderViewModel(
     val audioRecorderPresentationState: StateFlow<AudioRecorderPresentationState> =
         interactor.state
 
-    fun onStartRecording(updateUI: () -> Unit) {
+    fun onStartRecording(noteId: Long?, updateUI: () -> Unit) {
         interactor.initState()
-        interactor.onStartRecording(viewModelScope, updateUI)
+        interactor.onStartRecording(noteId,viewModelScope, updateUI)
     }
 
     fun onStopRecording() {

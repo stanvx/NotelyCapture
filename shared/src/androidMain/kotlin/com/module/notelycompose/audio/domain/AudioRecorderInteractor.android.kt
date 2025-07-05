@@ -32,7 +32,11 @@ class AudioRecorderInteractorImpl(
     private var recordingTimeSeconds = INITIAL_SECOND
     private var elapsedTimeBeforePause = 0
 
-    override fun onStartRecording(coroutineScope: CoroutineScope, updateUI: () -> Unit) {
+    override fun onStartRecording(
+        noteId: Long?,
+        coroutineScope: CoroutineScope,
+        updateUI: () -> Unit
+    ) {
         coroutineScope.launch {
             if (!audioRecorder.hasRecordingPermission()) {
                 audioRecorder.requestRecordingPermission()
@@ -42,8 +46,10 @@ class AudioRecorderInteractorImpl(
             }
 
             if (!audioRecorder.isRecording()) {
-//                audioRecorder.startRecording()
-                context.startRecordingService(AudioRecordingService.ACTION_START)
+                context.startRecordingService(
+                    recordingAction = AudioRecordingService.ACTION_START,
+                    noteId = noteId
+                )
                 delay(100L)
                 updateUI()
                 startCounter(coroutineScope)
@@ -84,7 +90,6 @@ class AudioRecorderInteractorImpl(
         coroutineScope.launch {
             debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
             if (audioRecorder.isRecording()) {
-//            audioRecorder.stopRecording()
                 context.startRecordingService(AudioRecordingService.ACTION_STOP)
                 delay(100L)
                 val recordingPath = audioRecorder.getRecordingFilePath()
@@ -110,7 +115,6 @@ class AudioRecorderInteractorImpl(
     }
 
     override fun onPauseRecording(coroutineScope: CoroutineScope) {
-//        audioRecorder.pauseRecording()
         context.startRecordingService(AudioRecordingService.ACTION_PAUSE)
         coroutineScope.launch {
             delay(100L)
@@ -120,7 +124,6 @@ class AudioRecorderInteractorImpl(
     }
 
     override fun onResumeRecording(coroutineScope: CoroutineScope) {
-//        audioRecorder.resumeRecording()
         context.startRecordingService(AudioRecordingService.ACTION_RESUME)
         coroutineScope.launch {
             delay(100L)
@@ -137,7 +140,6 @@ class AudioRecorderInteractorImpl(
     override fun onCleared() {
         stopCounter()
         if (audioRecorder.isRecording()) {
-//            audioRecorder.stopRecording()
             context.startRecordingService(AudioRecordingService.ACTION_STOP)
         }
     }

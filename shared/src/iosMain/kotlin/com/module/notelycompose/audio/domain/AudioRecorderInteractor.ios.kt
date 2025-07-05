@@ -29,7 +29,11 @@ class AudioRecorderInteractorImpl(
     private var recordingTimeSeconds = INITIAL_SECOND
     private var elapsedTimeBeforePause = 0
 
-    override fun onStartRecording(coroutineScope: CoroutineScope, updateUI: () -> Unit) {
+    override fun onStartRecording(
+        noteId: Long?,
+        coroutineScope: CoroutineScope,
+        updateUI: () -> Unit
+    ) {
         coroutineScope.launch {
             if (!audioRecorder.hasRecordingPermission()) {
                 audioRecorder.requestRecordingPermission()

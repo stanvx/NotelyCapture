@@ -76,6 +76,7 @@ kotlin {
             implementation(libs.koin.test)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
             // logging
             implementation(libs.napier)
             // Data store
