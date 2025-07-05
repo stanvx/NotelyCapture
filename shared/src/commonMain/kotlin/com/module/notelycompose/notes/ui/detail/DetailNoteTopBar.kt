@@ -35,10 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import org.jetbrains.compose.resources.stringResource
 import com.module.notelycompose.resources.top_bar_my_note
 import com.module.notelycompose.resources.top_bar_export_audio_folder
-import com.module.notelycompose.resources.top_bar_upload_audio
+import com.module.notelycompose.resources.top_bar_import_audio
 
 @Composable
 fun DetailNoteTopBar(
@@ -168,7 +167,7 @@ fun DetailDropDownMenu() {
                     // Handle option 2
                 }
             ) {
-                Text(stringResource(Res.string.top_bar_upload_audio))
+                Text(stringResource(Res.string.top_bar_import_audio))
             }
         }
     }

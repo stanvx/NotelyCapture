@@ -11,7 +11,7 @@
     <string name="top_bar_menu">Menu</string>
     <string name="top_bar_my_note">My Note</string>
     <string name="top_bar_export_audio_folder">Export Audio to Folder</string>
-    <string name="top_bar_upload_audio">Upload Audio</string>
+    <string name="top_bar_import_audio">Import Audio</string>
 
     <!-- Delete Dialog -->
     <string name="confirmation">Confirm</string>
