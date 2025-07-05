@@ -47,11 +47,11 @@ fun NoteItem(
     )
 
         Card(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
                 .clickable {
                     onNoteClick(note.id)
                 },
-            elevation = 4.dp,
+            elevation = 2.dp,
             shape = RoundedCornerShape(28.dp),
             backgroundColor = Color(0xFFD18B60)
         ) {

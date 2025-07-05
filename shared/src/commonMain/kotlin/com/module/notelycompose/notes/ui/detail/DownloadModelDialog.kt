@@ -6,14 +6,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import org.jetbrains.compose.resources.stringResource
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.download_required
+import com.module.notelycompose.resources.for_accurate_transcription
+import com.module.notelycompose.resources.take_few_minutes
+import com.module.notelycompose.resources.file_size_approx
+import com.module.notelycompose.resources.download
+import com.module.notelycompose.resources.cancel
 
 @Composable
 fun DownloadModelDialog(
@@ -25,15 +31,15 @@ fun DownloadModelDialog(
         modifier = modifier,
         onDismissRequest = onCancel,
         title = {
-            Text(text = "Download Required")
+            Text(text = stringResource(Res.string.download_required))
         },
         text = {
             Column {
-                Text("For accurate transcription, we need to download the AI model.")
+                Text(stringResource(Res.string.for_accurate_transcription))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("This may take a few minutes and requires a stable internet connection.")
+                Text(stringResource(Res.string.take_few_minutes))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("File size: approximately 142MB")
+                Text(stringResource(Res.string.file_size_approx))
             }
         },
         confirmButton = {
@@ -43,14 +49,14 @@ fun DownloadModelDialog(
                     contentColor = Color.White
                 )
             ) {
-                Text("Download")
+                Text(stringResource(Res.string.download))
             }
         },
         dismissButton = {
             TextButton(
                 onClick = onCancel
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         }
     )

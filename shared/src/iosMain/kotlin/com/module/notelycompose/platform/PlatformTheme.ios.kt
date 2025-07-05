@@ -38,4 +38,12 @@ actual class PlatformUtils{
             completion = null
         )
     }
+
+    actual fun exportRecording(sourcePath: String, fileName: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    actual fun requestStoragePermission(): Boolean {
+        TODO("Not yet implemented")
+    }
 }

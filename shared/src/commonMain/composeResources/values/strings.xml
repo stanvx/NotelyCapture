@@ -3,11 +3,15 @@
     <string name="app_name">Notely Voice</string>
     <string name="error">Error</string>
     <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
 
     <!-- TopBar -->
     <string name="top_bar_back">Back</string>
     <string name="top_bar_notes">Notely Voice</string>
     <string name="top_bar_menu">Menu</string>
+    <string name="top_bar_my_note">My Note</string>
+    <string name="top_bar_export_audio_folder">Export Audio to Folder</string>
+    <string name="top_bar_upload_audio">Upload Audio</string>
 
     <!-- Delete Dialog -->
     <string name="confirmation">Confirm</string>
@@ -115,5 +119,23 @@
     <string name="share_options">Share Options</string>
     <string name="share_text">Share Texts</string>
     <string name="share_audio_recording">Share Audio Recording</string>
+
+    <!-- Download Dialog -->
+    <string name="download_required">Download Required</string>
+    <string name="for_accurate_transcription">For accurate transcription, we need to download the AI model.</string>
+    <string name="take_few_minutes">This may take a few minutes and requires a stable internet connection.</string>
+    <string name="file_size_approx">File size: approximately 142MB</string>
+    <string name="download">Download</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">Settings</string>
+    <string name="customize_your_experience">Customize your experience</string>
+    <string name="language_and_region">Language &amp; Region</string>
+    <string name="transcription_language">Transcription Language</string>
+    <string name="language_used_for_voice_transcription">Language used for voice transcription</string>
+    <string name="select_language">Select language</string>
+    <string name="appearance">Appearance</string>
+    <string name="theme">Theme</string>
+    <string name="choose_how_the_app_looks">Choose how the app looks and feels</string>
 
 </resources>

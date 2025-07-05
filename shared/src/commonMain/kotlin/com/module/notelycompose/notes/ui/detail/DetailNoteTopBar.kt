@@ -27,10 +27,22 @@ import com.module.notelycompose.resources.vectors.Images
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.top_bar_back
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import org.jetbrains.compose.resources.stringResource
+import com.module.notelycompose.resources.top_bar_my_note
+import com.module.notelycompose.resources.top_bar_export_audio_folder
+import com.module.notelycompose.resources.top_bar_upload_audio
 
 @Composable
 fun DetailNoteTopBar(
-    title: String = "My Note",
+    title: String = stringResource(Res.string.top_bar_my_note),
     onNavigateBack: () -> Unit,
     onShare: () -> Unit = {}
 ) {
@@ -55,6 +67,8 @@ fun DetailAndroidNoteTopBar(
     onShare: () -> Unit,
     elevation: Dp = AppBarDefaults.TopAppBarElevation
 ) {
+
+
     TopAppBar(
         title = { Text(title) },
         navigationIcon = {
@@ -72,6 +86,8 @@ fun DetailAndroidNoteTopBar(
                     contentDescription = "Share note"
                 )
             }
+            DetailDropDownMenu()
+
         },
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
         contentColor = LocalCustomColors.current.bodyContentColor,
@@ -112,10 +128,48 @@ fun DetailIOSNoteTopBar(
                     modifier = Modifier.size(24.dp)
                 )
             }
+            DetailDropDownMenu()
         },
         contentColor = LocalCustomColors.current.iOSBackButtonColor,
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
         modifier = Modifier.padding(start = 0.dp),
         elevation = 0.dp
     )
+}
+
+@Composable
+fun DetailDropDownMenu() {
+    var dropdownExpanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { dropdownExpanded = true }) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = "More options"
+            )
+        }
+
+        DropdownMenu(
+            expanded = dropdownExpanded,
+            onDismissRequest = { dropdownExpanded = false },
+            modifier = Modifier.padding(vertical = 0.dp)
+        ) {
+            DropdownMenuItem(
+                onClick = {
+                    dropdownExpanded = false
+                    // Handle option 1
+                }
+            ) {
+                Text(stringResource(Res.string.top_bar_export_audio_folder))
+            }
+
+            DropdownMenuItem(
+                onClick = {
+                    dropdownExpanded = false
+                    // Handle option 2
+                }
+            ) {
+                Text(stringResource(Res.string.top_bar_upload_audio))
+            }
+        }
+    }
 }
