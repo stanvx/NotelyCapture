@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
+import com.module.notelycompose.extensions.restartMainActivity
 import com.module.notelycompose.platform.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,9 +43,8 @@ class AudioRecordingService : Service() {
             ACTION_PAUSE -> pauseRecording()
             ACTION_RESUME -> resumeRecording()
             ACTION_STOP -> stopRecording()
-            ACTION_STOP_INSERT -> stopRecorderAndInsertNote()
+            ACTION_STOP_FROM_TILE -> handleTileStop()
         }
-        stoppedFromQuicSettings = false
         return START_NOT_STICKY
     }
 
@@ -77,13 +77,13 @@ class AudioRecordingService : Service() {
         stopSelf()
     }
 
-    private fun stopRecorderAndInsertNote() {
+    private fun handleTileStop() {
         audioRecorder.stopRecording()
         coroutineScope.launch {
             saveAudioNoteInteractor.save(noteId)
-            stoppedFromQuicSettings = true
             noteId = null
             stopSelf()
+            this@AudioRecordingService.restartMainActivity()
         }
     }
 
@@ -99,19 +99,10 @@ class AudioRecordingService : Service() {
 
     companion object {
         var isRunning = false
-        private var stoppedFromQuicSettings = false
-
-        fun stopedByTile(): Boolean {
-            return stoppedFromQuicSettings.also {
-                stoppedFromQuicSettings = false
-            }
-        }
-
         const val ACTION_START = "START_RECORDING"
         const val ACTION_PAUSE = "PAUSE_RECORDING"
         const val ACTION_RESUME = "RESUME_RECORDING"
         const val ACTION_STOP = "STOP_RECORDING"
-        const val ACTION_STOP_INSERT = "STOP_RECORDING_INSERT"
+        const val ACTION_STOP_FROM_TILE = "STOP_RECORDING_FROM_TILE"
     }
-
 }
