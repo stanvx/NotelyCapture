@@ -1,5 +1,8 @@
 package com.module.notelycompose
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +20,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.module.notelycompose.Arguments.DEFAULT_NOTE_ID
+import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.audio.ui.recorder.RecordingScreen
 import com.module.notelycompose.core.Routes
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
@@ -37,13 +42,12 @@ import com.module.notelycompose.transcription.TranscriptionScreen
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.tween
 
-private const val NOTE_ID_PARAM = "noteId"
-private const val DEFAULT_NOTE_ID = "0"
-private const val ROUTE_SEPARATOR = "/"
+object Arguments {
+    const val NOTE_ID_PARAM = "noteId"
+    const val DEFAULT_NOTE_ID = "0"
+    const val ROUTE_SEPARATOR = "/"
+}
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable
@@ -88,7 +92,11 @@ fun App(
 @Composable
 fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
-    NavHost( navController, startDestination = Routes.HOME, modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
+    NavHost(
+        navController,
+        startDestination = Routes.HOME,
+        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
+    ) {
         navigation(startDestination = Routes.LIST, route = Routes.HOME) {
             composable(Routes.LIST) {
                 NoteListScreen(
@@ -132,9 +140,9 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 )
             }
         }
-        navigation(startDestination = "${Routes.DETAILS}/{noteId}", route = Routes.DETAILS_GRAPH) {
+        navigation(startDestination = "${Routes.DETAILS}/{$NOTE_ID_PARAM}", route = Routes.DETAILS_GRAPH) {
             composable(
-                route = "${Routes.DETAILS}/{noteId}",
+                route = "${Routes.DETAILS}/{$NOTE_ID_PARAM}",
                 arguments = listOf(navArgument(NOTE_ID_PARAM) {
                     type = NavType.StringType
                     defaultValue = DEFAULT_NOTE_ID
@@ -147,7 +155,9 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 NoteDetailScreen(
                     noteId = backStackEntry.arguments?.getString(NOTE_ID_PARAM) ?: DEFAULT_NOTE_ID,
                     navigateBack = { navController.popBackStack() },
-                    navigateToRecorder = { navController.navigate(Routes.RECORDER) },
+                    navigateToRecorder = { noteId ->
+                        navController.navigate("${Routes.RECORDER}/$noteId")
+                    },
                     navigateToTranscription = {
                         navController.navigate(Routes.TRANSCRIPTION)
                     },
@@ -166,11 +176,21 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 )
             }
             composable(
-                route = Routes.RECORDER
-            ) {
+                route = "${Routes.RECORDER}/{$NOTE_ID_PARAM}",
+                arguments = listOf(navArgument(NOTE_ID_PARAM) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = false
+                })
+            ) { backStackEntry ->
                 RecordingScreen(
+                    noteId = backStackEntry.arguments?.getString(NOTE_ID_PARAM)?.toLong()?.takeIf { it != 0L },
                     navigateBack = { navController.popBackStack() },
-                    editorViewModel = koinViewModel(viewModelStoreOwner = navController.getBackStackEntry(Routes.DETAILS_GRAPH))
+                    editorViewModel = koinViewModel(
+                        viewModelStoreOwner = navController.getBackStackEntry(
+                            Routes.DETAILS_GRAPH
+                        )
+                    )
                 )
             }
         }

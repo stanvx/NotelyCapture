@@ -26,10 +26,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,11 +61,6 @@ import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
-import com.module.notelycompose.resources.vectors.IcChevronLeft
-import com.module.notelycompose.resources.vectors.IcPause
-import com.module.notelycompose.resources.vectors.IcRecorder
-import com.module.notelycompose.resources.vectors.Images
-import kotlinx.coroutines.delay
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.recording_ui_checkmark
 import com.module.notelycompose.resources.recording_ui_microphone
@@ -73,6 +68,11 @@ import com.module.notelycompose.resources.recording_ui_tap_start_record
 import com.module.notelycompose.resources.recording_ui_tap_stop_record
 import com.module.notelycompose.resources.top_bar_back
 import com.module.notelycompose.resources.transcription_icon
+import com.module.notelycompose.resources.vectors.IcChevronLeft
+import com.module.notelycompose.resources.vectors.IcPause
+import com.module.notelycompose.resources.vectors.IcRecorder
+import com.module.notelycompose.resources.vectors.Images
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -84,6 +84,7 @@ enum class ScreenState {
 
 @Composable
 fun RecordingScreen(
+    noteId: Long?,
     navigateBack: () -> Unit,
     viewModel: AudioRecorderViewModel = koinViewModel(),
     editorViewModel: TextEditorViewModel
@@ -107,20 +108,21 @@ fun RecordingScreen(
             .padding(0.dp)
     ) {
 
-        when(screenState) {
+        when (screenState) {
             ScreenState.Initial -> RecordingInitialScreen(
                 onNavigateBack = navigateBack,
                 onTapToRecord = {
-                    viewModel.onStartRecording {
+                    viewModel.onStartRecording(noteId) {
                         screenState = ScreenState.Recording
                     }
                 },
                 onStopRecording = viewModel::onStopRecording
             )
+
             ScreenState.Recording -> RecordingInProgressScreen(
                 counterTimeString = recordingState.recordCounterString,
                 onStopRecording = {
-                    debugPrintln{"onStop recording"}
+                    debugPrintln { "onStop recording" }
                     viewModel.onStopRecording()
                     screenState = ScreenState.Success
                 },
@@ -129,11 +131,12 @@ fun RecordingScreen(
                 onPauseRecording = viewModel::onPauseRecording,
                 onResumeRecording = viewModel::onResumeRecording
             )
+
             ScreenState.Success -> {
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     delay(2000)
-                    debugPrintln{"%%%%%%%%%%% ${recordingState.recordingPath}"}
+                    debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
                     editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
                     navigateBack()
                 }
@@ -148,7 +151,7 @@ fun RecordingScreen(
 }
 
 @Composable
-fun RecordingInitialScreen(
+private fun RecordingInitialScreen(
     onNavigateBack: () -> Unit,
     onTapToRecord: () -> Unit,
     onStopRecording: () -> Unit
@@ -158,7 +161,7 @@ fun RecordingInitialScreen(
             .fillMaxSize()
             .background(LocalCustomColors.current.bodyBackgroundColor)
     ) {
-        recordingUiComponentBackButton(
+        RecordingUiComponentBackButton(
             onNavigateBack = onNavigateBack,
             onStopRecording = onStopRecording
         )
@@ -199,7 +202,7 @@ fun RecordingInitialScreen(
 }
 
 @Composable
-fun RecordingInProgressScreen(
+private fun RecordingInProgressScreen(
     counterTimeString: String,
     onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit,
@@ -212,7 +215,7 @@ fun RecordingInProgressScreen(
             .fillMaxSize()
             .background(LocalCustomColors.current.bodyBackgroundColor)
     ) {
-        recordingUiComponentBackButton(
+        RecordingUiComponentBackButton(
             onNavigateBack = onNavigateBack,
             onStopRecording = onStopRecording
         )
@@ -263,13 +266,13 @@ fun RecordingInProgressScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if(!isRecordPaused) Images.Icons.IcPause else Icons.Filled.PlayArrow,
+                            imageVector = if (!isRecordPaused) Images.Icons.IcPause else Icons.Filled.PlayArrow,
                             contentDescription = stringResource(Res.string.transcription_icon),
                             tint = LocalCustomColors.current.bodyContentColor,
                             modifier = Modifier
                                 .size(32.dp)
                                 .clickable {
-                                    if(isRecordPaused) {
+                                    if (isRecordPaused) {
                                         onResumeRecording()
                                     } else {
                                         onPauseRecording()
@@ -311,7 +314,7 @@ fun RecordingInProgressScreen(
 }
 
 @Composable
-fun LoadingAnimation(
+private fun LoadingAnimation(
     isRecordPaused: Boolean
 ) {
     val drawArcColor = LocalCustomColors.current.bodyContentColor
@@ -343,7 +346,7 @@ fun LoadingAnimation(
 }
 
 @Composable
-fun RecordingSuccessScreen() {
+private fun RecordingSuccessScreen() {
     val pathColor = LocalCustomColors.current.bodyContentColor
     Box(
         modifier = Modifier
@@ -405,7 +408,7 @@ fun RecordingSuccessScreen() {
 }
 
 @Composable
-fun recordingUiComponentBackButton(
+private fun RecordingUiComponentBackButton(
     onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit
 ) {
@@ -417,8 +420,8 @@ fun recordingUiComponentBackButton(
             },
             modifier = Modifier.padding(16.dp)
         ) {
-            androidx.compose.material3.Icon(
-                imageVector = Icons.Default.ArrowBack,
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(Res.string.top_bar_back),
                 tint = LocalCustomColors.current.bodyContentColor
             )

@@ -6,16 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +32,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -66,28 +61,25 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavController
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
-import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformViewModel
-import com.module.notelycompose.resources.vectors.IcRecorder
-import com.module.notelycompose.resources.vectors.Images
-import kotlinx.coroutines.launch
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.confirmation_cancel
 import com.module.notelycompose.resources.download_dialog_error
 import com.module.notelycompose.resources.ic_transcription
 import com.module.notelycompose.resources.note_detail_recorder
 import com.module.notelycompose.resources.transcription_icon
+import com.module.notelycompose.resources.vectors.IcRecorder
+import com.module.notelycompose.resources.vectors.Images
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -97,13 +89,14 @@ import org.koin.compose.viewmodel.koinViewModel
 fun NoteDetailScreen(
     noteId:String,
     navigateBack: () -> Unit,
-    navigateToRecorder: () -> Unit,
+    navigateToRecorder: (noteId: String) -> Unit,
     navigateToTranscription: () -> Unit,
     audioPlayerViewModel: AudioPlayerViewModel = koinViewModel(),
     downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
     platformViewModel: PlatformViewModel = koinViewModel(),
     editorViewModel: TextEditorViewModel
 ) {
+    val currentNoteId by editorViewModel.currentNoteId.collectAsState()
     val downloaderUiState by downloaderViewModel.uiState.collectAsState()
     val editorState = editorViewModel.editorPresentationState.collectAsState().value
         .let { editorViewModel.onGetUiState(it) }
@@ -120,7 +113,6 @@ fun NoteDetailScreen(
     var isTextFieldFocused by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
 
 
 
@@ -195,7 +187,7 @@ fun NoteDetailScreen(
                     backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
                     onClick = {
                         if(!editorState.recording.isRecordingExist) {
-                            navigateToRecorder()
+                            navigateToRecorder("$currentNoteId")
                         } else {
                             showExistingRecordConfirmDialog = true
                         }
@@ -287,7 +279,7 @@ fun NoteDetailScreen(
             showExistingRecordConfirmDialog = false
         },
         onConfirm = {
-            navigateToRecorder()
+            navigateToRecorder("$currentNoteId")
         }
     )
 

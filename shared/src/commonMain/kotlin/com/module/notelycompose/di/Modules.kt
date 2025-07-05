@@ -73,7 +73,7 @@ val viewModelModule = module {
     viewModel { TextEditorViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { NoteDetailScreenViewModel(get(), get(),get(), get(), get(), get(), get()) }
     viewModel { ModelDownloaderViewModel(get(), get()) }
-    viewModel { AudioRecorderViewModel(get(), get()) }
+    viewModel { AudioRecorderViewModel(get()) }
     viewModel { AudioPlayerViewModel(get(), get()) }
 }
 

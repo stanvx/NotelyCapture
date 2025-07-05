@@ -1,6 +1,6 @@
 package com.module.notelycompose.audio.presentation.mappers
 
-import com.module.notelycompose.audio.presentation.AudioRecorderPresentationState
+import com.module.notelycompose.audio.domain.AudioRecorderPresentationState
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 
 class AudioRecorderPresentationToUiMapper {

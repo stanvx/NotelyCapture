@@ -47,9 +47,9 @@ kotlin {
             // Wav Recorder
             implementation(libs.android.wave.recorder)
 
-            implementation(libs.kotlinx.serialization.json.v160)
+            implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
-            implementation(libs.activity.compose)
+            implementation(libs.androidx.activity.compose)
             // Refactor
             implementation(libs.koin.android)
             implementation(libs.core.splashscreen)
@@ -74,8 +74,11 @@ kotlin {
             // koin
             implementation(libs.koin.core)
             implementation(libs.koin.test)
-            implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
+
+            // navigation
+            implementation(libs.navigation.compose)
+
             // logging
             implementation(libs.napier)
             // Data store
