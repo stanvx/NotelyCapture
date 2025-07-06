@@ -70,8 +70,21 @@ val viewModelModule = module {
     viewModel { NoteListViewModel(get(), get(), get(), get()) }
     viewModel { PlatformViewModel(get(), get()) }
     viewModel { TranscriptionViewModel(get(), get()) }
-    viewModel { TextEditorViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { NoteDetailScreenViewModel(get(), get(),get(), get(), get(), get(), get()) }
+    viewModel {
+        TextEditorViewModel(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
+    viewModel { NoteDetailScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { ModelDownloaderViewModel(get(), get()) }
     viewModel { AudioRecorderViewModel(get()) }
     viewModel { AudioPlayerViewModel(get(), get()) }

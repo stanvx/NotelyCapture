@@ -4,22 +4,20 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
-import android.os.Environment
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import com.github.squti.androidwaverecorder.WaveRecorder
+import com.module.notelycompose.extensions.generateNewAudioFile
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
 
 private const val DEFAULT = "recording.wav"
-private const val RECORDING_PREFIX = "recording_"
-private const val RECORDING_EXTENSION = ".wav"
+
 private var selectedEncoding = AudioFormat.ENCODING_PCM_16BIT
 
 actual class AudioRecorder(
     private val context: Context,
-    private val permissionLauncher: ActivityResultLauncher<String>?
+    private val launcherHolder: LauncherHolder
 ) {
     private var recorder: WaveRecorder? = null
     private var isCurrentlyRecording = false
@@ -28,8 +26,7 @@ actual class AudioRecorder(
     private var currentRecordingPath: String? = null
 
     actual  fun startRecording() {
-        val fileName = "$RECORDING_PREFIX${System.currentTimeMillis()}$RECORDING_EXTENSION"
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
+        val file = context.generateNewAudioFile()
         currentRecordingPath = file.absolutePath
 
         recorder = WaveRecorder(file.absolutePath)
@@ -85,8 +82,8 @@ actual class AudioRecorder(
                 continuation.resume(isGranted)
             }
 
-            if (permissionLauncher != null) {
-                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            if (launcherHolder.permissionLauncher != null) {
+                launcherHolder.permissionLauncher?.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
             } else {
                 continuation.resume(false)
             }

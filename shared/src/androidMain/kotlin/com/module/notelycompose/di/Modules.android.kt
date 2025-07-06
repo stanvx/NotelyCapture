@@ -1,17 +1,18 @@
 package com.module.notelycompose.di
 
 import android.app.Application
-import com.module.notelycompose.PermissionHandler
-import com.module.notelycompose.PermissionLauncherHolder
+import com.module.notelycompose.platform.LauncherHolder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractor
-import com.module.notelycompose.database.NoteDatabase
-import com.module.notelycompose.platform.AndroidPlatform
-import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractorImpl
+import com.module.notelycompose.database.NoteDatabase
+import com.module.notelycompose.platform.AndroidFileManager
+import com.module.notelycompose.platform.AndroidPlatform
+import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
+import com.module.notelycompose.platform.FileManager
 import com.module.notelycompose.platform.Platform
 import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.platform.PlatformUtils
@@ -32,8 +33,8 @@ actual val platformModule = module {
             "Unknown"
         }
     }
-    single { PermissionLauncherHolder() }
-    factory { PermissionHandler(get()).requestPermission() }
+    single { LauncherHolder() }
+    single<FileManager> { AndroidFileManager(get(), get()) }
     single<Platform> { AndroidPlatform(get(named("AppVersion")), get()) }
     single { dataStore(get()) }
     single { PlatformUtils(get()) }
