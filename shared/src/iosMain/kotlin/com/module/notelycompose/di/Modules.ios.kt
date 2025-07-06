@@ -7,6 +7,8 @@ import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
+import com.module.notelycompose.platform.FileManager
+import com.module.notelycompose.platform.IOSFileManager
 import com.module.notelycompose.platform.IOSPlatform
 import com.module.notelycompose.platform.Platform
 import com.module.notelycompose.platform.PlatformAudioPlayer
@@ -21,6 +23,7 @@ import platform.Foundation.NSBundle
 
 
 actual val platformModule = module {
+    single <FileManager>{ IOSFileManager() }
     single<Platform> { IOSPlatform() }
     single { PlatformUtils() }
     single { BrowserLauncher() }

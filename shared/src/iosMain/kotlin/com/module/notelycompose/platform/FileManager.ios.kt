@@ -9,6 +9,13 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import platform.Foundation.*
 
+class IOSFileManager(
+) : FileManager {
+
+    override fun launchAudioPicker(onResult: (AudioFileResult) -> Unit) {
+
+    }
+}
 
 @OptIn(ExperimentalForeignApi::class)
 actual fun deleteFile(filePath: String): Boolean {

@@ -31,9 +31,9 @@ import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.transcription.TranscriptionViewModel
-import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 
@@ -66,28 +66,15 @@ val repositoryModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { OnboardingViewModel(get()) }
-    viewModel { NoteListViewModel(get(), get(), get(), get()) }
-    viewModel { PlatformViewModel(get(), get()) }
-    viewModel { TranscriptionViewModel(get(), get()) }
-    viewModel {
-        TextEditorViewModel(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-    viewModel { NoteDetailScreenViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    viewModel { ModelDownloaderViewModel(get(), get()) }
-    viewModel { AudioRecorderViewModel(get()) }
-    viewModel { AudioPlayerViewModel(get(), get()) }
+    viewModelOf(::OnboardingViewModel)
+    viewModelOf(::NoteListViewModel)
+    viewModelOf(::PlatformViewModel)
+    viewModelOf(::TranscriptionViewModel)
+    viewModelOf(::TextEditorViewModel)
+    viewModelOf(::NoteDetailScreenViewModel)
+    viewModelOf(::ModelDownloaderViewModel)
+    viewModelOf(::AudioRecorderViewModel)
+    viewModelOf(::AudioPlayerViewModel)
 }
 
 val useCaseModule = module {

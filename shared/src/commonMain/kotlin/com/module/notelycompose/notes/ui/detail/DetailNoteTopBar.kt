@@ -43,13 +43,15 @@ import com.module.notelycompose.resources.top_bar_import_audio
 fun DetailNoteTopBar(
     title: String = stringResource(Res.string.top_bar_my_note),
     onNavigateBack: () -> Unit,
-    onShare: () -> Unit = {}
+    onShare: () -> Unit = {},
+    onImportClick: () -> Unit = {},
 ) {
     if (getPlatform().isAndroid) {
         DetailAndroidNoteTopBar(
             title = title,
             onNavigateBack = onNavigateBack,
-            onShare = onShare
+            onShare = onShare,
+            onImportClick = onImportClick
         )
     } else {
         DetailIOSNoteTopBar(
@@ -64,6 +66,7 @@ fun DetailAndroidNoteTopBar(
     title: String,
     onNavigateBack: () -> Unit,
     onShare: () -> Unit,
+    onImportClick: () -> Unit,
     elevation: Dp = AppBarDefaults.TopAppBarElevation
 ) {
 
@@ -85,7 +88,7 @@ fun DetailAndroidNoteTopBar(
                     contentDescription = "Share note"
                 )
             }
-            DetailDropDownMenu()
+            DetailDropDownMenu(onImportClick = onImportClick)
 
         },
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
@@ -137,7 +140,9 @@ fun DetailIOSNoteTopBar(
 }
 
 @Composable
-fun DetailDropDownMenu() {
+fun DetailDropDownMenu(
+    onImportClick: () -> Unit = {}
+) {
     var dropdownExpanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { dropdownExpanded = true }) {
@@ -164,7 +169,7 @@ fun DetailDropDownMenu() {
             DropdownMenuItem(
                 onClick = {
                     dropdownExpanded = false
-                    // Handle option 2
+                    onImportClick()
                 }
             ) {
                 Text(stringResource(Res.string.top_bar_import_audio))

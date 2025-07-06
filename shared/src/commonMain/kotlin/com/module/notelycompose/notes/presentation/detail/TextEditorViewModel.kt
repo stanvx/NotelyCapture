@@ -19,6 +19,7 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.notes.ui.detail.EditorUiState
+import com.module.notelycompose.platform.FileManager
 import com.module.notelycompose.platform.deleteFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +35,7 @@ import kotlinx.datetime.toLocalDateTime
 
 private const val ID_NOT_SET = 0L
 
-class TextEditorViewModel (
+class TextEditorViewModel(
     private val getNoteByIdUseCase: GetNoteById,
     private val insertNoteUseCase: InsertNoteUseCase,
     private val deleteNoteUseCase: DeleteNoteById,
@@ -43,8 +44,9 @@ class TextEditorViewModel (
     private val editorPresentationToUiStateMapper: EditorPresentationToUiStateMapper,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    private val textEditorHelper: TextEditorHelper
-) :ViewModel(){
+    private val textEditorHelper: TextEditorHelper,
+    private val fileManager: FileManager
+) : ViewModel() {
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
     val editorPresentationState: StateFlow<EditorPresentationState> = _editorPresentationState
@@ -71,9 +73,11 @@ class TextEditorViewModel (
         loadNote(
             content = retrievedNote.content,
             formats = retrievedNote.formatting.map {
-                textFormatPresentationMapper.mapToPresentationModel(it) },
+                textFormatPresentationMapper.mapToPresentationModel(it)
+            },
             textAlign = textAlignPresentationMapper.mapToComposeTextAlign(
-                retrievedNote.textAlign),
+                retrievedNote.textAlign
+            ),
             recordingPath = retrievedNote.recordingPath,
             starred = retrievedNote.starred,
             createdAt = getFormattedDate(retrievedNote.createdAt)
@@ -213,7 +217,8 @@ class TextEditorViewModel (
     }
 
     private fun getFormattedDate(
-        createdAt: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        createdAt: LocalDateTime = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
     ): String {
         return createdAt.formattedDate()
     }
@@ -342,5 +347,15 @@ class TextEditorViewModel (
                 _editorPresentationState.update { newState }
             }
         )
+    }
+
+    internal fun handleImportAudioFile() = viewModelScope.launch {
+        println("Import audio file clicked")
+        fileManager.launchAudioPicker {
+            println("Import audio file: $it")
+            if(it.mimeType.orEmpty().contains("wav")) {
+                it.path?.run { onUpdateRecordingPath(this) }
+            }
+        }
     }
 }
