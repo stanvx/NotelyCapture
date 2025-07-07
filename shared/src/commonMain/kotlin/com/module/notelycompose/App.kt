@@ -14,14 +14,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.module.notelycompose.Arguments.DEFAULT_NOTE_ID
-import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.audio.ui.recorder.RecordingScreen
 import com.module.notelycompose.core.Routes
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
@@ -94,26 +92,25 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
     NavHost(
         navController,
-        startDestination = Routes.HOME,
+        startDestination = Routes.Home::class,
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        navigation(startDestination = Routes.LIST, route = Routes.HOME) {
-            composable(Routes.LIST) {
+        navigation<Routes.Home>(startDestination = Routes.List::class) {
+            composable<Routes.List> {
                 NoteListScreen(
                     navigateToSettings = {
-                        navController.navigate(Routes.SETTINGS)
+                        navController.navigate(Routes.Settings)
                     },
                     navigateToMenu = {
-                        navController.navigate(Routes.MENU)
+                        navController.navigate(Routes.Menu)
                     },
                     navigateToNoteDetails = { noteId ->
-                        navController.navigate("${Routes.DETAILS}/$noteId")
+                        navController.navigate(Routes.Details(noteId))
                     },
                     platformUiState = platformUiState
                 )
             }
-            composable(
-                route = Routes.MENU,
+            composable<Routes.Menu>(
                 enterTransition = { transitionSlideInVertically() },
                 exitTransition = { transitionSlideOutVertically() }
             ) {
@@ -124,85 +121,69 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     }
                 )
             }
-            composable(
-                route = Routes.SETTINGS,
+            composable<Routes.Settings>(
                 enterTransition = { transitionSlideInVertically() },
                 exitTransition = { transitionSlideOutVertically() }
             ) {
                 SettingsScreen(
                     navigateBack = { navController.popBackStack() },
-                    navigateToLanguages = { navController.navigate(Routes.LANGUAGE) }
+                    navigateToLanguages = { navController.navigate(Routes.Language) }
                 )
             }
-            composable(Routes.LANGUAGE) {
+            composable<Routes.Language> {
                 LanguageSelectionScreen(
                     navigateBack = { navController.popBackStack() }
                 )
             }
         }
-        navigation(startDestination = "${Routes.DETAILS}/{$NOTE_ID_PARAM}", route = Routes.DETAILS_GRAPH) {
-            composable(
-                route = "${Routes.DETAILS}/{$NOTE_ID_PARAM}",
-                arguments = listOf(navArgument(NOTE_ID_PARAM) {
-                    type = NavType.StringType
-                    defaultValue = DEFAULT_NOTE_ID
-                    nullable = false
-                })
-            ) { backStackEntry ->
+        navigation<Routes.DetailsGraph>(startDestination = Routes.Details::class) {
+            composable<Routes.Details> { backStackEntry ->
+                val route: Routes.Details = backStackEntry.toRoute()
                 val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(Routes.DETAILS_GRAPH)
+                    navController.getBackStackEntry(Routes.DetailsGraph)
                 }
                 NoteDetailScreen(
-                    noteId = backStackEntry.arguments?.getString(NOTE_ID_PARAM) ?: DEFAULT_NOTE_ID,
+                    noteId = route.noteId ?: DEFAULT_NOTE_ID,
                     navigateBack = { navController.popBackStack() },
                     navigateToRecorder = { noteId ->
-                        navController.navigate("${Routes.RECORDER}/$noteId")
+                        navController.navigate(Routes.Recorder(noteId))
                     },
                     navigateToTranscription = {
-                        navController.navigate(Routes.TRANSCRIPTION)
+                        navController.navigate(Routes.Transcription)
                     },
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 )
             }
-            composable(
-                route = Routes.TRANSCRIPTION
-            ) { backStackEntry ->
+            composable<Routes.Transcription> { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
-                    navController.getBackStackEntry(Routes.DETAILS_GRAPH)
+                    navController.getBackStackEntry(Routes.DetailsGraph)
                 }
                 TranscriptionScreen(
                     navigateBack = { navController.popBackStack() },
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
                 )
             }
-            composable(
-                route = "${Routes.RECORDER}/{$NOTE_ID_PARAM}",
-                arguments = listOf(navArgument(NOTE_ID_PARAM) {
-                    type = NavType.StringType
-                    defaultValue = ""
-                    nullable = false
-                })
-            ) { backStackEntry ->
+            composable<Routes.Recorder> { backStackEntry ->
+                val route: Routes.Recorder = backStackEntry.toRoute()
+                val parentEntry = remember(backStackEntry) {
+                    navController.getBackStackEntry(Routes.DetailsGraph)
+                }
                 RecordingScreen(
-                    noteId = backStackEntry.arguments?.getString(NOTE_ID_PARAM)?.toLong()?.takeIf { it != 0L },
+                    noteId = route.noteId?.toLong()?.takeIf { it != 0L },
                     navigateBack = { navController.popBackStack() },
-                    editorViewModel = koinViewModel(
-                        viewModelStoreOwner = navController.getBackStackEntry(
-                            Routes.DETAILS_GRAPH
-                        )
-                    )
+                    editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 )
             }
         }
     }
 }
 
-fun transitionSlideInVertically() = slideInVertically(
+private fun transitionSlideInVertically() = slideInVertically(
     initialOffsetY = { it },
     animationSpec = tween(durationMillis = 300)
 )
 
-fun transitionSlideOutVertically() = slideOutVertically(
+private fun transitionSlideOutVertically() = slideOutVertically(
     targetOffsetY = { it },
     animationSpec = tween(durationMillis = 300)
 )
