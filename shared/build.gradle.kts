@@ -49,9 +49,8 @@ kotlin {
 
             implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
-            implementation(libs.androidx.activity.compose)
-            // Refactor
-            implementation(libs.koin.android)
+
+            // splash
             implementation(libs.core.splashscreen)
         }
 
@@ -66,7 +65,6 @@ kotlin {
             implementation(libs.material.icons.core)
             implementation(compose.components.resources)
 
-            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
             implementation(libs.compose.vectorize.core)
             implementation(libs.kotlinx.serialization.json)
@@ -75,12 +73,15 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.test)
             implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.compose.viewmodel.nav)
+
 
             // navigation
             implementation(libs.navigation.compose)
 
             // logging
             implementation(libs.napier)
+
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
@@ -154,7 +155,7 @@ sqldelight {
 }
 android {
     namespace = "com.module.notelycompose"
-    compileSdk = 35
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
@@ -162,8 +163,8 @@ android {
     // sourceSets["main"].resources.srcDirs("src/commonMain/resources")
     defaultConfig {
         applicationId = "com.module.notelycompose"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 11
         versionName = "1.1.0"
     }
