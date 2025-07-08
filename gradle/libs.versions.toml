@@ -13,9 +13,10 @@ appcompat = "1.7.1"
 splashscreen = "1.0.1"
 androidx-lifecycle = "2.9.1"
 datastore = "1.1.7"
-core-ktx = "1.12.0"
+core-ktx = "1.16.0"
 
 # Compose & UI
+accompanistSystemuicontrollerVersion = "0.36.0"
 animationAndroid = "1.8.3"
 composeMultiplatform = "1.8.2"
 compose-ui-tooling = "1.8.3"
@@ -48,6 +49,7 @@ androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycl
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 
 # Compose & UI
+google-accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontrollerVersion" }
 animation-android = { group = "androidx.compose.animation", name = "animation-android", version.ref = "animationAndroid" }
 androidx-compose-ui-util = { module = "androidx.compose.ui:ui-util", version.ref = "compose-ui-tooling" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-ui-tooling" }
