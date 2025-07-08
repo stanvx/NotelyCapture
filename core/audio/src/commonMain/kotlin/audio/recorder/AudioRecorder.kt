@@ -1,4 +1,4 @@
-package com.module.notelycompose.platform
+package audio.recorder
 
 expect class AudioRecorder {
     suspend fun setup()

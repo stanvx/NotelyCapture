@@ -4,6 +4,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import audio.FileManager
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -19,7 +20,6 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.notes.ui.detail.EditorUiState
-import com.module.notelycompose.platform.FileManager
 import com.module.notelycompose.platform.deleteFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +32,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import io.github.aakira.napier.Napier
 
 private const val ID_NOT_SET = 0L
 
@@ -244,6 +245,7 @@ class TextEditorViewModel(
                     recordingPath = recordingPath
                 )
             }
+
             else -> {
                 insertNote(
                     title = title,
@@ -328,7 +330,7 @@ class TextEditorViewModel(
         val textAlign = _editorPresentationState.value.textAlign
         val starred = _editorPresentationState.value.starred
         val recordingPath = _editorPresentationState.value.recording.recordingPath
-        if(content.text.isNotEmpty()) {
+        if (content.text.isNotEmpty()) {
             createOrUpdateEvent(
                 title = content.text,
                 content = content.text,
@@ -349,12 +351,11 @@ class TextEditorViewModel(
         )
     }
 
-    internal fun handleImportAudioFile() = viewModelScope.launch {
-        println("Import audio file clicked")
-        fileManager.launchAudioPicker {
-            println("Import audio file: $it")
-            if(it.mimeType.orEmpty().contains("wav")) {
-                it.path?.run { onUpdateRecordingPath(this) }
+    internal fun importAudio() = viewModelScope.launch {
+        fileManager.launchAudioPicker { audioFileResult ->
+            Napier.d { "$audioFileResult" }
+            audioFileResult.path?.run {
+                onUpdateRecordingPath(this)
             }
         }
     }

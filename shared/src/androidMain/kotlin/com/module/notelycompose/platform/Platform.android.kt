@@ -3,7 +3,7 @@ package com.module.notelycompose.platform
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
-import io.github.aakira.napier.BuildConfig
+import com.module.notelycompose.BuildConfig
 
 class AndroidPlatform(
     private val version: String,

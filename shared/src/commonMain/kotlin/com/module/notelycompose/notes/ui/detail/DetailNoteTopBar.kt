@@ -1,43 +1,43 @@
 package com.module.notelycompose.notes.ui.detail
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.AppBarDefaults
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import com.module.notelycompose.platform.getPlatform
-import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.resources.vectors.IcChevronLeft
-import com.module.notelycompose.resources.vectors.Images
-import com.module.notelycompose.resources.Res
-import com.module.notelycompose.resources.top_bar_back
-import org.jetbrains.compose.resources.stringResource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.module.notelycompose.resources.top_bar_my_note
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.getPlatform
+import com.module.notelycompose.resources.Res
+import com.module.notelycompose.resources.top_bar_back
 import com.module.notelycompose.resources.top_bar_export_audio_folder
 import com.module.notelycompose.resources.top_bar_import_audio
+import com.module.notelycompose.resources.top_bar_my_note
+import com.module.notelycompose.resources.vectors.IcChevronLeft
+import com.module.notelycompose.resources.vectors.Images
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DetailNoteTopBar(
@@ -56,7 +56,8 @@ fun DetailNoteTopBar(
     } else {
         DetailIOSNoteTopBar(
             onNavigateBack = onNavigateBack,
-            onShare = onShare
+            onShare = onShare,
+            onImportClick = onImportClick
         )
     }
 }
@@ -76,7 +77,7 @@ fun DetailAndroidNoteTopBar(
         navigationIcon = {
             IconButton(onClick = { onNavigateBack() }) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(Res.string.top_bar_back)
                 )
             }
@@ -100,7 +101,8 @@ fun DetailAndroidNoteTopBar(
 @Composable
 fun DetailIOSNoteTopBar(
     onNavigateBack: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onImportClick: () -> Unit,
 ) {
     TopAppBar(
         title = {
@@ -130,7 +132,7 @@ fun DetailIOSNoteTopBar(
                     modifier = Modifier.size(24.dp)
                 )
             }
-            DetailDropDownMenu()
+            DetailDropDownMenu(onImportClick = onImportClick)
         },
         contentColor = LocalCustomColors.current.iOSBackButtonColor,
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,

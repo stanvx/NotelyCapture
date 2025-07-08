@@ -44,9 +44,6 @@ kotlin {
             implementation(libs.androidx.compose.ui.util)
             implementation(libs.sqldelight.android.driver)
 
-            // Wav Recorder
-            implementation(libs.android.wave.recorder)
-
             implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
 
@@ -85,6 +82,8 @@ kotlin {
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
+
+            implementation(project(":core:audio"))
         }
 
         iosMain.dependencies {
@@ -170,7 +169,9 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.6"
     }

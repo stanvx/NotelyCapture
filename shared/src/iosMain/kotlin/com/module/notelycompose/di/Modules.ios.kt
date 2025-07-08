@@ -2,13 +2,10 @@ package com.module.notelycompose.di
 
 
 import com.module.notelycompose.audio.domain.AudioRecorderInteractor
-import com.module.notelycompose.database.NoteDatabase
-import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
+import com.module.notelycompose.database.NoteDatabase
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
-import com.module.notelycompose.platform.FileManager
-import com.module.notelycompose.platform.IOSFileManager
 import com.module.notelycompose.platform.IOSPlatform
 import com.module.notelycompose.platform.Platform
 import com.module.notelycompose.platform.PlatformAudioPlayer
@@ -23,7 +20,7 @@ import platform.Foundation.NSBundle
 
 
 actual val platformModule = module {
-    single <FileManager>{ IOSFileManager() }
+
     single<Platform> { IOSPlatform() }
     single { PlatformUtils() }
     single { BrowserLauncher() }
@@ -44,7 +41,6 @@ actual val platformModule = module {
     single { Downloader() }
 
     single { Transcriber() }
-    single { AudioRecorder() }
 
     // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get()) }

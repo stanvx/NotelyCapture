@@ -1,12 +1,13 @@
-package com.module.notelycompose.platform
+package audio.recorder
 
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import androidx.core.content.ContextCompat
+import audio.utils.LauncherHolder
+import audio.utils.generateNewAudioFile
 import com.github.squti.androidwaverecorder.WaveRecorder
-import com.module.notelycompose.extensions.generateNewAudioFile
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
