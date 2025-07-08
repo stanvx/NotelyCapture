@@ -1,5 +1,6 @@
 [versions]
 accompanistNavigationMaterial = "0.37.3"
+accompanistSystemuicontrollerVersion = "0.27.0"
 agp = "8.10.1"
 androidWaveRecorder = "2.1.0"
 browser = "1.8.0"
@@ -38,6 +39,7 @@ accompanist-navigation-material = { module = "com.google.accompanist:accompanist
 android-wave-recorder = { module = "com.github.squti:Android-Wave-Recorder", version.ref = "androidWaveRecorder" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 compose-vectorize-core = { module = "dev.sergiobelda.compose.vectorize:compose-vectorize-core", version.ref = "composeVectorizeCore" }
+google-accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontrollerVersion" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hiltCompiler" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltCompose" }

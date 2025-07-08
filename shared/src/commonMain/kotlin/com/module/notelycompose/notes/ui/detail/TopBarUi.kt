@@ -44,7 +44,7 @@ fun AndroidNoteTopBar(
         },
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
         contentColor = LocalCustomColors.current.bodyContentColor,
-        elevation = elevation
+        elevation = 0.dp
     )
 }
 
