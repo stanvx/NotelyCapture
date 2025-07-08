@@ -167,8 +167,8 @@ android {
         applicationId = "com.module.notelycompose"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 11
-        versionName = "1.1.0"
+        versionCode = 12
+        versionName = "1.1.1"
     }
     buildFeatures {
         compose = true
@@ -195,7 +195,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+//            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
