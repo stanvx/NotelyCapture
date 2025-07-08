@@ -97,6 +97,7 @@ fun NoteDetailScreen(
     editorViewModel: TextEditorViewModel
 ) {
     val currentNoteId by editorViewModel.currentNoteId.collectAsState()
+    val importingState by editorViewModel.importingState.collectAsState()
     val downloaderUiState by downloaderViewModel.uiState.collectAsState()
     val editorState = editorViewModel.editorPresentationState.collectAsState().value
         .let { editorViewModel.onGetUiState(it) }
@@ -114,7 +115,10 @@ fun NoteDetailScreen(
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
 
-
+    if(importingState is ImportingState.Importing){
+        ImportingScreen()
+        return
+    }
 
     LaunchedEffect(Unit) {
         if(noteId.toLong() > 0L) {
