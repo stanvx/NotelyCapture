@@ -1,5 +1,7 @@
 package audio
 
 interface FileManager {
-    fun launchAudioPicker(onResult: (AudioFileResult) -> Unit)
+    fun launchAudioPicker(onResult: () -> Unit)
+
+    suspend fun processPickedAudioToWav(): String?
 }

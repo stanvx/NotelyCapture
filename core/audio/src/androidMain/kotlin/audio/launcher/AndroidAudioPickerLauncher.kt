@@ -6,14 +6,11 @@ import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import audio.AudioFileResult
-import audio.utils.getFileName
-import audio.utils.savePickedAudioToAppStorage
 
 class AndroidAudioPickerLauncher(
-    private val activity: ComponentActivity,
-) : AudioPickerLauncher {
-    private var launcherCallback: ((AudioFileResult) -> Unit)? = null
+    activity: ComponentActivity,
+) {
+    private var launcherCallback: ((Uri?) -> Unit)? = null
 
     private val launcher: ActivityResultLauncher<Intent>? =
         activity.activityResultRegistry.register(
@@ -23,16 +20,13 @@ class AndroidAudioPickerLauncher(
             val data: Intent? = result.data
             val uri: Uri? = data?.data
             if (result.resultCode == Activity.RESULT_OK && uri != null) {
-                val name = activity.getFileName(uri)
-                val path = activity.savePickedAudioToAppStorage(uri)?.absolutePath
-                launcherCallback?.invoke(AudioFileResult(name, path))
+                launcherCallback?.invoke(uri)
             } else {
-                launcherCallback?.invoke(AudioFileResult(null, null))
+                launcherCallback?.invoke(null)
             }
         }
 
-
-    override fun launch(onResult: (AudioFileResult) -> Unit) {
+    fun launch(onResult: (Uri?) -> Unit) {
         this.launcherCallback = onResult
 
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {

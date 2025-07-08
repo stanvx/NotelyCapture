@@ -3,20 +3,40 @@ package audio
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.core.content.ContextCompat
 import audio.utils.LauncherHolder
+import audio.utils.savePickedAudioToAppStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.seconds
 
-class AndroidFileManager(
+internal class AndroidFileManager(
     private val context: Context,
     private val launcherHolder: LauncherHolder,
 ) : FileManager {
 
-    override fun launchAudioPicker(onResult: (AudioFileResult) -> Unit) {
+    private var uri: Uri? = null
 
+    override fun launchAudioPicker(
+        onResult: () -> Unit
+    ) {
+        uri = null
         if (checkStoragePermission()) {
-            launcherHolder.audioPickerLauncher?.launch(onResult)
+            launcherHolder.audioPickerLauncher?.launch {
+                uri = it
+                it?.also { onResult() }
+            }
         }
+    }
+
+    override suspend fun processPickedAudioToWav() = withContext(Dispatchers.IO) {
+        // TODO: Remove delay used for showing the Importing screen
+        delay(2.seconds)
+        uri?.run { context.savePickedAudioToAppStorage(this)?.absolutePath }
+            .also { uri = null }
     }
 
     private fun checkStoragePermission(): Boolean {

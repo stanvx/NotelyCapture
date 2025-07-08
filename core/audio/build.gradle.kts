@@ -3,8 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
 	alias(libs.plugins.kotlinMultiplatform)
 	alias(libs.plugins.androidLibrary)
-	alias(libs.plugins.composeMultiplatform)
-	alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -26,8 +24,9 @@ kotlin {
 
 	sourceSets {
 		commonMain.dependencies {
-			implementation(compose.runtime)
-			implementation(compose.foundation)
+
+			// coroutines
+			implementation(libs.kotlinx.coroutines.core)
 
 			// logging
 			implementation(libs.napier)
@@ -41,13 +40,8 @@ kotlin {
 		}
 
 		androidMain.dependencies {
-			implementation(compose.uiTooling)
-			implementation(compose.preview)
-			implementation(compose.material)
 			implementation(libs.androidx.appcompat)
 			implementation(libs.androidx.core)
-			implementation(libs.androidx.activity.compose)
-			implementation(libs.kotlinx.coroutines.android)
 
 			// Wav Recorder
 			implementation(libs.android.wave.recorder)
