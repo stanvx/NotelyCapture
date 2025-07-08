@@ -1,0 +1,4 @@
+- Fixed silence in recording
+- Fixed UI remaining in paused state after audio recording resumed
+- Added Quick settings tile option for Android to stop recording
+- Re-instate Open Faq & Privacy Links in Device browser
