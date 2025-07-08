@@ -85,7 +85,9 @@ fun DetailAndroidNoteTopBar(
                     contentDescription = "Share note"
                 )
             }
-            DetailDropDownMenu()
+            // Hide dropdown menu
+            // TODO: Implement Export Audio to Folder / Import Audio
+            // DetailDropDownMenu()
 
         },
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
