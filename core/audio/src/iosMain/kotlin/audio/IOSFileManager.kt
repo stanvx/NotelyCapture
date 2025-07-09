@@ -1,20 +1,18 @@
 package audio
 
+import audio.converter.AudioConverter
 import audio.launcher.IOSAudioPickerLauncher
+import audio.utils.deleteFile
 import audio.utils.savePickedAudioToAppStorage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import platform.Foundation.NSURL
-import kotlin.time.Duration.Companion.seconds
 
 internal class IOSFileManager(
+    private val launcher: IOSAudioPickerLauncher,
+    private val audioConverter: AudioConverter
 ) : FileManager {
 
     private var path: String? = null
     override fun launchAudioPicker(onResult: () -> Unit) {
-        val launcher = IOSAudioPickerLauncher()
         path = null
         launcher.launch {
             path = it
@@ -22,9 +20,15 @@ internal class IOSFileManager(
         }
     }
 
-    override suspend fun processPickedAudioToWav(): String? = withContext(Dispatchers.IO) {
-        // TODO: Remove delay used for showing the Importing screen
-        delay(2.seconds)
-        path?.run { NSURL.fileURLWithPath(this).savePickedAudioToAppStorage()?.path }
+    override suspend fun processPickedAudioToWav(): String? {
+        val inputPath = copyToAppStorage() ?: return null
+        return audioConverter.convertAudioToWav(inputPath).also {
+            deleteFile(inputPath)
+        }
+    }
+
+    private fun copyToAppStorage(): String? {
+        return path?.run { NSURL.fileURLWithPath(this).savePickedAudioToAppStorage()?.path }
+            .also { path = null }
     }
 }

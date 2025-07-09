@@ -6,16 +6,15 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.ContextCompat
+import audio.converter.AudioConverter
 import audio.utils.LauncherHolder
+import audio.utils.deleteFile
 import audio.utils.savePickedAudioToAppStorage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.seconds
 
 internal class AndroidFileManager(
     private val context: Context,
     private val launcherHolder: LauncherHolder,
+    private val audioConverter: AudioConverter
 ) : FileManager {
 
     private var uri: Uri? = null
@@ -32,10 +31,15 @@ internal class AndroidFileManager(
         }
     }
 
-    override suspend fun processPickedAudioToWav() = withContext(Dispatchers.IO) {
-        // TODO: Remove delay used for showing the Importing screen
-        delay(2.seconds)
-        uri?.run { context.savePickedAudioToAppStorage(this)?.absolutePath }
+    override suspend fun processPickedAudioToWav(): String? {
+        val inputPath = copyToAppStorage() ?: return null
+        return audioConverter.convertAudioToWav(inputPath).also {
+            deleteFile(inputPath)
+        }
+    }
+
+    private fun copyToAppStorage(): String? {
+        return uri?.run { context.savePickedAudioToAppStorage(this)?.absolutePath }
             .also { uri = null }
     }
 

@@ -4,20 +4,22 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.provider.OpenableColumns
+import io.github.aakira.napier.Napier
 import java.io.File
 import java.io.FileOutputStream
 
-private const val RECORDING_PREFIX = "recording_"
-private const val RECORDING_EXTENSION = ".wav"
+internal const val RECORDING_PREFIX = "recording_"
+internal const val IMPORTED_PREFIX = "imported_"
+internal const val RECORDING_EXTENSION = ".wav"
 
-fun Context.generateNewAudioFile(): File {
-    val fileName = "$RECORDING_PREFIX${System.currentTimeMillis()}$RECORDING_EXTENSION"
+fun Context.generateWavFile(prefix: String = RECORDING_PREFIX): File {
+    val fileName = "$prefix${System.currentTimeMillis()}$RECORDING_EXTENSION"
     val outputFile = File(this.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
     return outputFile
 }
 
 fun Context.savePickedAudioToAppStorage(uri: Uri): File? {
-    val file = generateNewAudioFile()
+    val file = generateWavFile(prefix = IMPORTED_PREFIX)
     return try {
         this.contentResolver.openInputStream(uri)?.use { input ->
             FileOutputStream(file).use { output ->
@@ -40,4 +42,23 @@ fun Context.getFileName(uri: Uri): String? {
         }
     }
     return null
+}
+
+actual fun deleteFile(filePath: String): Boolean {
+    Napier.d { "Deleting file: $filePath" }
+    return try {
+        val file = File(filePath)
+        if (file.exists()) {
+            file.delete()
+        } else {
+            false
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        false
+    }
+}
+
+actual fun fileExists(filePath: String): Boolean {
+    return File(filePath).exists()
 }

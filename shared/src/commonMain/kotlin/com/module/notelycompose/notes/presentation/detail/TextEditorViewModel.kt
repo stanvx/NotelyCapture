@@ -5,6 +5,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import audio.FileManager
+import audio.utils.deleteFile
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -21,7 +22,6 @@ import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationM
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.notes.ui.detail.EditorUiState
 import com.module.notelycompose.notes.ui.detail.ImportingState
-import com.module.notelycompose.platform.deleteFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

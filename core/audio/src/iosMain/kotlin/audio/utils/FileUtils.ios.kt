@@ -1,9 +1,12 @@
 package audio.utils
 
+import io.github.aakira.napier.Napier
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.free
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
@@ -13,8 +16,6 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import kotlin.random.Random
-import io.github.aakira.napier.Napier
-import kotlinx.cinterop.free
 
 private const val RECORDING_PREFIX = "recording_"
 private const val RECORDING_EXTENSION = ".wav"
@@ -47,4 +48,25 @@ internal fun NSURL.savePickedAudioToAppStorage(): NSURL?{
     }
     nativeHeap.free(errorPtr)
     return file
+}
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+actual fun deleteFile(filePath: String): Boolean {
+    memScoped {
+        val error: ObjCObjectVar<NSError?> = alloc()
+        val success = NSFileManager.defaultManager.removeItemAtPath(filePath, error.ptr)
+
+        if (!success) {
+            Napier.e{"Failed to delete file at path: $filePath"}
+            Napier.e{"Error: ${error.value?.localizedDescription}"}
+        } else {
+            Napier.e{"File deleted successfully at path: $filePath"}
+        }
+
+        return success
+    }
+}
+
+actual fun fileExists(filePath: String): Boolean {
+    return NSFileManager.defaultManager.fileExistsAtPath(filePath)
 }

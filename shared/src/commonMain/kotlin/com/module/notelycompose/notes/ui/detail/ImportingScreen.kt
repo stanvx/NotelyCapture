@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,9 +22,18 @@ internal fun ImportingScreen() {
             .background(LocalCustomColors.current.bodyBackgroundColor),
         contentAlignment = Alignment.Center
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            CircularProgressIndicator()
-            Text("Importing..")
+        Column(
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(100.dp),
+                color = LocalCustomColors.current.bodyContentColor
+            )
+            Text(
+                text = "Importing..",
+                color = LocalCustomColors.current.bodyContentColor
+            )
         }
     }
 }

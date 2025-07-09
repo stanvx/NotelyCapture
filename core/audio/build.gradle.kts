@@ -30,6 +30,7 @@ kotlin {
 
 			// logging
 			implementation(libs.napier)
+			implementation(libs.logger.kmp)
 
 			// koin
 			implementation(libs.koin.core)
@@ -45,9 +46,11 @@ kotlin {
 
 			// Wav Recorder
 			implementation(libs.android.wave.recorder)
+
+			// ffmpeg-kit
+			implementation(libs.ffmpegkit.kmp.android)
 		}
 	}
-
 	@Suppress("OPT_IN_USAGE")
 	compilerOptions {
 		freeCompilerArgs = listOf("-Xexpect-actual-classes")

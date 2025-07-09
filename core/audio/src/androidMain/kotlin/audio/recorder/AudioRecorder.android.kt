@@ -6,7 +6,7 @@ import android.content.pm.PackageManager
 import android.media.AudioFormat
 import androidx.core.content.ContextCompat
 import audio.utils.LauncherHolder
-import audio.utils.generateNewAudioFile
+import audio.utils.generateWavFile
 import com.github.squti.androidwaverecorder.WaveRecorder
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
@@ -27,7 +27,7 @@ actual class AudioRecorder(
     private var currentRecordingPath: String? = null
 
     actual  fun startRecording() {
-        val file = context.generateNewAudioFile()
+        val file = context.generateWavFile()
         currentRecordingPath = file.absolutePath
 
         recorder = WaveRecorder(file.absolutePath)
