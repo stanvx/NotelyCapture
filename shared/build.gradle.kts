@@ -156,7 +156,7 @@ sqldelight {
     }
 }
 android {
-    namespace = "com.module.notelycompose"
+    namespace = "com.module.notelycompose.android"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
