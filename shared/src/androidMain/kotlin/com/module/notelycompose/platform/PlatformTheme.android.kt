@@ -70,7 +70,7 @@ actual class PlatformUtils(
         val contentResolver = context.contentResolver
         val contentValues = ContentValues().apply {
             put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
+            put(MediaStore.Audio.Media.MIME_TYPE, "audio/x-wav")
             put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/NotelyVoice")
         }
 
