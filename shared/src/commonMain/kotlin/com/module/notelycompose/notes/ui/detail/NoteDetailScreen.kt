@@ -160,7 +160,10 @@ fun NoteDetailScreen(
                 onShare = {
                     showShareDialog = true
                 },
-                onImportClick = editorViewModel::importAudio
+                onImportClick = {
+                    audioPlayerViewModel.releasePlayer()
+                    editorViewModel.importAudio()
+                }
             )
         },
         floatingActionButton = {

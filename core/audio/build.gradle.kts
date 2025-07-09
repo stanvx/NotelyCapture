@@ -30,7 +30,7 @@ kotlin {
 
 			// logging
 			implementation(libs.napier)
-			implementation(libs.logger.kmp)
+//			implementation(libs.logger.kmp)
 
 			// koin
 			implementation(libs.koin.core)
@@ -48,7 +48,7 @@ kotlin {
 			implementation(libs.android.wave.recorder)
 
 			// ffmpeg-kit
-			implementation(libs.ffmpegkit.kmp.android)
+//			implementation(libs.ffmpegkit.kmp.android)
 		}
 	}
 	@Suppress("OPT_IN_USAGE")

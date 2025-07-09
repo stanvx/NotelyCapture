@@ -3,9 +3,8 @@ package com.module.notelycompose.audio.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
-import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
-import kotlinx.coroutines.CoroutineScope
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -102,6 +101,10 @@ class AudioPlayerViewModel(
     private fun onStopProgressUpdates() {
         progressUpdateJob?.cancel()
         progressUpdateJob = null
+    }
+
+    internal fun releasePlayer() = viewModelScope.launch{
+        audioPlayer.release()
     }
 
     fun onClear(){
