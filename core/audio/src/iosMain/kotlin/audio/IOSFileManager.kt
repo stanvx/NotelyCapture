@@ -23,7 +23,8 @@ internal class IOSFileManager(
     override suspend fun processPickedAudioToWav(): String? {
         val inputPath = copyToAppStorage() ?: return null
         return audioConverter.convertAudioToWav(inputPath).also {
-            deleteFile(inputPath)
+            // TODO: Delete input file
+//            deleteFile(inputPath)
         }
     }
 
