@@ -154,7 +154,7 @@ sqldelight {
     }
 }
 android {
-    namespace = "com.module.notelycompose"
+    namespace = "com.module.notelycompose.android"
     compileSdk = 35
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -162,7 +162,7 @@ android {
     // Removed src/commonMain/resources
     // sourceSets["main"].resources.srcDirs("src/commonMain/resources")
     defaultConfig {
-        applicationId = "com.module.notelycompose"
+        applicationId = "com.module.notelycompose.android"
         minSdk = 26
         targetSdk = 35
         versionCode = 12
