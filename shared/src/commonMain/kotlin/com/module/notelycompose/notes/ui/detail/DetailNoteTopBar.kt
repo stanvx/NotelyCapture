@@ -43,18 +43,21 @@ import com.module.notelycompose.resources.top_bar_import_audio
 fun DetailNoteTopBar(
     title: String = stringResource(Res.string.top_bar_my_note),
     onNavigateBack: () -> Unit,
-    onShare: () -> Unit = {}
+    onShare: () -> Unit = {},
+    onExportAudio: () -> Unit,
 ) {
     if (getPlatform().isAndroid) {
         DetailAndroidNoteTopBar(
             title = title,
             onNavigateBack = onNavigateBack,
-            onShare = onShare
+            onShare = onShare,
+            onExportAudio = onExportAudio
         )
     } else {
         DetailIOSNoteTopBar(
             onNavigateBack = onNavigateBack,
-            onShare = onShare
+            onShare = onShare,
+            onExportAudio = onExportAudio
         )
     }
 }
@@ -64,10 +67,9 @@ fun DetailAndroidNoteTopBar(
     title: String,
     onNavigateBack: () -> Unit,
     onShare: () -> Unit,
-    elevation: Dp = AppBarDefaults.TopAppBarElevation
+    elevation: Dp = AppBarDefaults.TopAppBarElevation,
+    onExportAudio: () -> Unit
 ) {
-
-
     TopAppBar(
         title = { Text(title) },
         navigationIcon = {
@@ -87,7 +89,9 @@ fun DetailAndroidNoteTopBar(
             }
             // Hide dropdown menu
             // TODO: Implement Export Audio to Folder / Import Audio
-            // DetailDropDownMenu()
+            DetailDropDownMenu(
+                onExportAudio = onExportAudio
+            )
 
         },
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
@@ -99,7 +103,8 @@ fun DetailAndroidNoteTopBar(
 @Composable
 fun DetailIOSNoteTopBar(
     onNavigateBack: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onExportAudio: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -129,7 +134,9 @@ fun DetailIOSNoteTopBar(
                     modifier = Modifier.size(24.dp)
                 )
             }
-            DetailDropDownMenu()
+            DetailDropDownMenu(
+                onExportAudio = onExportAudio
+            )
         },
         contentColor = LocalCustomColors.current.iOSBackButtonColor,
         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
@@ -139,7 +146,9 @@ fun DetailIOSNoteTopBar(
 }
 
 @Composable
-fun DetailDropDownMenu() {
+fun DetailDropDownMenu(
+    onExportAudio: () -> Unit
+) {
     var dropdownExpanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { dropdownExpanded = true }) {
@@ -157,20 +166,20 @@ fun DetailDropDownMenu() {
             DropdownMenuItem(
                 onClick = {
                     dropdownExpanded = false
-                    // Handle option 1
+                    onExportAudio()
                 }
             ) {
                 Text(stringResource(Res.string.top_bar_export_audio_folder))
             }
 
-            DropdownMenuItem(
-                onClick = {
-                    dropdownExpanded = false
-                    // Handle option 2
-                }
-            ) {
-                Text(stringResource(Res.string.top_bar_import_audio))
-            }
+//            DropdownMenuItem(
+//                onClick = {
+//                    dropdownExpanded = false
+//                    // Handle option 2
+//                }
+//            ) {
+//                Text(stringResource(Res.string.top_bar_import_audio))
+//            }
         }
     }
 }

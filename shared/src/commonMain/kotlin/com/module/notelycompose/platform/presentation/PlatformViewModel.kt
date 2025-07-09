@@ -38,6 +38,12 @@ class PlatformViewModel (
              platformUtils.shareRecording(path)
          }
     }
+
+    fun onExportAudio(path: String) {
+        if (path.isNotBlank()) {
+            platformUtils.exportRecording(path, "123")
+        }
+    }
 }
 
 data class PlatformUiState(

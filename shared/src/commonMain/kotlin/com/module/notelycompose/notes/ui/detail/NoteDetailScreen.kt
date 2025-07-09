@@ -155,6 +155,9 @@ fun NoteDetailScreen(
                 onNavigateBack = navigateBack,
                 onShare = {
                     showShareDialog = true
+                },
+                onExportAudio = {
+                    platformViewModel.onExportAudio(editorState.recording.recordingPath)
                 }
             )
         },
