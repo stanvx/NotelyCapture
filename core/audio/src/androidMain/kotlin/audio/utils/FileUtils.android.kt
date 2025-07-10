@@ -8,10 +8,6 @@ import io.github.aakira.napier.Napier
 import java.io.File
 import java.io.FileOutputStream
 
-internal const val RECORDING_PREFIX = "recording_"
-internal const val IMPORTED_PREFIX = "imported_"
-internal const val RECORDING_EXTENSION = ".wav"
-
 fun Context.generateWavFile(prefix: String = RECORDING_PREFIX): File {
     val fileName = "$prefix${System.currentTimeMillis()}$RECORDING_EXTENSION"
     val outputFile = File(this.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
@@ -19,7 +15,7 @@ fun Context.generateWavFile(prefix: String = RECORDING_PREFIX): File {
 }
 
 fun Context.savePickedAudioToAppStorage(uri: Uri): File? {
-    val file = generateWavFile(prefix = IMPORTED_PREFIX)
+    val file = generateWavFile(prefix = IMPORTING_PREFIX)
     return try {
         this.contentResolver.openInputStream(uri)?.use { input ->
             FileOutputStream(file).use { output ->

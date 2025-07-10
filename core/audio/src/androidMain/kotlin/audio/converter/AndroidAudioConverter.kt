@@ -5,7 +5,7 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import audio.utils.IMPORTED_PREFIX
+import audio.utils.IMPORTING_PREFIX
 import audio.utils.generateWavFile
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +45,7 @@ internal class AndroidAudioConverter(
                 originalChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
             )
 
-            val outputFile = context.generateWavFile(prefix = IMPORTED_PREFIX)
+            val outputFile = context.generateWavFile(prefix = IMPORTING_PREFIX)
             writeWavFile(
                 file = outputFile,
                 rawPcm = processedPcmData,

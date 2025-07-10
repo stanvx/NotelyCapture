@@ -17,12 +17,9 @@ import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import kotlin.random.Random
 
-private const val RECORDING_PREFIX = "recording_"
-private const val RECORDING_EXTENSION = ".wav"
-
-internal fun generateNewAudioFile(): NSURL? {
+internal fun generateNewAudioFile(prefix: String = RECORDING_PREFIX): NSURL? {
     val randomNumber = Random.nextInt(100000, 999999)
-    val fileName = "$RECORDING_PREFIX${randomNumber}$RECORDING_EXTENSION"
+    val fileName = "$prefix${randomNumber}$RECORDING_EXTENSION"
     val documentsDirectory = NSFileManager.defaultManager.URLsForDirectory(
         NSDocumentDirectory,
         NSUserDomainMask
