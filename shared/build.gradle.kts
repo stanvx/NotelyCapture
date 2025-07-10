@@ -163,11 +163,11 @@ android {
     // Removed src/commonMain/resources
     // sourceSets["main"].resources.srcDirs("src/commonMain/resources")
     defaultConfig {
-        applicationId = "com.module.notelycompose"
+        applicationId = "com.module.notelycompose.android"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 12
-        versionName = "1.1.1"
+        versionCode = 13
+        versionName = "1.1.2"
     }
     buildFeatures {
         compose = true
@@ -202,6 +202,12 @@ android {
             // uncomment to run on release for testing
             // signingConfig = signingConfigs.getByName("debug")
         }
+    }
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
     }
     ndkVersion = "27.0.12077973"
 }
