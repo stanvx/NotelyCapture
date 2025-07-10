@@ -200,6 +200,12 @@ android {
             // signingConfig = signingConfigs.getByName("debug")
         }
     }
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
     ndkVersion = "27.0.12077973"
 }
 java {
