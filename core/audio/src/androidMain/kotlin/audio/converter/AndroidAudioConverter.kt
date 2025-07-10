@@ -1,6 +1,5 @@
 package audio.converter
 
-
 import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaExtractor
@@ -10,8 +9,8 @@ import audio.utils.generateWavFile
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -35,29 +34,120 @@ internal class AndroidAudioConverter(
             extractor.selectTrack(audioTrackIndex)
             val format = extractor.getTrackFormat(audioTrackIndex)
 
-            // Decode audio to PCM
-            val rawPcmData = decodeToPcm(extractor, format) ?: return@withContext null
-
-            // Resample if needed (simplified approach - for production consider proper resampling)
-            val processedPcmData = processPcmData(
-                rawPcmData,
-                originalSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE),
-                originalChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-            )
-
+            // Create output WAV file
             val outputFile = context.generateWavFile(prefix = IMPORTING_PREFIX)
-            writeWavFile(
-                file = outputFile,
-                rawPcm = processedPcmData,
-                sampleRate = targetSampleRate,
-                channels = targetChannels
+
+            // Process audio in chunks
+            val success = processAudioInChunks(
+                extractor = extractor,
+                format = format,
+                outputFile = outputFile
             )
-            outputFile.absolutePath
+
+            if (success) outputFile.absolutePath else null
         } catch (e: Exception) {
             Napier.e("Audio conversion failed: ${e.message}", e)
             null
         } finally {
             extractor.release()
+        }
+    }
+
+    private fun processAudioInChunks(
+        extractor: MediaExtractor,
+        format: MediaFormat,
+        outputFile: File
+    ): Boolean {
+        val mime = format.getString(MediaFormat.KEY_MIME) ?: return false
+        val originalSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        val originalChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+
+        val codec = MediaCodec.createDecoderByType(mime)
+        codec.configure(format, null, null, 0)
+        codec.start()
+
+        val info = MediaCodec.BufferInfo()
+        var sawInputEOS = false
+        var sawOutputEOS = false
+        var totalBytesWritten = 0
+
+        return try {
+            // Write initial WAV header (will update size later)
+            val header = createWavHeader(0)
+            RandomAccessFile(outputFile, "rw").use { raf ->
+                raf.write(header)
+
+                // Process audio chunks
+                while (!sawOutputEOS) {
+                    if (!sawInputEOS) {
+                        val inputBufferIndex = codec.dequeueInputBuffer(10000)
+                        if (inputBufferIndex >= 0) {
+                            val inputBuffer = codec.getInputBuffer(inputBufferIndex) ?: continue
+                            val sampleSize = extractor.readSampleData(inputBuffer, 0)
+
+                            if (sampleSize < 0) {
+                                sawInputEOS = true
+                                codec.queueInputBuffer(
+                                    inputBufferIndex,
+                                    0,
+                                    0,
+                                    0,
+                                    MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                                )
+                            } else {
+                                codec.queueInputBuffer(
+                                    inputBufferIndex,
+                                    0,
+                                    sampleSize,
+                                    extractor.sampleTime,
+                                    0
+                                )
+                                extractor.advance()
+                            }
+                        }
+                    }
+
+                    val outputBufferIndex = codec.dequeueOutputBuffer(info, 10000)
+                    when {
+                        outputBufferIndex >= 0 -> {
+                            val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
+                            outputBuffer?.let {
+                                val chunk = ByteArray(info.size)
+                                it.position(info.offset)
+                                it.limit(info.offset + info.size)
+                                it.get(chunk, 0, info.size)
+
+                                // Process and write the chunk
+                                val processedChunk = processPcmChunk(
+                                    chunk,
+                                    originalSampleRate,
+                                    originalChannels
+                                )
+                                raf.write(processedChunk)
+                                totalBytesWritten += processedChunk.size
+                            }
+                            codec.releaseOutputBuffer(outputBufferIndex, false)
+
+                            if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                                sawOutputEOS = true
+                            }
+                        }
+                        outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {}
+                        outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {}
+                    }
+                }
+
+                // Update WAV header with actual file size
+                raf.seek(0)
+                raf.write(createWavHeader(totalBytesWritten))
+            }
+            true
+        } catch (e: Exception) {
+            Napier.e("Error processing audio chunks: ${e.message}", e)
+            false
+        } finally {
+            codec.stop()
+            codec.release()
         }
     }
 
@@ -72,88 +162,13 @@ internal class AndroidAudioConverter(
         return -1
     }
 
-    private fun decodeToPcm(extractor: MediaExtractor, format: MediaFormat): ByteArray? {
-        val mime = format.getString(MediaFormat.KEY_MIME) ?: return null
-        val codec = MediaCodec.createDecoderByType(mime)
-        codec.configure(format, null, null, 0)
-        codec.start()
-
-        val info = MediaCodec.BufferInfo()
-        val pcmData = ByteArrayOutputStream()
-
-        try {
-            var sawInputEOS = false
-            var sawOutputEOS = false
-
-            while (!sawOutputEOS) {
-                if (!sawInputEOS) {
-                    val inputBufferIndex = codec.dequeueInputBuffer(10000)
-                    if (inputBufferIndex >= 0) {
-                        val inputBuffer = codec.getInputBuffer(inputBufferIndex) ?: continue
-                        val sampleSize = extractor.readSampleData(inputBuffer, 0)
-
-                        if (sampleSize < 0) {
-                            sawInputEOS = true
-                            codec.queueInputBuffer(
-                                inputBufferIndex,
-                                0,
-                                0,
-                                0,
-                                MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                            )
-                        } else {
-                            codec.queueInputBuffer(
-                                inputBufferIndex,
-                                0,
-                                sampleSize,
-                                extractor.sampleTime,
-                                0
-                            )
-                            extractor.advance()
-                        }
-                    }
-                }
-
-                val outputBufferIndex = codec.dequeueOutputBuffer(info, 10000)
-                when {
-                    outputBufferIndex >= 0 -> {
-                        val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
-                        outputBuffer?.let {
-                            // Create a temporary array to hold the data
-                            val chunk = ByteArray(info.size)
-                            it.position(info.offset)
-                            it.limit(info.offset + info.size)
-                            it.get(chunk, 0, info.size)
-                            pcmData.write(chunk)
-                        }
-                        codec.releaseOutputBuffer(outputBufferIndex, false)
-
-                        if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
-                            sawOutputEOS = true
-                        }
-                    }
-                    outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {
-                        // Not needed for decoder
-                    }
-                    outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                        // Handle format change if needed
-                    }
-                }
-            }
-
-            return pcmData.toByteArray()
-        } finally {
-            codec.stop()
-            codec.release()
-        }
-    }
-    private fun processPcmData(
-        rawPcm: ByteArray,
+    private fun processPcmChunk(
+        chunk: ByteArray,
         originalSampleRate: Int,
         originalChannels: Int
     ): ByteArray {
         // Convert byte array to short array (16-bit PCM)
-        val shortSamples = ByteBuffer.wrap(rawPcm)
+        val shortSamples = ByteBuffer.wrap(chunk)
             .order(ByteOrder.LITTLE_ENDIAN)
             .asShortBuffer()
             .let { buffer ->
@@ -171,7 +186,7 @@ internal class AndroidAudioConverter(
 
         // Resample if needed
         val resampledShorts = if (originalSampleRate != targetSampleRate) {
-            resampleAudio(monoShorts, originalSampleRate, targetSampleRate)
+            resampleAudio(monoShorts, originalSampleRate)
         } else {
             monoShorts
         }
@@ -202,8 +217,10 @@ internal class AndroidAudioConverter(
     private fun resampleAudio(
         input: ShortArray,
         inputSampleRate: Int,
-        outputSampleRate: Int
+        outputSampleRate: Int = targetSampleRate
     ): ShortArray {
+        if (inputSampleRate == outputSampleRate) return input
+
         val ratio = inputSampleRate.toDouble() / outputSampleRate.toDouble()
         val outputSize = (input.size / ratio).toInt()
         val output = ShortArray(outputSize)
@@ -216,27 +233,10 @@ internal class AndroidAudioConverter(
         return output
     }
 
-    private fun writeWavFile(
-        file: File,
-        rawPcm: ByteArray,
-        sampleRate: Int,
-        channels: Int
-    ) {
-        val wavHeader = createWavHeader(
-            pcmDataLength = rawPcm.size,
-            sampleRate = sampleRate,
-            channels = channels
-        )
-        file.outputStream().use {
-            it.write(wavHeader)
-            it.write(rawPcm)
-        }
-    }
-
     private fun createWavHeader(
         pcmDataLength: Int,
-        sampleRate: Int,
-        channels: Int
+        sampleRate: Int = targetSampleRate,
+        channels: Int = targetChannels
     ): ByteArray {
         val bitsPerSample = targetBitDepth
         val byteRate = sampleRate * channels * (bitsPerSample / 8)
