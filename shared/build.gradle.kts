@@ -73,7 +73,6 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.test)
             implementation(libs.koin.compose.viewmodel)
-            implementation(libs.koin.compose.viewmodel.nav)
 
 
             // navigation
@@ -111,7 +110,7 @@ kotlin {
     val whisperFrameworkPath = file("${projectDir}/../iosApp/whisper.xcframework")
     iosSimulatorArm64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperSimArm64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
@@ -122,7 +121,7 @@ kotlin {
     }
     iosArm64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperArm64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64/whisper.framework/Headers",
@@ -134,7 +133,7 @@ kotlin {
 
     iosX64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperX64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
