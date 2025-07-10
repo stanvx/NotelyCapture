@@ -22,7 +22,7 @@ composeMultiplatform = "1.8.2"
 compose-ui-tooling = "1.8.3"
 composeVectorizeCore = "1.0.2"
 materialIconsCore = "1.7.3"
-navigation-compose = "2.7.0-alpha07"
+navigation-compose = "2.9.0-beta03"
 
 # Kotlin & Multiplatform
 agp = "8.11.0"

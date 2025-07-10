@@ -1,8 +1,5 @@
 package com.module.notelycompose
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,13 +12,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.module.notelycompose.Arguments.DEFAULT_NOTE_ID
 import com.module.notelycompose.audio.ui.recorder.RecordingScreen
 import com.module.notelycompose.core.Routes
+import com.module.notelycompose.core.composableNoAnimation
+import com.module.notelycompose.core.composableWithHorizontalSlide
+import com.module.notelycompose.core.composableWithVerticalSlide
+import com.module.notelycompose.core.navigateSingleTop
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.list.InfoScreen
 import com.module.notelycompose.notes.ui.list.NoteListScreen
@@ -96,48 +96,42 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         navigation<Routes.Home>(startDestination = Routes.List::class) {
-            composable<Routes.List> {
+            composableNoAnimation<Routes.List> {
                 NoteListScreen(
                     navigateToSettings = {
-                        navController.navigate(Routes.Settings)
+                        navController.navigateSingleTop(Routes.Settings)
                     },
                     navigateToMenu = {
-                        navController.navigate(Routes.Menu)
+                        navController.navigateSingleTop(Routes.Menu)
                     },
                     navigateToNoteDetails = { noteId ->
-                        navController.navigate(Routes.Details(noteId))
+                        navController.navigateSingleTop(Routes.Details(noteId))
                     },
                     platformUiState = platformUiState
                 )
             }
-            composable<Routes.Menu>(
-                enterTransition = { transitionSlideInVertically() },
-                exitTransition = { transitionSlideOutVertically() }
-            ) {
+            composableWithVerticalSlide<Routes.Menu> {
                 InfoScreen(
                     navigateBack = { navController.popBackStack() },
                     onNavigateToWebPage = { title, url ->
-                        // navController.navigate("${Routes.WEB_VIEW}/$title/$url")
+                        // navController.navigateSingleTopWithPopUp("${Routes.WEB_VIEW}/$title/$url")
                     }
                 )
             }
-            composable<Routes.Settings>(
-                enterTransition = { transitionSlideInVertically() },
-                exitTransition = { transitionSlideOutVertically() }
-            ) {
+            composableWithVerticalSlide<Routes.Settings> {
                 SettingsScreen(
                     navigateBack = { navController.popBackStack() },
-                    navigateToLanguages = { navController.navigate(Routes.Language) }
+                    navigateToLanguages = { navController.navigateSingleTop(Routes.Language)}
                 )
             }
-            composable<Routes.Language> {
+            composableWithVerticalSlide<Routes.Language> {
                 LanguageSelectionScreen(
                     navigateBack = { navController.popBackStack() }
                 )
             }
         }
         navigation<Routes.DetailsGraph>(startDestination = Routes.Details::class) {
-            composable<Routes.Details> { backStackEntry ->
+            composableWithHorizontalSlide<Routes.Details> { backStackEntry ->
                 val route: Routes.Details = backStackEntry.toRoute()
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(Routes.DetailsGraph)
@@ -146,15 +140,15 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     noteId = route.noteId ?: DEFAULT_NOTE_ID,
                     navigateBack = { navController.popBackStack() },
                     navigateToRecorder = { noteId ->
-                        navController.navigate(Routes.Recorder(noteId))
+                        navController.navigateSingleTop(Routes.Recorder(noteId))
                     },
                     navigateToTranscription = {
-                        navController.navigate(Routes.Transcription)
+                        navController.navigateSingleTop(Routes.Transcription)
                     },
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 )
             }
-            composable<Routes.Transcription> { backStackEntry ->
+            composableWithHorizontalSlide<Routes.Transcription> { backStackEntry ->
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(Routes.DetailsGraph)
                 }
@@ -163,7 +157,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
                 )
             }
-            composable<Routes.Recorder> { backStackEntry ->
+            composableWithHorizontalSlide<Routes.Recorder> { backStackEntry ->
                 val route: Routes.Recorder = backStackEntry.toRoute()
                 val parentEntry = remember(backStackEntry) {
                     navController.getBackStackEntry(Routes.DetailsGraph)
@@ -177,13 +171,3 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
         }
     }
 }
-
-private fun transitionSlideInVertically() = slideInVertically(
-    initialOffsetY = { it },
-    animationSpec = tween(durationMillis = 300)
-)
-
-private fun transitionSlideOutVertically() = slideOutVertically(
-    targetOffsetY = { it },
-    animationSpec = tween(durationMillis = 300)
-)
