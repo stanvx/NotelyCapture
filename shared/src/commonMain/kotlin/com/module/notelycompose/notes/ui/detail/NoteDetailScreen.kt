@@ -160,6 +160,9 @@ fun NoteDetailScreen(
                 onShare = {
                     showShareDialog = true
                 },
+                onExportAudio = {
+                    platformViewModel.onExportAudio(editorState.recording.recordingPath)
+                },
                 onImportClick = {
                     audioPlayerViewModel.releasePlayer()
                     editorViewModel.importAudio()

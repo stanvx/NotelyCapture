@@ -5,16 +5,14 @@ import android.content.Intent
 import androidx.core.content.FileProvider
 import java.io.File
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
-import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
+import com.module.notelycompose.FileSaverHandler
 
 actual class PlatformUtils(
-    private val context: Context
+    private val context: Context,
+    private val fileSaverHandler: FileSaverHandler
 ) {
 
     actual fun shareText(text: String) {
@@ -45,66 +43,32 @@ actual class PlatformUtils(
         context.startActivity(chooser)
     }
 
-    actual fun exportRecording(sourcePath: String, fileName: String): Boolean {
-        return try {
+    actual fun exportRecordingWithFilePicker(
+        sourcePath: String,
+        fileName: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
+        try {
             val sourceFile = File(sourcePath)
             if (!sourceFile.exists()) {
-                return false
+                onResult(false, "Source file not found")
+                return
             }
 
-            // For Android 10+ (API 29+), use MediaStore
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                exportToMediaStore(sourceFile, fileName)
-            } else {
-                // For older versions, use external storage
-                exportToExternalStorage(sourceFile, fileName)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun exportToMediaStore(sourceFile: File, fileName: String): Boolean {
-        val contentResolver = context.contentResolver
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/wav")
-            put(MediaStore.Audio.Media.RELATIVE_PATH, "Music/NotelyVoice")
-        }
-
-        val uri = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)
-
-        return uri?.let {
-            contentResolver.openOutputStream(it)?.use { outputStream ->
-                sourceFile.inputStream().use { inputStream ->
-                    inputStream.copyTo(outputStream)
+            fileSaverHandler.saveFile(fileName) { targetUri ->
+                try {
+                    val success = exportRecordingWithStorageAccessFramework(
+                        sourcePath = sourcePath,
+                        targetUri = targetUri
+                    )
+                    onResult(success, if (success) "File exported successfully" else "Failed to export file")
+                } catch (e: Exception) {
+                    onResult(false, "Export failed: ${e.message}")
                 }
             }
-            true
-        } ?: false
-    }
-
-    private fun exportToExternalStorage(sourceFile: File, fileName: String): Boolean {
-        val musicDir = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_MUSIC
-        )
-        val appDir = File(musicDir, "NotelyVoice")
-
-        if (!appDir.exists()) {
-            appDir.mkdirs()
+        } catch (e: Exception) {
+            onResult(false, "Export failed: ${e.message}")
         }
-
-        val destFile = File(appDir, fileName)
-        sourceFile.copyTo(destFile, overwrite = true)
-
-        // Notify media scanner
-        val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-        intent.data = Uri.fromFile(destFile)
-        context.sendBroadcast(intent)
-
-        return true
     }
 
     actual fun requestStoragePermission(): Boolean {
@@ -113,5 +77,28 @@ actual class PlatformUtils(
         }
 
         return context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun exportRecordingWithStorageAccessFramework(
+        sourcePath: String,
+        targetUri: String
+    ): Boolean {
+        return try {
+            val sourceFile = File(sourcePath)
+            if (!sourceFile.exists()) {
+                return false
+            }
+
+            val uri = targetUri.toUri()
+            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                sourceFile.inputStream().use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 }

@@ -14,12 +14,16 @@ import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.platform.Theme
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : AppCompatActivity() {
+    private val fileSaverLauncherHolder by inject<FileSaverLauncherHolder>()
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         injectLauncher()
+        setupFileSaverLauncher()
         enableEdgeToEdge()
         setContent {
             val systemUiController = rememberSystemUiController()
@@ -36,6 +40,15 @@ class MainActivity : AppCompatActivity() {
             )
             App()
         }
+    }
+
+    private fun setupFileSaverLauncher() {
+        fileSaverLauncherHolder.fileSaverLauncher =
+            registerForActivityResult(ActivityResultContracts.CreateDocument("audio/wav")) { uri: Uri? ->
+                uri?.let {
+                    fileSaverLauncherHolder.onFileSaved?.invoke(uri.toString())
+                }
+            }
     }
 
     private fun injectLauncher() {

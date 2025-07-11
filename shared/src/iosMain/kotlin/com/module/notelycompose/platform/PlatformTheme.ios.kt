@@ -39,11 +39,14 @@ actual class PlatformUtils{
         )
     }
 
-    actual fun exportRecording(sourcePath: String, fileName: String): Boolean {
+    actual fun requestStoragePermission(): Boolean {
         TODO("Not yet implemented")
     }
 
-    actual fun requestStoragePermission(): Boolean {
-        TODO("Not yet implemented")
+    actual fun exportRecordingWithFilePicker(
+        sourcePath: String,
+        fileName: String,
+        onResult: (Boolean, String?) -> Unit
+    ) {
     }
 }

@@ -52,6 +52,7 @@ kotlin {
 
             // splash
             implementation(libs.core.splashscreen)
+            implementation(libs.androidx.compose.documentfile)
         }
 
         commonMain.dependencies {
