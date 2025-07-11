@@ -1,14 +1,15 @@
 package com.module.notelycompose.platform
 
 import platform.Foundation.NSURL
-import platform.Foundation.NSUserDefaults
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
-import platform.UIKit.UIUserInterfaceStyle
-import platform.UIKit.UIWindow
-import platform.UIKit.UIWindowScene
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSData
+import platform.Foundation.dataWithContentsOfURL
+import platform.UIKit.popoverPresentationController
 
-actual class PlatformUtils{
+actual class PlatformUtils {
 
     actual fun shareText(text: String) {
         val activityViewController = UIActivityViewController(
@@ -39,14 +40,45 @@ actual class PlatformUtils{
         )
     }
 
-    actual fun requestStoragePermission(): Boolean {
-        TODO("Not yet implemented")
-    }
-
+    // iOS implementation using UIActivityViewController for sharing/exporting
+    // iOS uses a unified approach where UIActivityViewController handles both sharing to other apps AND saving to locations like the Files app.
+    @OptIn(ExperimentalForeignApi::class)
     actual fun exportRecordingWithFilePicker(
         sourcePath: String,
         fileName: String,
         onResult: (Boolean, String?) -> Unit
     ) {
+        try {
+            val sourceUrl = NSURL.fileURLWithPath(sourcePath)
+            val sourceData = NSData.dataWithContentsOfURL(sourceUrl)
+            if (sourceData == null) {
+                onResult(false, "Source file not found")
+                return
+            }
+            val activityController = UIActivityViewController(
+                activityItems = listOf(sourceUrl),
+                applicationActivities = null
+            )
+            activityController.popoverPresentationController?.let { popover ->
+                // Set source view if available, otherwise center
+                val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
+                popover.sourceView = rootViewController?.view
+                popover.sourceRect = CGRectMake(0.0, 0.0, 1.0, 1.0)
+            }
+            UIApplication.sharedApplication.keyWindow?.rootViewController?.presentViewController(
+                activityController,
+                animated = true,
+                completion = null
+            )
+
+            onResult(true, "Export options presented")
+        } catch (e: Exception) {
+            onResult(false, "Export failed: ${e.message}")
+        }
+    }
+
+    actual fun requestStoragePermission(): Boolean {
+        // iOS doesn't require explicit storage permissions like Android
+        return true
     }
 }
