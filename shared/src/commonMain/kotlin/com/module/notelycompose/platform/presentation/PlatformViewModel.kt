@@ -5,6 +5,7 @@ import com.module.notelycompose.platform.Platform
 import com.module.notelycompose.platform.PlatformUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.datetime.Clock
 
 class PlatformViewModel (
     private val platformInfo: Platform,
@@ -41,8 +42,27 @@ class PlatformViewModel (
 
     fun onExportAudio(path: String) {
         if (path.isNotBlank()) {
-            platformUtils.exportRecording(path, "123")
+            val defaultFileName = "recording_${Clock.System.now().toEpochMilliseconds()}.wav"
+            _state.value = _state.value.copy(isExporting = true)
+
+            platformUtils.exportRecordingWithFilePicker(
+                sourcePath = path,
+                fileName = defaultFileName
+            ) { success, message ->
+                _state.value = _state.value.copy(
+                    isExporting = false,
+                    exportSuccess = success,
+                    exportMessage = message ?: if (success) "Audio exported successfully" else "Failed to export audio"
+                )
+            }
         }
+    }
+
+    fun clearExportStatus() {
+        _state.value = _state.value.copy(
+            exportSuccess = null,
+            exportMessage = null
+        )
     }
 }
 
@@ -51,5 +71,8 @@ data class PlatformUiState(
     val platformName: String = "",
     val isAndroid: Boolean = false,
     val isTablet: Boolean = false,
-    val isLandscape: Boolean = false
+    val isLandscape: Boolean = false,
+    val isExporting: Boolean = false,
+    val exportSuccess: Boolean? = null,
+    val exportMessage: String? = null
 )

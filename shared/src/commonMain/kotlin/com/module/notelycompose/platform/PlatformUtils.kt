@@ -6,10 +6,13 @@ enum class Theme(val displayName: String) {
     SYSTEM("System")
 }
 
-
 expect class PlatformUtils {
     fun shareText(text: String)
     fun shareRecording(path: String)
-    fun exportRecording(sourcePath: String, fileName: String): Boolean
+    fun exportRecordingWithFilePicker(
+        sourcePath: String,
+        fileName: String,
+        onResult: (Boolean, String?) -> Unit
+    )
     fun requestStoragePermission(): Boolean
 }
