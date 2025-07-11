@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 rootProject.name = "NotelyCompose"
 include(":shared")
 include(":lib")
+include(":core:audio")

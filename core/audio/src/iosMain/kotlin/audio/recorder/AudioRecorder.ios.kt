@@ -1,13 +1,14 @@
-package com.module.notelycompose.platform
+package audio.recorder
 
-import com.module.notelycompose.core.debugPrintln
-import kotlinx.cinterop.*
-import kotlinx.cinterop.nativeHeap.alloc
-import platform.Foundation.*
+import audio.utils.generateNewAudioFile
+import io.github.aakira.napier.Napier
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AVFAudio.AVAudioQualityHigh
 import platform.AVFAudio.AVAudioRecorder
 import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryOptionDefaultToSpeaker
 import platform.AVFAudio.AVAudioSessionCategoryPlayAndRecord
 import platform.AVFAudio.AVAudioSessionRecordPermissionGranted
 import platform.AVFAudio.AVEncoderAudioQualityKey
@@ -15,19 +16,15 @@ import platform.AVFAudio.AVFormatIDKey
 import platform.AVFAudio.AVNumberOfChannelsKey
 import platform.AVFAudio.AVSampleRateKey
 import platform.AVFAudio.setActive
-import kotlin.coroutines.resume
-import kotlin.random.Random
-import platform.AVFAudio.*
 import platform.CoreAudioTypes.kAudioFormatLinearPCM
-
-private const val RECORDING_PREFIX = "recording_"
-private const val RECORDING_EXTENSION = ".wav"
+import platform.Foundation.NSURL
+import kotlin.coroutines.resume
 
 actual class AudioRecorder {
 
     private var audioRecorder: AVAudioRecorder? = null
     private var recordingSession: AVAudioSession = AVAudioSession.sharedInstance()
-    private lateinit var recordingURL: NSURL
+    private var recordingURL: NSURL? = null
     private var isCurrentlyPaused = false
 
     /**
@@ -43,7 +40,7 @@ actual class AudioRecorder {
             )
             recordingSession.setActive(true, null)
         } catch (e: Exception) {
-            debugPrintln{"Audio session setup failed: ${e.message}"}
+            Napier.d { "Audio session setup failed: ${e.message}" }
         }
     }
 
@@ -61,7 +58,7 @@ actual class AudioRecorder {
         try {
             recordingSession.setActive(false, null)
         } catch (e: Exception) {
-            debugPrintln{"Audio session teardown failed: ${e.message}"}
+            Napier.d { "Audio session teardown failed: ${e.message}" }
         }
     }
 
@@ -69,21 +66,12 @@ actual class AudioRecorder {
     actual fun startRecording() {
         // 1. Request permissions early
         if (!hasRecordingPermission()) {
-            debugPrintln{"Recording permission not granted"}
+            Napier.d { "Recording permission not granted" }
             return
         }
 
-        val randomNumber = Random.nextInt(100000, 999999)
-        val fileName = "$RECORDING_PREFIX$randomNumber$RECORDING_EXTENSION"
-
-        debugPrintln{"Start Recording: $fileName"}
-        val documentsDirectory = NSFileManager.defaultManager.URLsForDirectory(
-            NSDocumentDirectory,
-            NSUserDomainMask
-        ).first() as NSURL
-
-        this.recordingURL = documentsDirectory.URLByAppendingPathComponent(fileName) ?: run {
-            debugPrintln{"Failed to create recording URL"}
+        this.recordingURL = generateNewAudioFile() ?: run {
+            Napier.e { "Failed to create recording URL" }
             return
         }
 
@@ -93,15 +81,15 @@ actual class AudioRecorder {
             AVNumberOfChannelsKey to 1,
             AVEncoderAudioQualityKey to AVAudioQualityHigh,
         )
-            audioRecorder = AVAudioRecorder(recordingURL, settings, null)
-            if (audioRecorder?.prepareToRecord() == true) {
-                val isRecording = audioRecorder?.record()
-                isCurrentlyPaused = false
-                debugPrintln{"Recording started successfully $isRecording"}
-            } else {
-                debugPrintln{"Failed to prepare recording"}
-                audioRecorder = null
-            }
+        audioRecorder = AVAudioRecorder(recordingURL!!, settings, null)
+        if (audioRecorder?.prepareToRecord() == true) {
+            val isRecording = audioRecorder?.record()
+            isCurrentlyPaused = false
+            Napier.d { "Recording started successfully $isRecording" }
+        } else {
+            Napier.d { "Failed to prepare recording" }
+            audioRecorder = null
+        }
 
     }
 
@@ -125,7 +113,7 @@ actual class AudioRecorder {
         return recordingSession.recordPermission() == AVAudioSessionRecordPermissionGranted
     }
 
-    actual suspend fun requestRecordingPermission() : Boolean {
+    actual suspend fun requestRecordingPermission(): Boolean {
         if (hasRecordingPermission()) return true
 
         return suspendCancellableCoroutine { continuation ->
@@ -136,7 +124,7 @@ actual class AudioRecorder {
     }
 
     actual fun getRecordingFilePath(): String {
-        return recordingURL.path.orEmpty()
+        return recordingURL?.path.orEmpty()
     }
 
     actual fun pauseRecording() {
@@ -144,7 +132,7 @@ actual class AudioRecorder {
             audioRecorder?.let { recorder ->
                 recorder.pause()
                 isCurrentlyPaused = true
-                debugPrintln{"Recording paused successfully"}
+                Napier.d { "Recording paused successfully" }
             }
         }
     }
@@ -154,7 +142,7 @@ actual class AudioRecorder {
             audioRecorder?.let { recorder ->
                 recorder.record()
                 isCurrentlyPaused = false
-                debugPrintln{"Recording resumed successfully"}
+                Napier.d { "Recording resumed successfully" }
             }
         }
     }

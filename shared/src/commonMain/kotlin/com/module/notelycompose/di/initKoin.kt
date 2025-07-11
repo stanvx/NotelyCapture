@@ -1,5 +1,6 @@
 package com.module.notelycompose.di
 
+import audio.di.audioModule
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.KoinAppDeclaration
@@ -12,7 +13,8 @@ fun KoinApplication.init() {
         repositoryModule,
         useCaseModule,
         mapperModule,
-        platformModule
+        platformModule,
+        audioModule
     )
 }
 
@@ -25,7 +27,8 @@ fun initKoinApplication(config: KoinAppDeclaration? = null) {
             repositoryModule,
             useCaseModule,
             mapperModule,
-            platformModule
+            platformModule,
+            audioModule
         )
     }
 }

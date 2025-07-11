@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Environment
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
+import audio.utils.LauncherHolder
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.utils.decodeWaveFile
 import com.whispercpp.whisper.WhisperCallback
@@ -16,7 +16,7 @@ import kotlin.coroutines.resume
 
 actual class Transcriber(
     private val context: Context,
-    private val permissionLauncher: ActivityResultLauncher<String>?
+    private val launcherHolder: LauncherHolder
 ) {
     private var canTranscribe: Boolean = false
     private var isTranscribing = false
@@ -43,8 +43,8 @@ actual class Transcriber(
                 continuation.resume(isGranted)
             }
 
-            if (permissionLauncher != null) {
-                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            if (launcherHolder.permissionLauncher != null) {
+                launcherHolder.permissionLauncher?.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
             } else {
                 continuation.resume(false)
             }

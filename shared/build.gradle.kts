@@ -45,14 +45,12 @@ kotlin {
             implementation(libs.google.accompanist.systemuicontroller)
             implementation(libs.sqldelight.android.driver)
 
-            // Wav Recorder
-            implementation(libs.android.wave.recorder)
+            implementation(libs.google.accompanist.systemuicontroller)
 
             implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
-            implementation(libs.androidx.activity.compose)
-            // Refactor
-            implementation(libs.koin.android)
+
+            // splash
             implementation(libs.core.splashscreen)
         }
 
@@ -67,7 +65,6 @@ kotlin {
             implementation(libs.material.icons.core)
             implementation(compose.components.resources)
 
-            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
             implementation(libs.compose.vectorize.core)
             implementation(libs.kotlinx.serialization.json)
@@ -77,14 +74,18 @@ kotlin {
             implementation(libs.koin.test)
             implementation(libs.koin.compose.viewmodel)
 
+
             // navigation
             implementation(libs.navigation.compose)
 
             // logging
             implementation(libs.napier)
+
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
+
+            implementation(project(":core:audio"))
         }
 
         iosMain.dependencies {
@@ -109,7 +110,7 @@ kotlin {
     val whisperFrameworkPath = file("${projectDir}/../iosApp/whisper.xcframework")
     iosSimulatorArm64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperSimArm64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
@@ -120,7 +121,7 @@ kotlin {
     }
     iosArm64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperArm64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64/whisper.framework/Headers",
@@ -132,7 +133,7 @@ kotlin {
 
     iosX64 {
         compilations.getByName("main") {
-            val whisper by cinterops.creating {
+            cinterops.create("whisperX64") {
                 defFile(project.file("src/nativeInterop/cinterop/whisper.def"))
                 compilerOpts(
                     "-I${whisperFrameworkPath}/ios-arm64_x86_64-simulator/whisper.framework/Headers",
@@ -155,7 +156,7 @@ sqldelight {
 }
 android {
     namespace = "com.module.notelycompose.android"
-    compileSdk = 35
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
@@ -163,14 +164,16 @@ android {
     // sourceSets["main"].resources.srcDirs("src/commonMain/resources")
     defaultConfig {
         applicationId = "com.module.notelycompose.android"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 13
         versionName = "1.1.2"
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.6"
     }
