@@ -1,9 +1,9 @@
 package com.module.notelycompose.audio.domain
 
+import audio.recorder.AudioRecorder
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import com.module.notelycompose.core.debugPrintln
-import com.module.notelycompose.platform.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

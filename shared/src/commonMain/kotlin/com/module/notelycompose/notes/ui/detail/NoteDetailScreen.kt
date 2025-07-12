@@ -24,6 +24,8 @@ import androidx.compose.material.DismissDirection
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.FloatingActionButtonDefaults.elevation
+import androidx.compose.material.FloatingActionButtonElevation
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SwipeToDismiss
@@ -97,6 +99,7 @@ fun NoteDetailScreen(
     editorViewModel: TextEditorViewModel
 ) {
     val currentNoteId by editorViewModel.currentNoteId.collectAsState()
+    val importingState by editorViewModel.importingState.collectAsState()
     val downloaderUiState by downloaderViewModel.uiState.collectAsState()
     val editorState = editorViewModel.editorPresentationState.collectAsState().value
         .let { editorViewModel.onGetUiState(it) }
@@ -114,7 +117,10 @@ fun NoteDetailScreen(
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
 
-
+    if(importingState is ImportingState.Importing){
+        ImportingScreen()
+        return
+    }
 
     LaunchedEffect(Unit) {
         if(noteId.toLong() > 0L) {
@@ -155,6 +161,13 @@ fun NoteDetailScreen(
                 onNavigateBack = navigateBack,
                 onShare = {
                     showShareDialog = true
+                },
+                onExportAudio = {
+                    platformViewModel.onExportAudio(editorState.recording.recordingPath)
+                },
+                onImportClick = {
+                    audioPlayerViewModel.releasePlayer()
+                    editorViewModel.importAudio()
                 }
             )
         },
@@ -168,7 +181,8 @@ fun NoteDetailScreen(
                             shape = CircleShape
                         ),
                         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { downloaderViewModel.checkTranscriptionAvailability() }
+                        onClick = { downloaderViewModel.checkTranscriptionAvailability() },
+                        elevation = elevation(defaultElevation = 2.dp)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_transcription),
@@ -191,7 +205,8 @@ fun NoteDetailScreen(
                         } else {
                             showExistingRecordConfirmDialog = true
                         }
-                    }
+                    },
+                    elevation = elevation(defaultElevation = 2.dp)
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,

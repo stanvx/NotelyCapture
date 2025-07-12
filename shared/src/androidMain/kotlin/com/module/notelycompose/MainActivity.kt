@@ -3,9 +3,9 @@ package com.module.notelycompose
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import audio.utils.LauncherHolder
 import org.koin.android.ext.android.inject
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
@@ -14,15 +14,16 @@ import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.platform.Theme
-
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : AppCompatActivity() {
-    private val permissionLauncherHolder by inject<PermissionLauncherHolder>()
+    private val fileSaverLauncherHolder by inject<FileSaverLauncherHolder>()
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        permissionLauncherHolder.permissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        injectLauncher()
+        setupFileSaverLauncher()
         enableEdgeToEdge()
         setContent {
             val systemUiController = rememberSystemUiController()
@@ -39,5 +40,19 @@ class MainActivity : AppCompatActivity() {
             )
             App()
         }
+    }
+
+    private fun setupFileSaverLauncher() {
+        fileSaverLauncherHolder.fileSaverLauncher =
+            registerForActivityResult(ActivityResultContracts.CreateDocument("audio/wav")) { uri: Uri? ->
+                uri?.let {
+                    fileSaverLauncherHolder.onFileSaved?.invoke(uri.toString())
+                }
+            }
+    }
+
+    private fun injectLauncher() {
+        val launcherHolder by inject<LauncherHolder>()
+        launcherHolder.init(this)
     }
 }

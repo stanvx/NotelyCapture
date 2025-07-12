@@ -4,6 +4,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import audio.FileManager
+import audio.utils.deleteFile
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -19,7 +21,7 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.notes.ui.detail.EditorUiState
-import com.module.notelycompose.platform.deleteFile
+import com.module.notelycompose.notes.ui.detail.ImportingState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,10 +33,13 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import io.github.aakira.napier.Napier
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 private const val ID_NOT_SET = 0L
 
-class TextEditorViewModel (
+class TextEditorViewModel(
     private val getNoteByIdUseCase: GetNoteById,
     private val insertNoteUseCase: InsertNoteUseCase,
     private val deleteNoteUseCase: DeleteNoteById,
@@ -43,12 +48,16 @@ class TextEditorViewModel (
     private val editorPresentationToUiStateMapper: EditorPresentationToUiStateMapper,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    private val textEditorHelper: TextEditorHelper
-) :ViewModel(){
+    private val textEditorHelper: TextEditorHelper,
+    private val fileManager: FileManager
+) : ViewModel() {
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
     val editorPresentationState: StateFlow<EditorPresentationState> = _editorPresentationState
     private var _currentNoteId = MutableStateFlow<Long?>(ID_NOT_SET)
+    private var _importingState = MutableStateFlow<ImportingState>(ImportingState.Idle)
+    val importingState: StateFlow<ImportingState> = _importingState
+
     internal val currentNoteId: StateFlow<Long?> = _currentNoteId.asStateFlow()
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
 
@@ -71,9 +80,11 @@ class TextEditorViewModel (
         loadNote(
             content = retrievedNote.content,
             formats = retrievedNote.formatting.map {
-                textFormatPresentationMapper.mapToPresentationModel(it) },
+                textFormatPresentationMapper.mapToPresentationModel(it)
+            },
             textAlign = textAlignPresentationMapper.mapToComposeTextAlign(
-                retrievedNote.textAlign),
+                retrievedNote.textAlign
+            ),
             recordingPath = retrievedNote.recordingPath,
             starred = retrievedNote.starred,
             createdAt = getFormattedDate(retrievedNote.createdAt)
@@ -213,7 +224,8 @@ class TextEditorViewModel (
     }
 
     private fun getFormattedDate(
-        createdAt: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        createdAt: LocalDateTime = Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
     ): String {
         return createdAt.formattedDate()
     }
@@ -239,6 +251,7 @@ class TextEditorViewModel (
                     recordingPath = recordingPath
                 )
             }
+
             else -> {
                 insertNote(
                     title = title,
@@ -323,7 +336,7 @@ class TextEditorViewModel (
         val textAlign = _editorPresentationState.value.textAlign
         val starred = _editorPresentationState.value.starred
         val recordingPath = _editorPresentationState.value.recording.recordingPath
-        if(content.text.isNotEmpty()) {
+        if (content.text.isNotEmpty()) {
             createOrUpdateEvent(
                 title = content.text,
                 content = content.text,
@@ -342,5 +355,15 @@ class TextEditorViewModel (
                 _editorPresentationState.update { newState }
             }
         )
+    }
+
+    internal fun importAudio() = fileManager.launchAudioPicker {
+        viewModelScope.launch {
+            _importingState.update { ImportingState.Importing }
+            val path = fileManager.processPickedAudioToWav()
+            Napier.d { "Imported audio path: $path" }
+            _importingState.update { ImportingState.Idle }
+            onUpdateRecordingPath(path ?: return@launch)
+        }
     }
 }

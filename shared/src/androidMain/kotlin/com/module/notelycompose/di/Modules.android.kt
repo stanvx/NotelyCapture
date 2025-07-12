@@ -1,15 +1,14 @@
 package com.module.notelycompose.di
 
 import android.app.Application
-import com.module.notelycompose.PermissionHandler
-import com.module.notelycompose.PermissionLauncherHolder
+import com.module.notelycompose.FileSaverHandler
+import com.module.notelycompose.FileSaverLauncherHolder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractor
-import com.module.notelycompose.database.NoteDatabase
-import com.module.notelycompose.platform.AndroidPlatform
-import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.audio.domain.AudioRecorderInteractorImpl
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractorImpl
+import com.module.notelycompose.database.NoteDatabase
+import com.module.notelycompose.platform.AndroidPlatform
 import com.module.notelycompose.platform.BrowserLauncher
 import com.module.notelycompose.platform.Downloader
 import com.module.notelycompose.platform.Platform
@@ -32,11 +31,11 @@ actual val platformModule = module {
             "Unknown"
         }
     }
-    single { PermissionLauncherHolder() }
-    factory { PermissionHandler(get()).requestPermission() }
+    single { FileSaverLauncherHolder() }
+    single { FileSaverHandler(get()) }
     single<Platform> { AndroidPlatform(get(named("AppVersion")), get()) }
     single { dataStore(get()) }
-    single { PlatformUtils(get()) }
+    single { PlatformUtils(get(), get()) }
     single { BrowserLauncher(get()) }
 
     single<SqlDriver> {
@@ -48,7 +47,6 @@ actual val platformModule = module {
     single { Downloader(get(), get()) }
 
     single { Transcriber(get(), get()) }
-    single { AudioRecorder(get(), get()) }
 
     // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get(), get()) }

@@ -1,11 +1,11 @@
 package com.module.notelycompose.audio.domain
 
 import android.content.Context
+import audio.recorder.AudioRecorder
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.audio.ui.recorder.AudioRecorderUiState
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.extensions.startRecordingService
-import com.module.notelycompose.platform.AudioRecorder
 import com.module.notelycompose.service.AudioRecordingService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -7,10 +7,10 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import audio.recorder.AudioRecorder
 import com.module.notelycompose.Arguments.NOTE_ID_PARAM
 import com.module.notelycompose.audio.domain.SaveAudioNoteInteractor
 import com.module.notelycompose.extensions.restartMainActivity
-import com.module.notelycompose.platform.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
