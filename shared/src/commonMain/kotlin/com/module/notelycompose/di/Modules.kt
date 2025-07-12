@@ -18,6 +18,7 @@ import com.module.notelycompose.notes.domain.SearchNotesUseCase
 import com.module.notelycompose.notes.domain.UpdateNoteUseCase
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
 import com.module.notelycompose.notes.domain.mapper.TextFormatMapper
+import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.presentation.helpers.TextEditorHelper
@@ -75,6 +76,7 @@ val viewModelModule = module {
     viewModelOf(::ModelDownloaderViewModel)
     viewModelOf(::AudioRecorderViewModel)
     viewModelOf(::AudioPlayerViewModel)
+    viewModelOf(::AudioImportViewModel)
 }
 
 val useCaseModule = module {

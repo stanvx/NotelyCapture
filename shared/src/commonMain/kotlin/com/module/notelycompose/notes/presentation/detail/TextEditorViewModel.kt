@@ -4,7 +4,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import audio.FileManager
 import audio.utils.deleteFile
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
@@ -21,7 +20,6 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
 import com.module.notelycompose.notes.ui.detail.EditorUiState
-import com.module.notelycompose.notes.ui.detail.ImportingState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,9 +31,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import io.github.aakira.napier.Napier
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
 
 private const val ID_NOT_SET = 0L
 
@@ -48,15 +43,12 @@ class TextEditorViewModel(
     private val editorPresentationToUiStateMapper: EditorPresentationToUiStateMapper,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    private val textEditorHelper: TextEditorHelper,
-    private val fileManager: FileManager
+    private val textEditorHelper: TextEditorHelper
 ) : ViewModel() {
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
     val editorPresentationState: StateFlow<EditorPresentationState> = _editorPresentationState
     private var _currentNoteId = MutableStateFlow<Long?>(ID_NOT_SET)
-    private var _importingState = MutableStateFlow<ImportingState>(ImportingState.Idle)
-    val importingState: StateFlow<ImportingState> = _importingState
 
     internal val currentNoteId: StateFlow<Long?> = _currentNoteId.asStateFlow()
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
@@ -355,15 +347,5 @@ class TextEditorViewModel(
                 _editorPresentationState.update { newState }
             }
         )
-    }
-
-    internal fun importAudio() = fileManager.launchAudioPicker {
-        viewModelScope.launch {
-            _importingState.update { ImportingState.Importing }
-            val path = fileManager.processPickedAudioToWav()
-            Napier.d { "Imported audio path: $path" }
-            _importingState.update { ImportingState.Idle }
-            onUpdateRecordingPath(path ?: return@launch)
-        }
     }
 }
