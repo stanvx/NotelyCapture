@@ -346,7 +346,7 @@ private fun LoadingAnimation(
 }
 
 @Composable
-private fun RecordingSuccessScreen() {
+internal fun RecordingSuccessScreen() {
     val pathColor = LocalCustomColors.current.bodyContentColor
     Box(
         modifier = Modifier
