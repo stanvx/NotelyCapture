@@ -17,34 +17,33 @@ internal class AndroidFileManager(
     private val audioConverter: AudioConverter
 ) : FileManager {
 
-    private var uri: Uri? = null
+    private var pickedAudioUri: Uri? = null
 
-    override fun launchAudioPicker(
-        onResult: () -> Unit
-    ) {
-        uri = null
-        if (checkStoragePermission()) {
-            launcherHolder.audioPickerLauncher?.launch {
-                uri = it
-                it?.also { onResult() }
+    override fun launchAudioPicker(onResult: () -> Unit) {
+        pickedAudioUri = null
+
+        if (hasStoragePermissions()) {
+            launcherHolder.audioPickerLauncher?.launch { uri ->
+                pickedAudioUri = uri
+                uri?.let { onResult() }
             }
         }
     }
 
-    override suspend fun processPickedAudioToWav(): String? {
+    override suspend fun processPickedAudioToWav(onProgress: (Float) -> Unit): String? {
         val inputPath = copyToAppStorage() ?: return null
-        return audioConverter.convertAudioToWav(inputPath).also {
-            deleteFile(inputPath)
-        }
+        val outputPath = audioConverter.convertAudioToWav(inputPath, onProgress)
+        deleteFile(inputPath)
+        return outputPath
     }
 
     private fun copyToAppStorage(): String? {
-        return uri?.run { context.savePickedAudioToAppStorage(this)?.absolutePath }
-            .also { uri = null }
+        return pickedAudioUri?.let { context.savePickedAudioToAppStorage(it)?.absolutePath }
+            .also { pickedAudioUri = null }
     }
 
-    private fun checkStoragePermission(): Boolean {
-        val permissions = mutableListOf<String>().apply {
+    private fun hasStoragePermissions(): Boolean {
+        val requiredPermissions = mutableListOf<String>().apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.READ_MEDIA_AUDIO)
             } else {
@@ -56,14 +55,14 @@ internal class AndroidFileManager(
             }
         }
 
-        val allGranted = permissions.all {
+        val granted = requiredPermissions.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
 
-        if (!allGranted) {
-            launcherHolder.permissionLauncher?.launch(permissions.toTypedArray())
+        if (!granted) {
+            launcherHolder.permissionLauncher?.launch(requiredPermissions.toTypedArray())
         }
 
-        return allGranted
+        return granted
     }
 }

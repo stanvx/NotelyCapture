@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,12 +62,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
+import com.module.notelycompose.audio.presentation.AudioImportViewModel
+import com.module.notelycompose.audio.ui.importing.ImportingAudioStateHost
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
@@ -89,22 +91,23 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteDetailScreen(
-    noteId:String,
+    noteId: String,
     navigateBack: () -> Unit,
     navigateToRecorder: (noteId: String) -> Unit,
     navigateToTranscription: () -> Unit,
     audioPlayerViewModel: AudioPlayerViewModel = koinViewModel(),
     downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
     platformViewModel: PlatformViewModel = koinViewModel(),
+    audioImportViewModel: AudioImportViewModel = koinViewModel(),
     editorViewModel: TextEditorViewModel
 ) {
-    val currentNoteId by editorViewModel.currentNoteId.collectAsState()
-    val importingState by editorViewModel.importingState.collectAsState()
-    val downloaderUiState by downloaderViewModel.uiState.collectAsState()
-    val editorState = editorViewModel.editorPresentationState.collectAsState().value
+    val currentNoteId by editorViewModel.currentNoteId.collectAsStateWithLifecycle()
+    val importingState by audioImportViewModel.importingAudioState.collectAsStateWithLifecycle()
+    val downloaderUiState by downloaderViewModel.uiState.collectAsStateWithLifecycle()
+    val editorState = editorViewModel.editorPresentationState.collectAsStateWithLifecycle().value
         .let { editorViewModel.onGetUiState(it) }
 
-    val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsState().value
+    val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsStateWithLifecycle().value
         .let { audioPlayerViewModel.onGetUiState(it) }
 
     var showFormatBar by remember { mutableStateOf(false) }
@@ -117,13 +120,8 @@ fun NoteDetailScreen(
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
 
-    if(importingState is ImportingState.Importing){
-        ImportingScreen()
-        return
-    }
-
     LaunchedEffect(Unit) {
-        if(noteId.toLong() > 0L) {
+        if (noteId.toLong() > 0L) {
             editorViewModel.onGetNoteById(noteId)
         }
         downloaderViewModel.effects.collect {
@@ -133,16 +131,19 @@ fun NoteDetailScreen(
                     showDownloadQuestionDialog = false
                     showLoadingDialog = false
                 }
+
                 is DownloaderEffect.ErrorEffect -> {
                     showDownloadDialog = false
                     showErrorDialog = true
                     showLoadingDialog = false
                 }
+
                 is DownloaderEffect.ModelsAreReady -> {
                     showDownloadDialog = false
                     showLoadingDialog = false
                     navigateToTranscription()
                 }
+
                 is DownloaderEffect.AskForUserAcceptance -> {
                     showDownloadQuestionDialog = true
                     showLoadingDialog = false
@@ -167,13 +168,13 @@ fun NoteDetailScreen(
                 },
                 onImportClick = {
                     audioPlayerViewModel.releasePlayer()
-                    editorViewModel.importAudio()
+                    audioImportViewModel.importAudio()
                 }
             )
         },
         floatingActionButton = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if(editorState.recording.isRecordingExist) {
+                if (editorState.recording.isRecordingExist) {
                     FloatingActionButton(
                         modifier = Modifier.border(
                             width = 1.dp,
@@ -200,7 +201,7 @@ fun NoteDetailScreen(
                     ),
                     backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
                     onClick = {
-                        if(!editorState.recording.isRecordingExist) {
+                        if (!editorState.recording.isRecordingExist) {
                             navigateToRecorder("$currentNoteId")
                         } else {
                             showExistingRecordConfirmDialog = true
@@ -231,19 +232,19 @@ fun NoteDetailScreen(
         }
     ) { paddingValues ->
 
-            NoteContent(
-                paddingValues = paddingValues,
-                newNoteDateString = editorState.createdAt,
-                editorState = editorState,
-                showFormatBar = showFormatBar,
-                focusRequester = focusRequester,
-                audioPlayerUiState = audioPlayerUiState,
-                textEditorViewModel = editorViewModel,
-                audioPlayerViewModel = audioPlayerViewModel,
-                onFocusChange = {
-                    isTextFieldFocused = it
-                },
-                )
+        NoteContent(
+            paddingValues = paddingValues,
+            newNoteDateString = editorState.createdAt,
+            editorState = editorState,
+            showFormatBar = showFormatBar,
+            focusRequester = focusRequester,
+            audioPlayerUiState = audioPlayerUiState,
+            textEditorViewModel = editorViewModel,
+            audioPlayerViewModel = audioPlayerViewModel,
+            onFocusChange = {
+                isTextFieldFocused = it
+            },
+        )
     }
 
 
@@ -310,7 +311,11 @@ fun NoteDetailScreen(
         )
     }
 
-
+    ImportingAudioStateHost(
+        state = importingState,
+        onSuccess = editorViewModel::onUpdateRecordingPath,
+        onRelease = audioImportViewModel::releaseState
+    )
 }
 
 
@@ -323,7 +328,7 @@ private fun NoteContent(
     editorState: EditorUiState,
     showFormatBar: Boolean,
     focusRequester: FocusRequester,
-    onFocusChange:(Boolean)->Unit,
+    onFocusChange: (Boolean) -> Unit,
     audioPlayerUiState: AudioPlayerUiState,
     textEditorViewModel: TextEditorViewModel,
     audioPlayerViewModel: AudioPlayerViewModel
@@ -335,7 +340,6 @@ private fun NoteContent(
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
-
 
     Column(
         modifier = Modifier
@@ -395,7 +399,7 @@ private fun NoteContent(
             }
 
             NoteEditor(
-                modifier= Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 editorState = editorState,
                 showFormatBar = showFormatBar,
                 focusRequester = focusRequester,
@@ -435,7 +439,7 @@ private fun NoteEditor(
     editorState: EditorUiState,
     showFormatBar: Boolean,
     focusRequester: FocusRequester,
-    onFocusChange:(Boolean)->Unit,
+    onFocusChange: (Boolean) -> Unit,
     textEditorViewModel: TextEditorViewModel
 ) {
 
@@ -466,11 +470,11 @@ private fun NoteEditor(
         onValueChange = textEditorViewModel::onUpdateContent,
         modifier =
             modifier
-            .focusRequester(focusRequester)
-            .padding(horizontal = 16.dp)
-            .onFocusChanged {
-                onFocusChange(it.isFocused)
-            },
+                .focusRequester(focusRequester)
+                .padding(horizontal = 16.dp)
+                .onFocusChanged {
+                    onFocusChange(it.isFocused)
+                },
         textStyle = TextStyle(
             color = LocalCustomColors.current.bodyContentColor,
             textAlign = editorState.textAlign
