@@ -78,7 +78,8 @@ fun TranscriptionScreen(
         }
     }
         Card(
-            backgroundColor = LocalCustomColors.current.bodyBackgroundColor
+            backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
+            elevation = 0.dp
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

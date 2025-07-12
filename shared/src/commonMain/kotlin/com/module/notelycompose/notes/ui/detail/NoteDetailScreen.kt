@@ -24,6 +24,8 @@ import androidx.compose.material.DismissDirection
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.FloatingActionButtonDefaults.elevation
+import androidx.compose.material.FloatingActionButtonElevation
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SwipeToDismiss
@@ -179,7 +181,8 @@ fun NoteDetailScreen(
                             shape = CircleShape
                         ),
                         backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { downloaderViewModel.checkTranscriptionAvailability() }
+                        onClick = { downloaderViewModel.checkTranscriptionAvailability() },
+                        elevation = elevation(defaultElevation = 2.dp)
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_transcription),
@@ -202,7 +205,8 @@ fun NoteDetailScreen(
                         } else {
                             showExistingRecordConfirmDialog = true
                         }
-                    }
+                    },
+                    elevation = elevation(defaultElevation = 2.dp)
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,
