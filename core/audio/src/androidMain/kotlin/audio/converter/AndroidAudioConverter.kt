@@ -17,31 +17,35 @@ import java.nio.ByteOrder
 internal class AndroidAudioConverter(
     private val context: Context
 ) : AudioConverter {
-    // Target format
+    // Target format constants
     private val targetSampleRate = 16000
     private val targetChannels = 1
     private val targetBitDepth = 16
 
-    override suspend fun convertAudioToWav(path: String) = withContext(Dispatchers.IO) {
+    override suspend fun convertAudioToWav(
+        path: String,
+        onProgress: (Float) -> Unit
+    ): String? = withContext(Dispatchers.IO) {
         val extractor = MediaExtractor()
         try {
             extractor.setDataSource(path)
 
-            // Find audio track
+            // Locate the audio track
             val audioTrackIndex = findAudioTrack(extractor)
             if (audioTrackIndex == -1) return@withContext null
 
             extractor.selectTrack(audioTrackIndex)
             val format = extractor.getTrackFormat(audioTrackIndex)
 
-            // Create output WAV file
+            // Prepare output WAV file
             val outputFile = context.generateWavFile(prefix = IMPORTING_PREFIX)
 
-            // Process audio in chunks
+            // Convert in chunks and report progress
             val success = processAudioInChunks(
                 extractor = extractor,
                 format = format,
-                outputFile = outputFile
+                outputFile = outputFile,
+                onProgress = onProgress
             )
 
             if (success) outputFile.absolutePath else null
@@ -56,11 +60,13 @@ internal class AndroidAudioConverter(
     private fun processAudioInChunks(
         extractor: MediaExtractor,
         format: MediaFormat,
-        outputFile: File
+        outputFile: File,
+        onProgress: (Float) -> Unit
     ): Boolean {
         val mime = format.getString(MediaFormat.KEY_MIME) ?: return false
         val originalSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         val originalChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        val durationUs = format.getLong(MediaFormat.KEY_DURATION)
 
         val codec = MediaCodec.createDecoderByType(mime)
         codec.configure(format, null, null, 0)
@@ -69,26 +75,26 @@ internal class AndroidAudioConverter(
         val info = MediaCodec.BufferInfo()
         var sawInputEOS = false
         var sawOutputEOS = false
-        var totalBytesWritten = 0
+        var totalBytesWritten = 0L
+        var lastProgress = 0f
 
         return try {
-            // Write initial WAV header (will update size later)
+            // Write placeholder header
             val header = createWavHeader(0)
             RandomAccessFile(outputFile, "rw").use { raf ->
                 raf.write(header)
 
-                // Process audio chunks
                 while (!sawOutputEOS) {
                     if (!sawInputEOS) {
-                        val inputBufferIndex = codec.dequeueInputBuffer(10000)
-                        if (inputBufferIndex >= 0) {
-                            val inputBuffer = codec.getInputBuffer(inputBufferIndex) ?: continue
-                            val sampleSize = extractor.readSampleData(inputBuffer, 0)
+                        val inIndex = codec.dequeueInputBuffer(10000)
+                        if (inIndex >= 0) {
+                            val inBuf = codec.getInputBuffer(inIndex) ?: continue
+                            val sampleSize = extractor.readSampleData(inBuf, 0)
 
                             if (sampleSize < 0) {
                                 sawInputEOS = true
                                 codec.queueInputBuffer(
-                                    inputBufferIndex,
+                                    inIndex,
                                     0,
                                     0,
                                     0,
@@ -96,7 +102,7 @@ internal class AndroidAudioConverter(
                                 )
                             } else {
                                 codec.queueInputBuffer(
-                                    inputBufferIndex,
+                                    inIndex,
                                     0,
                                     sampleSize,
                                     extractor.sampleTime,
@@ -107,39 +113,46 @@ internal class AndroidAudioConverter(
                         }
                     }
 
-                    val outputBufferIndex = codec.dequeueOutputBuffer(info, 10000)
+                    val outIndex = codec.dequeueOutputBuffer(info, 10000)
                     when {
-                        outputBufferIndex >= 0 -> {
-                            val outputBuffer = codec.getOutputBuffer(outputBufferIndex)
-                            outputBuffer?.let {
+                        outIndex >= 0 -> {
+                            codec.getOutputBuffer(outIndex)?.let { buf ->
                                 val chunk = ByteArray(info.size)
-                                it.position(info.offset)
-                                it.limit(info.offset + info.size)
-                                it.get(chunk, 0, info.size)
+                                buf.position(info.offset)
+                                buf.limit(info.offset + info.size)
+                                buf.get(chunk)
 
-                                // Process and write the chunk
-                                val processedChunk = processPcmChunk(
-                                    chunk,
-                                    originalSampleRate,
-                                    originalChannels
-                                )
-                                raf.write(processedChunk)
-                                totalBytesWritten += processedChunk.size
+                                val processed =
+                                    processPcmChunk(chunk, originalSampleRate, originalChannels)
+                                raf.write(processed)
+                                totalBytesWritten += processed.size
+
+                                // Report progress every ~1%
+                                if (durationUs > 0) {
+                                    val progress = (info.presentationTimeUs.toDouble() / durationUs)
+                                        .coerceIn(0.0, 1.0)
+                                        .toFloat()
+                                    if (progress - lastProgress >= 0.01f) {
+                                        lastProgress = progress
+                                        onProgress(progress)
+                                    }
+                                }
                             }
-                            codec.releaseOutputBuffer(outputBufferIndex, false)
+                            codec.releaseOutputBuffer(outIndex, false)
 
                             if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
                                 sawOutputEOS = true
                             }
                         }
-                        outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {}
-                        outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {}
+
+                        outIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {}
+                        outIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {}
                     }
                 }
 
-                // Update WAV header with actual file size
+                // Rewrite header with actual data length
                 raf.seek(0)
-                raf.write(createWavHeader(totalBytesWritten))
+                raf.write(createWavHeader(totalBytesWritten.toInt()))
             }
             true
         } catch (e: Exception) {
@@ -153,11 +166,8 @@ internal class AndroidAudioConverter(
 
     private fun findAudioTrack(extractor: MediaExtractor): Int {
         for (i in 0 until extractor.trackCount) {
-            val format = extractor.getTrackFormat(i)
-            val mime = format.getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith("audio/") == true) {
-                return i
-            }
+            val mime = extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)
+            if (mime?.startsWith("audio/") == true) return i
         }
         return -1
     }
@@ -167,70 +177,39 @@ internal class AndroidAudioConverter(
         originalSampleRate: Int,
         originalChannels: Int
     ): ByteArray {
-        // Convert byte array to short array (16-bit PCM)
-        val shortSamples = ByteBuffer.wrap(chunk)
+        val shortBuf = ByteBuffer.wrap(chunk)
             .order(ByteOrder.LITTLE_ENDIAN)
             .asShortBuffer()
-            .let { buffer ->
-                val shorts = ShortArray(buffer.remaining())
-                buffer.get(shorts)
-                shorts
-            }
+        val shorts = ShortArray(shortBuf.remaining()).also { shortBuf.get(it) }
 
-        // Convert stereo to mono if needed
-        val monoShorts = if (originalChannels == 2) {
-            convertStereoToMono(shortSamples)
-        } else {
-            shortSamples
-        }
+        val mono = if (originalChannels == 2) convertStereoToMono(shorts) else shorts
+        val resampled = if (originalSampleRate != targetSampleRate) resampleAudio(
+            mono,
+            originalSampleRate
+        ) else mono
 
-        // Resample if needed
-        val resampledShorts = if (originalSampleRate != targetSampleRate) {
-            resampleAudio(monoShorts, originalSampleRate)
-        } else {
-            monoShorts
-        }
-
-        // Convert back to byte array
-        return ByteBuffer.allocate(resampledShorts.size * 2)
+        return ByteBuffer.allocate(resampled.size * 2)
             .order(ByteOrder.LITTLE_ENDIAN)
-            .apply {
-                resampledShorts.forEach { putShort(it) }
-            }
+            .apply { resampled.forEach(::putShort) }
             .array()
     }
 
-    private fun convertStereoToMono(stereoSamples: ShortArray): ShortArray {
-        val monoSize = stereoSamples.size / 2
-        val mono = ShortArray(monoSize)
-
-        for (i in 0 until monoSize) {
-            // Simple average of left and right channels
-            val left = stereoSamples[i * 2].toInt()
-            val right = stereoSamples[i * 2 + 1].toInt()
-            mono[i] = ((left + right) / 2).toShort()
+    private fun convertStereoToMono(stereo: ShortArray): ShortArray {
+        return ShortArray(stereo.size / 2) { i ->
+            ((stereo[i * 2].toInt() + stereo[i * 2 + 1].toInt()) / 2).toShort()
         }
-
-        return mono
     }
 
     private fun resampleAudio(
         input: ShortArray,
-        inputSampleRate: Int,
-        outputSampleRate: Int = targetSampleRate
+        inputSampleRate: Int
     ): ShortArray {
-        if (inputSampleRate == outputSampleRate) return input
-
-        val ratio = inputSampleRate.toDouble() / outputSampleRate.toDouble()
-        val outputSize = (input.size / ratio).toInt()
-        val output = ShortArray(outputSize)
-
-        for (i in 0 until outputSize) {
-            val inputIndex = (i * ratio).toInt()
-            output[i] = if (inputIndex < input.size) input[inputIndex] else 0
+        if (inputSampleRate == targetSampleRate) return input
+        val ratio = inputSampleRate.toDouble() / targetSampleRate
+        return ShortArray((input.size / ratio).toInt()) { i ->
+            val idx = (i * ratio).toInt()
+            if (idx < input.size) input[idx] else 0
         }
-
-        return output
     }
 
     private fun createWavHeader(
@@ -248,8 +227,8 @@ internal class AndroidAudioConverter(
             putInt(totalDataLen)
             put("WAVE".toByteArray())
             put("fmt ".toByteArray())
-            putInt(16) // Subchunk1Size
-            putShort(1.toShort()) // PCM
+            putInt(16)
+            putShort(1.toShort())
             putShort(channels.toShort())
             putInt(sampleRate)
             putInt(byteRate)
