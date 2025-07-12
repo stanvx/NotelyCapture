@@ -67,7 +67,7 @@ internal class IOSAudioPickerLauncher {
     }
 
     private val contentTypes: List<UTType>
-        get() = listOf("aac", "aiff", "caf", "flac", "wma", "m4a", "mp3", "wav")
+        get() = listOf("aac", "aiff", "caf", "flac", "m4a", "mp3", "wav")
             .mapNotNull { UTType.typeWithFilenameExtension(it) }
             .ifEmpty { listOf(UTTypeContent) }
 

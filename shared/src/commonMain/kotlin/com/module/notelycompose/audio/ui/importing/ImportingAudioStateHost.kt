@@ -75,15 +75,24 @@ private fun ImportingCircularProgressIndicator(
             .background(LocalCustomColors.current.bodyBackgroundColor),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(
-            progress = { percentage },
-            modifier = Modifier.size(radius.times(2)),
-            color = contentColor,
-            strokeWidth = strokeWidth,
-            gapSize = 0.dp,
-            trackColor = trackColor,
-            strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
-        )
+        if (percentage == 0f) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(radius.times(2)),
+                color = contentColor,
+                strokeWidth = strokeWidth,
+            )
+        } else {
+            CircularProgressIndicator(
+                progress = { percentage },
+                modifier = Modifier.size(radius.times(2)),
+                color = contentColor,
+                strokeWidth = strokeWidth,
+                gapSize = 0.dp,
+                trackColor = trackColor,
+                strokeCap = ProgressIndicatorDefaults.CircularDeterminateStrokeCap,
+            )
+        }
+
         Text(
             text = "${(percentage * 100).toInt()}%",
             fontSize = 20.sp,
