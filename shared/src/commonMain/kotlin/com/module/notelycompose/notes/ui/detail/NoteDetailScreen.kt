@@ -169,7 +169,8 @@ fun NoteDetailScreen(
                 onImportClick = {
                     audioPlayerViewModel.releasePlayer()
                     audioImportViewModel.importAudio()
-                }
+                },
+                isRecordingExist = editorState.recording.isRecordingExist
             )
         },
         floatingActionButton = {
@@ -296,7 +297,8 @@ fun NoteDetailScreen(
         },
         onConfirm = {
             navigateToRecorder("$currentNoteId")
-        }
+        },
+        option = RecordingConfirmationUiModel.Record
     )
 
     if (showShareDialog) {

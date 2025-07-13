@@ -20,6 +20,7 @@
     <string name="confirmation_delete">Delete</string>
     <string name="confirmation_cancel">Cancel</string>
     <string name="recording_replace_error">You already have a recording saved. Creating a new recording will permanently replace it. Do you want to continue?</string>
+    <string name="recording_import_error">You already have a recording saved. Importing a new record will permanently replace it. Do you want to continue?</string>
     <string name="recording_replace_continue">Continue</string>
 
     <!-- BottomNavigationBar -->

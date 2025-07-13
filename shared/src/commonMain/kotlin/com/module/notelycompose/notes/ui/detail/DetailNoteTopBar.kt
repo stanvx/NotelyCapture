@@ -46,23 +46,48 @@ fun DetailNoteTopBar(
     onShare: () -> Unit = {},
     onExportAudio: () -> Unit,
     onImportClick: () -> Unit = {},
+    isRecordingExist: Boolean
 ) {
+    var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
     if (getPlatform().isAndroid) {
         DetailAndroidNoteTopBar(
             title = title,
             onNavigateBack = onNavigateBack,
             onShare = onShare,
             onExportAudio = onExportAudio,
-            onImportClick = onImportClick
+            onImportClick = {
+                if (!isRecordingExist) {
+                    onImportClick()
+                } else {
+                    showExistingRecordConfirmDialog = true
+                }
+            }
         )
     } else {
         DetailIOSNoteTopBar(
             onNavigateBack = onNavigateBack,
             onShare = onShare,
             onExportAudio = onExportAudio,
-            onImportClick = onImportClick
+            onImportClick = {
+                if (!isRecordingExist) {
+                    onImportClick()
+                } else {
+                    showExistingRecordConfirmDialog = true
+                }
+            }
         )
     }
+
+    ReplaceRecordingConfirmationDialog(
+        showDialog = showExistingRecordConfirmDialog,
+        onDismiss = {
+            showExistingRecordConfirmDialog = false
+        },
+        onConfirm = {
+            onImportClick()
+        },
+        option = RecordingConfirmationUiModel.Import
+    )
 }
 
 @Composable
