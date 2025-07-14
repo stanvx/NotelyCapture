@@ -36,7 +36,7 @@ class PlatformViewModel (
 
     fun shareRecording(path: String) {
          if (path.isNotBlank()) {
-             platformUtils.shareRecording(path)
+             onExportAudio(path)
          }
     }
 
