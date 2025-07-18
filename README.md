@@ -79,7 +79,7 @@ This project uses [Weblate](https://hosted.weblate.org/projects/notelyvoice/) fo
 - **[Coroutines](https://kotlinlang.org/docs/coroutines-overview.html)** - For asynchronous programming
 - **[Clean Architecture](https://developer.android.com/topic/architecture)** - Ensures scalability and testability
 - **[ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel)** - Stores and manages UI-related data
-- **[Dagger-Hilt](https://dagger.dev/hilt/)** - Dependency injection for Android
+- **[Koin](https://insert-koin.io/docs/quickstart/android/)** - Dependency injection for Android
 - **[Material 3](https://m3.material.io/)** - Design system for modern UI
 - **[Whisper AI](https://openai.com/index/whisper/)** - Human level robustness speech recognition
 - **Native Compose Navigation** - No third-party navigation libraries
