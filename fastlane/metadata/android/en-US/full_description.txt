@@ -5,6 +5,8 @@ Features
 - Rich Text Editing - Format your notes with: Title, Bold, italic, and underline text.
 - Text alignment (left, right, center)
 - Record Voice notes
+- Import Audios and Transcribe
+- Export Audios to local storage
 - Share Audios functionality
 - Audio Transcription - Unlimited audio transcriptions after downloading model on your device
 - Transcribe Audios in multiple languages
