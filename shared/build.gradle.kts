@@ -192,7 +192,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
+    packaging {
+        // Force consistent ordering
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     buildTypes {
         getByName("release") {
 //            isMinifyEnabled = true
