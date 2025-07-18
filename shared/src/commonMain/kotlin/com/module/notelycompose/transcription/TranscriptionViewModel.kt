@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+const val SPACE_STR = " "
 
 class TranscriptionViewModel(
     private val transcriber: Transcriber,
@@ -51,7 +52,7 @@ class TranscriptionViewModel(
                         }
                     }, onNewSegment = { _, _, text ->
                         
-                        val delimiter = if(_uiState.value.originalText.endsWith(".")) "\n\n" else ""
+                        val delimiter = if(_uiState.value.originalText.endsWith(".")) "\n\n" else SPACE_STR
                         debugPrintln{"\n text ========================= $text"}
                         _uiState.update { current ->
                             current.copy(
