@@ -1,15 +1,19 @@
-# Notely Voice
+# Notely Capture
 
 [![Kotlin](https://img.shields.io/badge/kotlin-2.1.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/compose-1.8.0-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
-[![](https://hosted.weblate.org/widget/notelyvoice/svg-badge.svg)](https://hosted.weblate.org/projects/notelyvoice/)
 
-A completely free modern, cross-platform note-taking application with powerful Whisper AI Voice to Text capabilities built with Compose Multiplatform.
+A Personalised, cross-platform note-taking application with powerful Whisper AI Voice to Text capabilities built with Compose Multiplatform.
 
-Perfect for students capturing lectures, professionals documenting meetings, doctors recording patient notes, researchers transcribing interviews, and anyone needing accessible hands-free note-taking across all their devices.
+This is a Personalised fork of the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project, focused on simplifying the UI, adding additional capture methods, focusing on Android development, and integration with Logseq and Obsidian.
 
-## Download the app
+Perfect for students capturing lectures, professionals documenting meetings, researchers transcribing interviews, and anyone needing accessible hands-free note-taking with seamless integration to their knowledge management systems.
+
+## Download
+
+> **Note**: This is a Personalised fork. The original Notely Voice app is available on the official stores:
+
 <div style="display:flex;" >
 <a href="https://f-droid.org/en/packages/com.module.notelycompose.android">
     <img alt="Get it on F-Droid" height="64" src="https://raw.githubusercontent.com/anwilli5/coin-collection-android-US/main/images/fdroid-repo-badge.png" />
@@ -22,9 +26,16 @@ Perfect for students capturing lectures, professionals documenting meetings, doc
 </a>
 </div>
 
-## Translations
-This project uses [Weblate](https://hosted.weblate.org/projects/notelyvoice/) for translation management. Help us translate NotelyVoice into your language!
-<br/>
+## Personalisation Features
+
+### Enhanced Integrations
+🔗 **Logseq Integration** - Export notes directly to Logseq  
+📝 **Obsidian Integration** - Seamless workflow with Obsidian vaults  
+🎯 **Android Focus** - Optimized primarily for Android devices  
+
+### Simplified UI
+✨ **Streamlined Interface** - Cleaner, more focused user experience  
+🚀 **Performance** - Reduced complexity for better performance
 
 ## Screenshots
 
@@ -103,12 +114,40 @@ Notely is built with Clean Architecture principles, separating the app into dist
 
 `iosApp/`: Contains iOS-specific code.
 
+## Fork Management
+
+### Upstream Synchronization
+This fork maintains sync with the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) repository:
+
+```bash
+# Quick sync using the helper script
+./upstream-sync.sh
+
+# Manual sync
+git fetch upstream
+git merge upstream/main
+```
+
+### Personalisation Strategy
+- **Package names unchanged** for store compatibility  
+- **Smart merge rules** via `.gitattributes` preserve customizations
+- **Automated conflict resolution** for UI strings and metadata
+- **Roadmap tracking** in this README
+
+### Planned Personalisations
+- **UI Simplification**: Streamlined navigation and reduced complexity
+- **Additional Capture Methods**: Quick voice memo widget, background recording
+- **Android Focus**: Material You theming, Android-specific optimizations  
+- **Knowledge Management**: Logseq export, Obsidian vault sync, markdown optimization
+
 ## Contributing
 Contributions are welcome! Please follow these steps:
 
 - Fork the repository.
 - Create a new branch for your feature or bug fix.
 - Submit a pull request with a clear description of your changes.
+
+**For upstream contributions:** Bug fixes and generic features should be contributed to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project.
 
 ## Getting Started
 
@@ -123,7 +162,7 @@ Contributions are welcome! Please follow these steps:
 
 1. Clone the repository
    ```sh
-   git clone https://github.com/tosinonikute/NotelyVoice.git
+   git clone https://github.com/stanvx/NotelyCapture.git
    ```
 
 2. Open the project in Android Studio
@@ -133,17 +172,11 @@ Contributions are welcome! Please follow these steps:
 ### License
 
 ```
-Copyright (C) 2025 NotelyVoice
+Copyright (C) 2025 Notely Capture (forked from NotelyVoice)
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License version 3 only 
-as published by the Free Software Foundation.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+## Original Project
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <https://www.gnu.org/licenses/>.
+This is a fork of the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project by [tosinonikute](https://github.com/tosinonikute). Please consider supporting the original project and contributing to the upstream repository.
 ```
