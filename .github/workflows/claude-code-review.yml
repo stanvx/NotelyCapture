@@ -1,0 +1,82 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Run on Kotlin/Android files since this is a Kotlin Multiplatform project
+    paths:
+      - "shared/**/*.kt"
+      - "core/**/*.kt"
+      - "lib/**/*.kt"
+      - "iosApp/**/*.swift"
+      - "androidApp/**/*.kt"
+      - "build.gradle.kts"
+      - "gradle/**"
+
+jobs:
+  claude-review:
+    # Only run for PRs created by the repository owner
+    if: github.event.pull_request.user.login == 'stanvx'
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
+          # model: "claude-opus-4-20250514"
+          
+          # Customized prompt for Kotlin Multiplatform project
+          direct_prompt: |
+            Please review this Kotlin Multiplatform pull request and provide feedback on:
+            - Kotlin code quality and best practices
+            - Proper use of expect/actual patterns for platform-specific code
+            - Compose Multiplatform UI patterns and performance
+            - Clean Architecture layer boundaries (UI → Presentation → Domain → Data)
+            - Coroutines and StateFlow usage
+            - Dependency injection with Koin
+            - Potential bugs or issues
+            - Security concerns (especially for audio processing and file I/O)
+            - Test coverage
+            
+            Be constructive and helpful in your feedback.
+
+          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+          use_sticky_comment: true
+          
+          # Optional: Customize review based on file types
+          # direct_prompt: |
+          #   Review this PR focusing on:
+          #   - For TypeScript files: Type safety and proper interface usage
+          #   - For API endpoints: Security, input validation, and error handling
+          #   - For React components: Performance, accessibility, and best practices
+          #   - For tests: Coverage, edge cases, and test quality
+          
+          # Optional: Different prompts for different authors
+          # direct_prompt: |
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
+          #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
+          
+          # Optional: Add specific tools for running tests or linting
+          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          
+          # Optional: Skip review for certain conditions
+          # if: |
+          #   !contains(github.event.pull_request.title, '[skip-review]') &&
+          #   !contains(github.event.pull_request.title, '[WIP]')
+
