@@ -31,6 +31,7 @@ import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentation
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.platform.presentation.PlatformViewModel
+import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.transcription.TranscriptionViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -87,4 +88,5 @@ val useCaseModule = module {
     factory { InsertNoteUseCase(get(), get(), get()) }
     factory { SearchNotesUseCase(get(), get()) }
     factory { UpdateNoteUseCase(get(), get(), get()) }
+    factory { BackgroundTranscriptionService(get(), get()) }
 }

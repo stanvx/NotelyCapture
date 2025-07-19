@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
+import com.module.notelycompose.notes.ui.components.SpeedDialFAB
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformUiState
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ fun NoteListScreen(
     navigateToSettings: () -> Unit,
     navigateToMenu: () -> Unit,
     navigateToNoteDetails: (String) -> Unit,
+    navigateToQuickRecord: () -> Unit,
     viewModel: NoteListViewModel = koinViewModel(),
     platformUiState: PlatformUiState
 ) {
@@ -59,25 +61,14 @@ fun NoteListScreen(
             isFloatingActionButtonDocked = true,
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
+                SpeedDialFAB(
+                    onNewNoteClick = {
                         navigateToNoteDetails("0")
                     },
-                    backgroundColor = LocalCustomColors.current.backgroundViewColor,
-                    elevation = elevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        Icon(
-                            modifier = Modifier.padding(4.dp),
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(Res.string.note_list_add_note),
-                            tint = LocalCustomColors.current.floatActionButtonIconColor
-                        )
+                    onQuickRecordClick = {
+                        navigateToQuickRecord()
                     }
-                }
+                )
             }
         ) { paddingValues ->
             Column(

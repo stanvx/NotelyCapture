@@ -72,6 +72,7 @@
 
     <!-- Note List -->
     <string name="note_list_add_note">Add Note</string>
+    <string name="note_list_quick_record">Quick Record</string>
 
     <!-- Search Bar -->
     <string name="search_bar_search_text">Search notes...</string>

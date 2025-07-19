@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
@@ -74,6 +75,7 @@ import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class ScreenState {
@@ -87,13 +89,21 @@ fun RecordingScreen(
     noteId: Long?,
     navigateBack: () -> Unit,
     viewModel: AudioRecorderViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel
+    editorViewModel: TextEditorViewModel,
+    isQuickRecordMode: Boolean = false,
+    backgroundTranscriptionService: BackgroundTranscriptionService = koinInject()
 ) {
     val recordingState by viewModel.audioRecorderPresentationState.collectAsState()
-    var screenState by remember { mutableStateOf(ScreenState.Initial) }
+    var screenState by remember { mutableStateOf(if (isQuickRecordMode) ScreenState.Recording else ScreenState.Initial) }
 
     DisposableEffect(Unit){
         viewModel.setupRecorder()
+        // Auto-start recording in quick record mode
+        if (isQuickRecordMode) {
+            viewModel.onStartRecording(noteId) {
+                // Already in Recording state, no state change needed
+            }
+        }
         onDispose {
             viewModel.onStopRecording()
             viewModel.finishRecorder()
@@ -135,10 +145,45 @@ fun RecordingScreen(
             ScreenState.Success -> {
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
-                    delay(2000)
-                    debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
-                    editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
-                    navigateBack()
+                    if (isQuickRecordMode) {
+                        // Wait for recording path to be available (handle race condition)
+                        var attempts = 0
+                        val maxAttempts = 10 // Wait up to 1 second
+                        
+                        while (recordingState.recordingPath.isEmpty() && attempts < maxAttempts) {
+                            delay(100) // Wait 100ms between checks
+                            attempts++
+                        }
+                        
+                        if (recordingState.recordingPath.isNotEmpty()) {
+                            debugPrintln { "Quick record completed: ${recordingState.recordingPath}" }
+                            
+                            backgroundTranscriptionService.startTranscription(
+                                audioFilePath = recordingState.recordingPath,
+                                onComplete = { noteId ->
+                                    debugPrintln { "Background transcription completed for note: $noteId" }
+                                    // Navigate back to note list after successful transcription and note creation
+                                    navigateBack()
+                                },
+                                onError = { error ->
+                                    debugPrintln { "Background transcription failed: $error" }
+                                    // Still update editor with recording path and navigate back
+                                    editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
+                                    navigateBack()
+                                }
+                            )
+                        } else {
+                            debugPrintln { "Quick record failed: Recording path not available after ${maxAttempts * 100}ms" }
+                            // Fallback: navigate back without transcription
+                            navigateBack()
+                        }
+                    } else {
+                        // Traditional flow with 2-second delay
+                        delay(2000)
+                        debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
+                        editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
+                        navigateBack()
+                    }
                 }
             }
 

@@ -12,6 +12,7 @@ import com.module.notelycompose.notes.presentation.helpers.returnFirstLine
 import com.module.notelycompose.notes.presentation.helpers.truncateWithEllipsis
 import com.module.notelycompose.notes.presentation.list.mapper.NotesFilterMapper
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
+import com.module.notelycompose.notes.presentation.list.model.QuickRecordState
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,6 +68,12 @@ class NoteListViewModel(
             is NoteListIntent.OnNoteDeleted -> handleNoteDeletion(intent.note)
             is NoteListIntent.OnFilterNote -> setSelectedTab(intent.filter)
             is NoteListIntent.OnSearchNote -> searchQuery.value = intent.keyword
+            
+            // Quick Record Intents
+            is NoteListIntent.OnQuickRecordStarted -> handleQuickRecordStarted()
+            is NoteListIntent.OnQuickRecordCompleted -> handleQuickRecordCompleted()
+            is NoteListIntent.OnQuickRecordError -> handleQuickRecordError(intent.error)
+            is NoteListIntent.OnQuickRecordReset -> handleQuickRecordReset()
         }
     }
 
@@ -168,5 +175,59 @@ class NoteListViewModel(
 
     private fun isStarred(note: NotePresentationModel): Boolean {
         return note.isStarred
+    }
+
+    // Quick Record Handler Methods
+    private fun handleQuickRecordStarted() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Recording,
+                quickRecordError = null
+            )
+        }
+    }
+
+    private fun handleQuickRecordCompleted() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Complete,
+                quickRecordError = null
+            )
+        }
+        // Auto-reset state after completion
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(2000) // Show completion state for 2 seconds
+            handleQuickRecordReset()
+        }
+    }
+
+    private fun handleQuickRecordError(error: String) {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Error,
+                quickRecordError = error
+            )
+        }
+    }
+
+    private fun handleQuickRecordReset() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Idle,
+                quickRecordError = null
+            )
+        }
+    }
+
+    /**
+     * Updates quick record state to Processing during background transcription
+     */
+    fun updateQuickRecordToProcessing() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Processing,
+                quickRecordError = null
+            )
+        }
     }
 }

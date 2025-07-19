@@ -53,12 +53,14 @@ fun App(
     preferencesRepository: PreferencesRepository = koinInject()
 ) {
     val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
+    val accentColor by preferencesRepository.getAccentColor().collectAsState(PreferencesRepository.DEFAULT_ACCENT_COLOR)
     MyApplicationTheme(
         darkTheme = when (uiMode) {
             Theme.DARK.name -> true
             Theme.LIGHT.name -> false
             else -> isSystemInDarkTheme()
-        }
+        },
+        accentColor = accentColor
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -107,6 +109,9 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     navigateToNoteDetails = { noteId ->
                         navController.navigateSingleTop(Routes.Details(noteId))
                     },
+                    navigateToQuickRecord = {
+                        navController.navigateSingleTop(Routes.QuickRecord)
+                    },
                     platformUiState = platformUiState
                 )
             }
@@ -129,6 +134,14 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     navigateBack = { navController.popBackStack() }
                 )
             }
+        }
+        composableWithHorizontalSlide<Routes.QuickRecord> {
+            RecordingScreen(
+                noteId = null, // No existing note for quick record
+                navigateBack = { navController.popBackStack() },
+                editorViewModel = koinViewModel(), // Create new instance for quick record
+                isQuickRecordMode = true
+            )
         }
         navigation<Routes.DetailsGraph>(startDestination = Routes.Details::class) {
             composableWithHorizontalSlide<Routes.Details> { backStackEntry ->
@@ -165,7 +178,8 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 RecordingScreen(
                     noteId = route.noteId?.toLong()?.takeIf { it != 0L },
                     navigateBack = { navController.popBackStack() },
-                    editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
+                    editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
+                    isQuickRecordMode = false // Traditional recording flow
                 )
             }
         }

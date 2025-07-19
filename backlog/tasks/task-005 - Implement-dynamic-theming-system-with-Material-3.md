@@ -15,13 +15,13 @@ dependencies: []
 Enhance the existing Material 3 theming system to support comprehensive customization including light/dark modes and user-selectable accent colors. This improves visual appeal and user personalization while ensuring Material 3 consistency.
 ## Acceptance Criteria
 
-- [ ] Light Dark and System theme modes implemented
-- [ ] User can select accent color from predefined palette
-- [ ] Theme preference stored in DataStore
-- [ ] Color scheme follows Material 3 guidelines
-- [ ] Dynamic theming applies across all screens
-- [ ] Theme changes are applied immediately without restart
-- [ ] Improve Material 3 theming consistency across components
+- [x] Light Dark and System theme modes implemented
+- [x] User can select accent color from predefined palette
+- [x] Theme preference stored in DataStore
+- [x] Color scheme follows Material 3 guidelines
+- [x] Dynamic theming applies across all screens
+- [x] Theme changes are applied immediately without restart
+- [x] Improve Material 3 theming consistency across components
 
 ## Implementation Plan
 

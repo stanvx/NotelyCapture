@@ -20,6 +20,9 @@ sealed interface Routes {
     data class Recorder(val noteId: String?) : Routes
 
     @Serializable
+    data object QuickRecord : Routes
+
+    @Serializable
     data object Web : Routes
 
     @Serializable

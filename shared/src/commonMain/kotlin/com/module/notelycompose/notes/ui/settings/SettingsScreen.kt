@@ -66,6 +66,7 @@ fun SettingsScreen(
     val language by preferencesRepository.getDefaultTranscriptionLanguage()
         .collectAsState(languageCodeMap.entries.first().key)
     val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
+    val accentColor by preferencesRepository.getAccentColor().collectAsState(PreferencesRepository.DEFAULT_ACCENT_COLOR)
     val coroutineScope = rememberCoroutineScope()
 
     Column(
@@ -96,6 +97,12 @@ fun SettingsScreen(
                     onThemeSelected = {
                         coroutineScope.launch {
                             preferencesRepository.setTheme(it.name)
+                        }
+                    },
+                    selectedAccentColor = accentColor,
+                    onAccentColorSelected = {
+                        coroutineScope.launch {
+                            preferencesRepository.setAccentColor(it)
                         }
                     }
                 )
@@ -256,7 +263,9 @@ fun TranscriptionLanguageItem(
 @Composable
 private fun AppearanceSection(
     selectedTheme: Theme,
-    onThemeSelected: (Theme) -> Unit
+    onThemeSelected: (Theme) -> Unit,
+    selectedAccentColor: String,
+    onAccentColorSelected: (String) -> Unit
 ) {
     Column {
         Text(
@@ -270,6 +279,13 @@ private fun AppearanceSection(
         ThemeSection(
             selectedTheme = selectedTheme,
             onThemeSelected = onThemeSelected
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        AccentColorSection(
+            selectedAccentColor = selectedAccentColor,
+            onAccentColorSelected = onAccentColorSelected
         )
     }
 }
@@ -432,5 +448,66 @@ private fun ThemePreview(theme: Theme) {
             )
         }
     }
+}
+
+@Composable
+private fun AccentColorSection(
+    selectedAccentColor: String,
+    onAccentColorSelected: (String) -> Unit
+) {
+    Column {
+        Text(
+            text = "Accent Color",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = LocalCustomColors.current.bodyContentColor,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            PreferencesRepository.VALID_ACCENT_COLORS.forEach { accentColor ->
+                AccentColorOption(
+                    accentColor = accentColor,
+                    isSelected = selectedAccentColor == accentColor,
+                    onSelected = { onAccentColorSelected(accentColor) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentColorOption(
+    accentColor: String,
+    isSelected: Boolean,
+    onSelected: () -> Unit
+) {
+    val accentColorValue = when (accentColor) {
+        "Material Red" -> Color(0xFFD32F2F)
+        "Material Green" -> Color(0xFF388E3C)
+        "Material Blue" -> Color(0xFF1976D2)
+        "Material Purple" -> Color(0xFF7B1FA2)
+        "Material Orange" -> Color(0xFFF57C00)
+        "Material Teal" -> Color(0xFF00796B)
+        else -> Color(0xFF1976D2)
+    }
+
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(accentColorValue)
+            .border(
+                width = if (isSelected) 3.dp else 0.dp,
+                color = if (isSelected) 
+                    MaterialTheme.colorScheme.outline 
+                else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable { onSelected() }
+    )
 }
 
