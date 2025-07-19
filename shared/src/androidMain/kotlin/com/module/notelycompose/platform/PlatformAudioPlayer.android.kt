@@ -54,14 +54,36 @@ actual class PlatformAudioPlayer {
         mediaPlayer?.let { player ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 try {
+                    // Validate speed range for Android
+                    if (speed < 0.125f || speed > 8.0f) {
+                        android.util.Log.w("PlatformAudioPlayer", 
+                            "Warning: Android playback speed $speed is outside supported range (0.125-8.0)")
+                    }
+                    
                     val params = PlaybackParams().setSpeed(speed)
                     player.playbackParams = params
+                    android.util.Log.d("PlatformAudioPlayer", 
+                        "Successfully set Android playback speed to $speed")
+                } catch (e: IllegalStateException) {
+                    android.util.Log.e("PlatformAudioPlayer", 
+                        "IllegalStateException setting playback speed to $speed: MediaPlayer in invalid state", e)
+                    // MediaPlayer is in invalid state - gracefully ignore
+                } catch (e: IllegalArgumentException) {
+                    android.util.Log.e("PlatformAudioPlayer", 
+                        "IllegalArgumentException setting playback speed to $speed: Invalid speed value", e)
+                    // Invalid speed value - gracefully ignore
                 } catch (e: Exception) {
-                    android.util.Log.e("PlatformAudioPlayer", "Failed to set playback speed", e)
+                    android.util.Log.e("PlatformAudioPlayer", 
+                        "Unexpected error setting playback speed to $speed", e)
                     // Fallback: ignore speed change if not supported
                 }
+            } else {
+                android.util.Log.w("PlatformAudioPlayer", 
+                    "Playback speed control not supported on API level ${Build.VERSION.SDK_INT} (requires API 23+)")
             }
-            // For API levels below 23, speed control is not supported
+        } ?: run {
+            android.util.Log.w("PlatformAudioPlayer", 
+                "Cannot set playback speed - MediaPlayer is null")
         }
     }
 }

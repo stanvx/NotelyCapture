@@ -1,5 +1,8 @@
 package com.module.notelycompose.audio.ui.player.model
 
+import androidx.compose.runtime.Stable
+
+@Stable
 data class AudioPlayerUiState(
     val isLoaded: Boolean,
     val isPlaying: Boolean,

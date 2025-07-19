@@ -2,6 +2,7 @@ package com.module.notelycompose.audio.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.Stable
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.onboarding.data.PreferencesRepository
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Platform-independent ViewModel for audio playback functionality
@@ -26,6 +29,7 @@ class AudioPlayerViewModel(
     private val preferencesRepository: PreferencesRepository,
 ):ViewModel(){
     private var progressUpdateJob: Job? = null
+    private val speedUpdateMutex = Mutex()
 
     private val _uiState = MutableStateFlow(AudioPlayerPresentationState())
     val uiState: StateFlow<AudioPlayerPresentationState> = _uiState.asStateFlow()
@@ -49,20 +53,29 @@ class AudioPlayerViewModel(
     }
 
     fun onTogglePlaybackSpeed() {
-        val currentSpeed = _uiState.value.playbackSpeed
-        val nextSpeed = when (currentSpeed) {
-            1.0f -> 1.5f
-            1.5f -> 2.0f
-            else -> 1.0f
-        }
-        
         viewModelScope.launch {
-            try {
-                audioPlayer.setPlaybackSpeed(nextSpeed)
-                _uiState.update { it.copy(playbackSpeed = nextSpeed) }
-                preferencesRepository.setPlaybackSpeed(nextSpeed)
-            } catch (e: Exception) {
-                println("Error setting playback speed: ${e.message}")
+            speedUpdateMutex.withLock {
+                try {
+                    val currentSpeed = _uiState.value.playbackSpeed
+                    val nextSpeed = when (currentSpeed) {
+                        1.0f -> 1.5f
+                        1.5f -> 2.0f
+                        else -> 1.0f
+                    }
+                    
+                    // Apply speed to audio player first
+                    audioPlayer.setPlaybackSpeed(nextSpeed)
+                    
+                    // Update UI state
+                    _uiState.update { it.copy(playbackSpeed = nextSpeed) }
+                    
+                    // Save to preferences (validation happens here)
+                    preferencesRepository.setPlaybackSpeed(nextSpeed)
+                    
+                } catch (e: Exception) {
+                    println("Error setting playback speed: ${e.message}")
+                    // On error, keep current state unchanged
+                }
             }
         }
     }
@@ -165,6 +178,7 @@ class AudioPlayerViewModel(
 /**
  * Data class representing the UI state of the audio player
  */
+@Stable
 data class AudioPlayerPresentationState(
     val isLoaded: Boolean = false,
     val isPlaying: Boolean = false,

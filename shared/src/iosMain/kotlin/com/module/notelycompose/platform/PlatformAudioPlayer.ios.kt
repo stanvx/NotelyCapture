@@ -89,6 +89,20 @@ actual class PlatformAudioPlayer actual constructor() {
     }
 
     actual fun setPlaybackSpeed(speed: Float) {
-        audioPlayer?.rate = speed
+        try {
+            audioPlayer?.let { player ->
+                if (speed < 0.5f || speed > 2.0f) {
+                    debugPrintln{"Warning: iOS playback speed $speed is outside recommended range (0.5-2.0)"}
+                }
+                player.rate = speed
+                debugPrintln{"Successfully set iOS playback speed to $speed"}
+            } ?: run {
+                debugPrintln{"Warning: Cannot set playback speed - audio player is null"}
+            }
+        } catch (e: Exception) {
+            debugPrintln{"Error setting iOS playback speed to $speed: ${e.message}"}
+            // Gracefully handle the error - don't crash the app
+            // iOS will continue playing at current speed
+        }
     }
 }
