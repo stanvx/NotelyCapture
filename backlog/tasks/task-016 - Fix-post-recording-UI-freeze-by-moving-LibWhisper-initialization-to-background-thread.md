@@ -6,6 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2025-07-19'
+updated_date: '2025-07-19'
 labels:
   - bug
   - critical
@@ -29,3 +30,31 @@ The app experiences a critical UI freeze immediately after completing quick reco
 - [ ] Loading progress indicators display properly during transcription
 - [ ] Background transcription completes successfully and creates notes
 - [ ] Error handling works correctly for background transcription failures
+
+## Implementation Plan
+
+1. Analyze current TranscriptionViewModel.initRecognizer() flow to confirm main thread execution
+2. Create dedicated TranscriptionRepository following clean architecture pattern:
+   - Abstract transcription data operations from UI layer
+   - Implement background threading using withContext(Dispatchers.IO)
+   - Wrap all transcriber operations in Result<T> for proper error handling
+3. Refactor Android Transcriber implementation:
+   - Ensure all LibWhisper operations (initialize, loadBaseModel) are thread-safe
+   - Document any thread-safety requirements in the interface
+4. Update TranscriptionViewModel to use repository pattern:
+   - Replace direct transcriber calls with repository calls
+   - Ensure all heavy operations use proper coroutine dispatchers
+   - Maintain existing UI state management patterns
+5. Update BackgroundTranscriptionService integration:
+   - Ensure compatibility with new repository pattern
+   - Verify background transcription still works correctly
+6. Add comprehensive error handling:
+   - Handle initialization failures gracefully
+   - Provide meaningful error messages to users
+   - Implement fallback behavior for transcription failures
+7. Testing and validation:
+   - Test quick record flow with various audio lengths
+   - Verify UI responsiveness during transcription
+   - Test error scenarios and recovery
+   - Perform ANR testing on different Android versions
+   - Validate existing functionality remains intact
