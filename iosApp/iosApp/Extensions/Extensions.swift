@@ -1,6 +1,6 @@
 //
 //  Extensions.swift
-//  Notely Voice
+//  Notely Capture
 //
 //  Created by Tosin Onikute on 07/06/2025.
 //  Copyright © 2025 orgName. All rights reserved.
