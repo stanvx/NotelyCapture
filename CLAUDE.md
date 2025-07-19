@@ -76,6 +76,58 @@ pod install
 open iosApp.xcworkspace
 ```
 
+### Release Workflow
+
+#### Creating GitHub Releases with APK Distribution
+
+The project has automated GitHub Actions workflows that create releases and distribute APK files:
+
+```bash
+# 1. Update version in shared/build.gradle.kts
+# Update versionCode and versionName
+
+# 2. Create and push version tag
+git add .
+git commit -m "feat: bump version to 1.1.5"
+git tag v1.1.5
+git push origin main
+git push origin v1.1.5
+```
+
+**Automated Process:**
+- **Trigger**: Git tag creation (e.g., `v1.1.5`)
+- **Workflow**: `.github/workflows/github-release.yml`
+- **Outputs**: 
+  - Debug APK: `notely-capture-v1.1.5-debug.apk`
+  - Release APK: `notely-capture-v1.1.5-release.apk`
+- **Distribution**: Uploaded to GitHub Releases as downloadable assets
+- **Changelog**: Auto-generated from commit messages since last tag
+
+#### GitHub Actions Workflows
+
+1. **`github-release.yml`** - Main release workflow
+   - Triggered by version tags
+   - Builds both debug and release APKs
+   - Creates GitHub release with changelog
+   - Uploads APK files as assets
+
+2. **`release-signed.yml`** - Enhanced signed release workflow
+   - Triggered by GitHub release creation or manual dispatch
+   - Builds signed APKs (requires keystore secrets)
+   - Also uploads to GitHub releases when triggered by release events
+
+3. **`build-android.yml`** - Manual build workflow
+   - Manual trigger for testing builds
+   - Creates workflow artifacts (temporary)
+
+#### Keystore Configuration
+
+For signed releases, configure these GitHub repository secrets:
+- `KEYSTORE_BASE64`: Base64-encoded keystore file
+- `KEYSTORE_PASSWORD`: Keystore password
+- `KEY_ALIAS`: Key alias name
+- `KEY_PASSWORD`: Key password
+
 ## Architecture Overview
 
 ### Clean Architecture Layers

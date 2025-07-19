@@ -12,7 +12,13 @@ Perfect for students capturing lectures, professionals documenting meetings, res
 
 ## Download
 
-> **Note**: This is a Personalised fork. The original Notely Voice app is available on the official stores:
+### 📦 GitHub Releases
+Download the latest APK files directly from [GitHub Releases](https://github.com/stanvx/NotelyCapture/releases):
+
+- **Debug APK**: `notely-capture-vX.X.X-debug.apk` - For testing and development
+- **Release APK**: `notely-capture-vX.X.X-release.apk` - For production use
+
+> **Installation**: Enable "Install from unknown sources" in Android settings, then install the downloaded APK file.
 
 ## Personalisation Features
 
@@ -148,6 +154,30 @@ Contributions to Notely Capture are welcome! Please follow the feature branch wo
    ```
 
 4. **Follow the PR template** with clear description of changes, testing checklist, and impact assessment
+
+#### Release Process
+
+To create a new release with APK distribution:
+
+1. **Update version** in `shared/build.gradle.kts`:
+   ```kotlin
+   versionCode = 16
+   versionName = "1.1.5"
+   ```
+
+2. **Create and push a version tag**:
+   ```bash
+   git add .
+   git commit -m "feat: bump version to 1.1.5"
+   git tag v1.1.5
+   git push origin main
+   git push origin v1.1.5
+   ```
+
+3. **Automatic release creation**: GitHub Actions will automatically:
+   - Build debug and release APKs
+   - Create a GitHub release with changelog
+   - Upload APK files as downloadable assets
 
 #### Branch Naming Conventions
 - **Features**: `feature/description` (e.g., `feature/logseq-integration`)

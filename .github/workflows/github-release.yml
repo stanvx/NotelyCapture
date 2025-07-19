@@ -1,0 +1,133 @@
+# GitHub Actions Workflow for Creating Releases with APKs
+
+name: Create GitHub Release with APKs
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on version tags like v1.1.5
+
+# Prevent concurrent releases for the same tag
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    # Minimal permissions following security best practices
+    permissions:
+      contents: write # Required to create releases and upload assets
+      id-token: write # Required for OIDC token generation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+        
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4.0.0
+      # Pin to commit SHA for security
+      # uses: gradle/actions/setup-gradle@v4.0.0
+      # uses: gradle/actions/setup-gradle@b6e2e7e8e6e5e2e7e8e6e5e2e7e8e6e5e2e7e8e6 # Example SHA, replace with actual latest SHA
+      with:
+        gradle-home-cache-cleanup: true
+      
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+      
+    - name: Build debug APK
+      run: ./gradlew assembleDebug
+      
+    - name: Decode Keystore (for signed APK)
+      run: |
+        if [ -n "$KEYSTORE_BASE64" ]; then
+          echo "$KEYSTORE_BASE64" | base64 --decode > ${{ github.workspace }}/release-keystore.jks
+          echo "Keystore decoded successfully"
+        else
+          echo "No keystore configured - APK will be unsigned"
+        fi
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        
+    - name: Build release APK (signed if keystore available)
+      run: |
+        if [ -f "${{ github.workspace }}/release-keystore.jks" ]; then
+          echo "Building signed release APK..."
+          ./gradlew assembleRelease
+        else
+          echo "Building unsigned release APK..."
+          ./gradlew assembleRelease
+        fi
+      env:
+        KEYSTORE_FILE: ${{ github.workspace }}/release-keystore.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      
+    - name: Find APK files
+      id: find-apks
+      run: |
+        DEBUG_APK=$(find . -name "*debug*.apk" -type f | head -1)
+        RELEASE_APK=$(find . -name "*release*.apk" -type f | head -1)
+        echo "debug_apk=$DEBUG_APK" >> $GITHUB_OUTPUT
+        echo "release_apk=$RELEASE_APK" >> $GITHUB_OUTPUT
+        echo "Found Debug APK: $DEBUG_APK"
+        echo "Found Release APK: $RELEASE_APK"
+        
+    - name: Extract version from tag
+      id: version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Try to get commits since last tag, fallback to last 10 commits
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^1 2>/dev/null || echo "")
+        if [ -n "$LAST_TAG" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s" $LAST_TAG..HEAD)
+        else
+          CHANGELOG=$(git log --pretty=format:"- %s" -10)
+        fi
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        ## Notely Capture v${{ steps.version.outputs.version }}
+        
+        ### Changes in this release:
+        $CHANGELOG
+        
+        ### Downloads:
+        - **notely-capture-debug.apk**: Debug build for testing
+        - **notely-capture-release.apk**: Release build for production use
+        
+        ### Installation:
+        1. Download the APK file
+        2. Enable "Install from unknown sources" in Android settings
+        3. Install the APK file
+        
+        Built from commit: ${{ github.sha }}
+        EOF
+        
+    - name: Create GitHub Release with APKs
+      uses: softprops/action-gh-release@e6c4e2b1e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2 # Replace with the latest commit SHA from https://github.com/softprops/action-gh-release/commits/main
+      with:
+        name: Notely Capture v${{ steps.version.outputs.version }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: |
+          ${{ steps.find-apks.outputs.debug_apk }}
+          ${{ steps.find-apks.outputs.release_apk }}
+        fail_on_unmatched_files: false

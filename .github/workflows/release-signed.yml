@@ -1,3 +1,5 @@
+# GitHub Actions Workflow for Building Signed Release APKs
+
 name: Build Signed Release APK
 
 on:
@@ -5,9 +7,20 @@ on:
     types: [published]
   workflow_dispatch: # Allows manual trigger
 
+# Prevent concurrent builds
+concurrency:
+  group: build-signed-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-signed:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    # Minimal permissions following security best practices
+    permissions:
+      contents: write # Required to upload release assets
+      id-token: write # Required for OIDC token generation
     
     steps:
     - name: Checkout code
@@ -18,18 +31,23 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: 'gradle'
         
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
+      uses: gradle/actions/setup-gradle@v4.0.0
+      with:
+        gradle-home-cache-cleanup: true
       
     - name: Make gradlew executable
       run: chmod +x ./gradlew
       
     - name: Decode Keystore
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/release-keystore.jks
+        echo "${KEYSTORE_BASE64}" | base64 --decode > ${{ github.workspace }}/release-keystore.jks
         ls -la ${{ github.workspace }}/release-keystore.jks
         echo "Keystore file created at: ${{ github.workspace }}/release-keystore.jks"
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         
     - name: Debug environment variables
       run: |
@@ -60,3 +78,26 @@ jobs:
         path: |
           **/build/outputs/apk/release/*.apk
         retention-days: 90
+        
+    - name: Find Release APK for GitHub Release
+      if: github.event_name == 'release'
+      id: find-release-apk
+      run: |
+        RELEASE_APK=$(find . -name "*release*.apk" -type f | head -1)
+        echo "release_apk=$RELEASE_APK" >> $GITHUB_OUTPUT
+        echo "Found Release APK: $RELEASE_APK"
+        
+    - name: Upload APK to GitHub Release
+      if: github.event_name == 'release' && steps.find-release-apk.outputs.release_apk != ''
+      uses: softprops/action-gh-release@v2.0.4
+      with:
+        files: ${{ steps.find-release-apk.outputs.release_apk }}
+        fail_on_unmatched_files: false
+        name: ${{ github.event.release.tag_name }}
+        body: |
+          Signed APK build for ${{ github.event.release.tag_name }}
+          
+          This APK was built and signed automatically using GitHub Actions.
+          
+          📱 **Installation**: Download the APK and install on your Android device
+          🔐 **Security**: This APK is digitally signed for authenticity
