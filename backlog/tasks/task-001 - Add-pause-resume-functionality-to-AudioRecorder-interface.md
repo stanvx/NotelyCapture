@@ -15,11 +15,11 @@ Enable users to pause and resume audio recordings during capture. This is a core
 
 ## Acceptance Criteria
 
-- [ ] AudioRecorder interface includes pause() and resume() methods
-- [ ] Android implementation uses MediaRecorder pause/resume
-- [ ] iOS implementation uses AVAudioRecorder pause/record
-- [ ] Recording state properly tracks paused/resumed status
-- [ ] UI displays pause/resume button during recording
+- [x] AudioRecorder interface includes pause() and resume() methods
+- [x] Android implementation uses MediaRecorder pause/resume
+- [x] iOS implementation uses AVAudioRecorder pause/record
+- [x] Recording state properly tracks paused/resumed status
+- [x] UI displays pause/resume button during recording
 
 ## Implementation Notes
 
