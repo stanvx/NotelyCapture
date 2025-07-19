@@ -1,7 +1,7 @@
 ---
 id: task-013
 title: Add quick record shortcut for streamlined audio capture
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2025-07-19'
 updated_date: '2025-07-19'
