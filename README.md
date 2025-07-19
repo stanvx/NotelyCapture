@@ -14,18 +14,6 @@ Perfect for students capturing lectures, professionals documenting meetings, res
 
 > **Note**: This is a Personalised fork. The original Notely Voice app is available on the official stores:
 
-<div style="display:flex;" >
-<a href="https://f-droid.org/en/packages/com.module.notelycompose.android">
-    <img alt="Get it on F-Droid" height="64" src="https://raw.githubusercontent.com/anwilli5/coin-collection-android-US/main/images/fdroid-repo-badge.png" />
-</a>
-<a href="https://play.google.com/store/apps/details?id=com.module.notelycompose.android">
-    <img alt="Get it on Google Play" height="64" src="https://raw.githubusercontent.com/anwilli5/coin-collection-android-US/main/images/google-play-badge.png" />
-</a>
-<a href="https://apps.apple.com/us/app/notely-voice-speech-to-text/id6745835691">
-    <img alt="Available at Appstore" height="64" src="https://dbsqho33cgp4y.cloudfront.net/github/app-store-badge.png" />
-</a>
-</div>
-
 ## Personalisation Features
 
 ### Enhanced Integrations
@@ -39,9 +27,9 @@ Perfect for students capturing lectures, professionals documenting meetings, res
 
 ## Screenshots
 
-<img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="screenshot3" width="250">
+<img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="screenshot2" width="250"> <img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="screenshot2" width="250"> <img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="screenshot3" width="250">
 
-<img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="screenshot2" width="250"> <img src="https://github.com/tosinonikute/NotelyVoice/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="screenshot3" width="250">
+<img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" alt="screenshot2" width="250"> <img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="screenshot2" width="250"> <img src="https://github.com/stanvx/NotelyCapture/blob/main/fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="screenshot3" width="250">
 
 ## Features
 
@@ -141,13 +129,37 @@ git merge upstream/main
 - **Knowledge Management**: Logseq export, Obsidian vault sync, markdown optimization
 
 ## Contributing
-Contributions are welcome! Please follow these steps:
 
-- Fork the repository.
-- Create a new branch for your feature or bug fix.
-- Submit a pull request with a clear description of your changes.
+### Contributing to this Fork
 
-**For upstream contributions:** Bug fixes and generic features should be contributed to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project.
+Contributions to Notely Capture are welcome! Please follow the feature branch workflow:
+
+#### Development Process
+1. **Create a feature branch** from `main`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Develop your feature** following the project guidelines in `CLAUDE.md`
+
+3. **Submit a Pull Request** within this fork:
+   ```bash
+   gh pr create --base main --head feature/your-feature-name --repo stanvx/NotelyCapture
+   ```
+
+4. **Follow the PR template** with clear description of changes, testing checklist, and impact assessment
+
+#### Branch Naming Conventions
+- **Features**: `feature/description` (e.g., `feature/logseq-integration`)
+- **Bug fixes**: `fix/description` (e.g., `fix/audio-recording-crash`)
+- **Refactoring**: `refactor/description`
+- **Documentation**: `docs/description`
+
+### Contributing to Upstream
+
+**For upstream contributions:** Generic bug fixes and widely applicable features should be contributed to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project.
+
+**Personalization-specific features** (Logseq integration, Android-focused optimizations, UI simplifications) belong in this fork.
 
 ## Getting Started
 
