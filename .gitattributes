@@ -1,0 +1,18 @@
+# .gitattributes for Notely Capture
+# This file helps manage merge conflicts when syncing with upstream
+
+# Automatically merge these files in favor of upstream (original project)
+CLAUDE.md merge=ours
+README.md merge=ours
+
+# Files that should use custom merge strategy for app name changes
+shared/src/*/res/values*/strings.xml merge=ours
+fastlane/metadata/android/en-US/title.txt merge=ours
+iosApp/iosApp.xcodeproj/project.pbxproj merge=ours
+iosApp/Podfile merge=ours
+
+# Allow standard merge for code files
+*.kt merge
+*.swift merge
+*.gradle merge
+*.gradle.kts merge
