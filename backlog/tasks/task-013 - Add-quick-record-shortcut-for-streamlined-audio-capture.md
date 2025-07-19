@@ -24,7 +24,6 @@ Implement a direct recording flow that bypasses the current multi-step process (
 - [ ] No manual transcription or append button interaction required
 - [ ] Reuses existing recording and transcription components
 - [ ] Flow reduces current 7+ clicks to just 2 clicks
-
 ## Implementation Plan
 
 ## Implementation Plan
