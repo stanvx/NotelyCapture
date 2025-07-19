@@ -11,8 +11,7 @@ dependencies: []
 
 ## Description
 
-Create a dedicated KMP module for OpenAI API communication using Ktor HTTP client. This provides the foundation for AI-powered features.
-
+Create a dedicated KMP module for OpenAI API communication using Ktor HTTP client. This complements the existing offline Whisper AI by providing cloud-based transcription and summarization capabilities for enhanced features.
 ## Acceptance Criteria
 
 - [ ] Research integration strategy with existing offline Whisper
