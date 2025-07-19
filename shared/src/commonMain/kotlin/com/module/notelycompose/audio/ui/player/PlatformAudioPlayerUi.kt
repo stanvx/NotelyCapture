@@ -1,17 +1,22 @@
 package com.module.notelycompose.audio.ui.player
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +59,8 @@ fun PlatformAudioPlayerUi(
     onLoadAudio: (filePath: String) -> Unit,
     onClear: () -> Unit,
     onSeekTo: (position: Int) -> Unit,
-    onTogglePlayPause: () -> Unit
+    onTogglePlayPause: () -> Unit,
+    onTogglePlaybackSpeed: () -> Unit
 ) {
     // Load audio when the composable is first created
     LaunchedEffect(filePath) {
@@ -128,6 +134,34 @@ fun PlatformAudioPlayerUi(
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
+            }
+
+            Box(modifier = Modifier.padding(horizontal = 4.dp)) {
+                Button(
+                    onClick = { onTogglePlaybackSpeed() },
+                    modifier = Modifier
+                        .height(28.dp)
+                        .widthIn(min = 48.dp),
+                    enabled = uiState.isLoaded,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LocalCustomColors.current.playerBoxBackgroundColor,
+                        contentColor = if (uiState.isLoaded) Color.DarkGray else Color.LightGray,
+                        disabledContainerColor = LocalCustomColors.current.playerBoxBackgroundColor,
+                        disabledContentColor = Color.LightGray
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (uiState.isLoaded) Color.DarkGray.copy(alpha = 0.3f) else Color.LightGray.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = "${uiState.playbackSpeed}x",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

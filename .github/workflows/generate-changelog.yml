@@ -1,0 +1,123 @@
+name: Generate Release Changelog
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to generate changelog for'
+        required: true
+        type: string
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Previous Release Tag
+        id: get_previous_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CURRENT_TAG="${{ github.event.inputs.tag }}"
+          else
+            CURRENT_TAG="${{ github.event.release.tag_name }}"
+          fi
+          
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -A1 "^${CURRENT_TAG}$" | tail -n1)
+          
+          if [ "$PREVIOUS_TAG" = "$CURRENT_TAG" ]; then
+            # If no previous tag found, use first commit
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+          
+          echo "current_tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+          echo "Current: $CURRENT_TAG, Previous: $PREVIOUS_TAG"
+
+      - name: Generate Changelog from Commits
+        id: generate_changelog
+        run: |
+          cat > changelog_section.md << 'EOF'
+          ## [${{ steps.get_previous_tag.outputs.current_tag }}] - $(date +%Y-%m-%d)
+          
+          ### Added
+          EOF
+          
+          # Get commits between tags and categorize them
+          git log ${{ steps.get_previous_tag.outputs.previous_tag }}..${{ steps.get_previous_tag.outputs.current_tag }} \
+            --pretty=format:"- %s" \
+            --grep="feat:" --grep="add:" | head -20 >> changelog_section.md
+          
+          echo "" >> changelog_section.md
+          echo "### Changed" >> changelog_section.md
+          
+          git log ${{ steps.get_previous_tag.outputs.previous_tag }}..${{ steps.get_previous_tag.outputs.current_tag }} \
+            --pretty=format:"- %s" \
+            --grep="update:" --grep="change:" --grep="improve:" | head -20 >> changelog_section.md
+          
+          echo "" >> changelog_section.md
+          echo "### Fixed" >> changelog_section.md
+          
+          git log ${{ steps.get_previous_tag.outputs.previous_tag }}..${{ steps.get_previous_tag.outputs.current_tag }} \
+            --pretty=format:"- %s" \
+            --grep="fix:" --grep="bug:" | head -20 >> changelog_section.md
+          
+          echo "" >> changelog_section.md
+
+      - name: Update CHANGELOG.md
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+          
+          # Create temp file with new entry
+          cp CHANGELOG.md CHANGELOG_TMP.md
+          
+          # Insert new changelog section after the header
+          awk '
+          /^# Changelog/ { print; getline; print; print ""; while ((getline line < "changelog_section.md") > 0) print line; close("changelog_section.md"); print "" }
+          !/^# Changelog/ { print }
+          ' CHANGELOG.md > CHANGELOG_NEW.md
+          
+          mv CHANGELOG_NEW.md CHANGELOG.md
+          rm -f changelog_section.md
+
+      - name: Check for Changes
+        id: check_changes
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: "changelog/release-${{ steps.get_previous_tag.outputs.current_tag }}"
+          commit-message: "docs: update changelog for ${{ steps.get_previous_tag.outputs.current_tag }}"
+          title: "📜 Update Changelog for ${{ steps.get_previous_tag.outputs.current_tag }}"
+          body: |
+            **Description**: 
+            This PR updates the CHANGELOG.md with release notes for ${{ steps.get_previous_tag.outputs.current_tag }}.
+            
+            **Changes**:
+            - Generated changelog from commits between ${{ steps.get_previous_tag.outputs.previous_tag }} and ${{ steps.get_previous_tag.outputs.current_tag }}
+            - Categorized changes into Added, Changed, and Fixed sections
+            
+            **Note**: Please review and edit the changelog as needed before merging.

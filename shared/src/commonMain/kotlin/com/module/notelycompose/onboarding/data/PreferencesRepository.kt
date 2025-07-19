@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.module.notelycompose.notes.ui.settings.languageCodeMap
@@ -21,6 +22,7 @@ class PreferencesRepository(
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_THEME = stringPreferencesKey("theme")
         private val KEY_MODEL_DOWNLOAD_ID= longPreferencesKey("model_download_id")
+        private val KEY_PLAYBACK_SPEED = floatPreferencesKey("playback_speed")
     }
 
     suspend fun hasCompletedOnboarding(): Boolean {
@@ -61,6 +63,16 @@ class PreferencesRepository(
     suspend fun setModelDownloadId(downloadId: Long) {
         dataStore.edit { prefs ->
             prefs[KEY_MODEL_DOWNLOAD_ID] = downloadId
+        }
+    }
+
+    fun getPlaybackSpeed(): Flow<Float> = dataStore.data.map { prefs ->
+        prefs[KEY_PLAYBACK_SPEED] ?: 1.0f
+    }
+
+    suspend fun setPlaybackSpeed(speed: Float) {
+        dataStore.edit { prefs ->
+            prefs[KEY_PLAYBACK_SPEED] = speed
         }
     }
 }

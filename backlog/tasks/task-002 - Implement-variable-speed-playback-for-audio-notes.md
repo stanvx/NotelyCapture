@@ -16,12 +16,12 @@ Allow users to adjust playback speed (1x, 1.5x, 2x) to improve listening experie
 
 ## Acceptance Criteria
 
-- [ ] PlatformAudioPlayer interface includes setPlaybackSpeed method
-- [ ] Android implementation uses MediaPlayer.setPlaybackParams
-- [ ] iOS implementation uses AVPlayer.rate
-- [ ] UI provides speed selection controls (1.0x 1.5x 2.0x)
-- [ ] Speed preference persists across app sessions
-- [ ] Current speed is visually indicated to user
+- [x] PlatformAudioPlayer interface includes setPlaybackSpeed method
+- [x] Android implementation uses MediaPlayer.setPlaybackParams
+- [x] iOS implementation uses AVPlayer.rate
+- [x] UI provides speed selection controls (1.0x 1.5x 2.0x)
+- [x] Speed preference persists across app sessions
+- [x] Current speed is visually indicated to user
 
 ## Implementation Plan
 

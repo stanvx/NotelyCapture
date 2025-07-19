@@ -1,5 +1,8 @@
 package com.module.notelycompose.platform
 
+import android.media.PlaybackParams
+import android.os.Build
+
 actual class PlatformAudioPlayer {
     private var mediaPlayer: android.media.MediaPlayer? = null
 
@@ -45,5 +48,20 @@ actual class PlatformAudioPlayer {
 
     actual fun isPlaying(): Boolean {
         return mediaPlayer?.isPlaying ?: false
+    }
+
+    actual fun setPlaybackSpeed(speed: Float) {
+        mediaPlayer?.let { player ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    val params = PlaybackParams().setSpeed(speed)
+                    player.playbackParams = params
+                } catch (e: Exception) {
+                    android.util.Log.e("PlatformAudioPlayer", "Failed to set playback speed", e)
+                    // Fallback: ignore speed change if not supported
+                }
+            }
+            // For API levels below 23, speed control is not supported
+        }
     }
 }

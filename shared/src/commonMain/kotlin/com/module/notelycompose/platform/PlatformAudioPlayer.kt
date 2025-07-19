@@ -9,4 +9,5 @@ expect class PlatformAudioPlayer() {
     fun seekTo(position: Int)
     fun getCurrentPosition(): Int
     fun isPlaying(): Boolean
+    fun setPlaybackSpeed(speed: Float)
 }

@@ -87,4 +87,8 @@ actual class PlatformAudioPlayer actual constructor() {
     actual fun isPlaying(): Boolean {
         return audioPlayer?.isPlaying() ?: false
     }
+
+    actual fun setPlaybackSpeed(speed: Float) {
+        audioPlayer?.rate = speed
+    }
 }

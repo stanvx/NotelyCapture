@@ -5,5 +5,6 @@ data class AudioPlayerUiState(
     val isPlaying: Boolean,
     val currentPosition: Int,
     val duration: Int,
-    val errorMessage: String
+    val errorMessage: String,
+    val playbackSpeed: Float
 )

@@ -55,7 +55,8 @@ Download the latest APK files directly from [GitHub Releases](https://github.com
 🌐 **Offline Capability** - Speech recognition works without an internet connection  
 🔄 **Seamless Integration** - Dictate directly into notes or transcribe audio recordings  
 🎧 **Audio Recording** - Record voice notes and play them back within the app  
-🎧 **Unlimited Transcriptions** - Transcribe unlimited voice notes to multiple languages
+🎧 **Unlimited Transcriptions** - Transcribe unlimited voice notes to multiple languages  
+⚡ **Variable Speed Playback** - Adjust audio playback speed (1x, 1.5x, 2x) for faster note review
 
 ### General
 🌓 **Theming** - Switch between dark and light themes based on your preference  
