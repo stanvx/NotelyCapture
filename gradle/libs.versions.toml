@@ -26,7 +26,7 @@ navigation-compose = "2.9.0-beta03"
 documentfile = "1.1.0"
 
 # Kotlin & Multiplatform
-agp = "8.11.0"
+agp = "8.11.1"
 app-icon = "1.2.6"
 atomicfu = "0.29.0"
 koin = "4.1.0"

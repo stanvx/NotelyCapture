@@ -116,10 +116,6 @@ This fork maintains sync with the original [Notely Voice](https://github.com/tos
 ```bash
 # Quick sync using the helper script
 ./upstream-sync.sh
-
-# Manual sync
-git fetch upstream
-git merge upstream/main
 ```
 
 ### Personalisation Strategy
