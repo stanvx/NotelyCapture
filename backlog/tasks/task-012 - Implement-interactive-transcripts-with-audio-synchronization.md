@@ -4,8 +4,11 @@ title: Implement interactive transcripts with audio synchronization
 status: To Do
 assignee: []
 created_date: '2025-07-19'
+updated_date: '2025-07-19'
 labels: []
-dependencies: []
+dependencies:
+  - task-010
+  - task-011
 ---
 
 ## Description
