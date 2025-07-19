@@ -151,6 +151,52 @@ open iosApp.xcworkspace
 - **Upstream Contributions**: Only contribute generic bug fixes or widely applicable features to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) repository
 - **Branch Strategy**: Use feature branches for development, merge to `main` when ready
 
+#### Feature Development Process
+
+**MANDATORY: Each feature must be developed on a separate feature branch and merged via Pull Request.**
+
+```bash
+# 1. Create and switch to new feature branch
+git checkout -b feature/your-feature-name
+
+# 2. Develop your feature with commits
+git add .
+git commit -m "feat: implement core functionality"
+git commit -m "test: add comprehensive tests"
+git commit -m "docs: update documentation"
+
+# 3. Push feature branch to origin
+git push -u origin feature/your-feature-name
+
+# 4. Create Pull Request within this fork
+gh pr create --base main --head feature/your-feature-name --repo stanvx/NotelyCapture \
+  --title "feat: Add [feature description]" \
+  --body "## Summary
+Brief description of the feature
+
+## Changes
+- List of key changes
+- New functionality added
+- Tests included
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed"
+
+# 5. After PR approval and merge, clean up
+git checkout main
+git pull origin main
+git branch -d feature/your-feature-name
+git push origin --delete feature/your-feature-name
+```
+
+#### Branch Naming Conventions
+- **Features**: `feature/description` (e.g., `feature/logseq-integration`)
+- **Bug fixes**: `fix/description` (e.g., `fix/audio-recording-crash`)
+- **Refactoring**: `refactor/description` (e.g., `refactor/viewmodel-cleanup`)
+- **Documentation**: `docs/description` (e.g., `docs/api-documentation`)
+
 **CRITICAL: When creating PRs, always specify the base repository explicitly:**
 ```bash
 # ✅ CORRECT - Create PR within this fork
