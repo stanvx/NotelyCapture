@@ -1,7 +1,7 @@
 ---
 id: task-005
 title: Implement dynamic theming system with Material 3
-status: In Progress
+status: Done
 assignee:
   - '@myself'
 created_date: '2025-07-19'
