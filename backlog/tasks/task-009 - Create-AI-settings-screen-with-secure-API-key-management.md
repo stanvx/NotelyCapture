@@ -4,8 +4,10 @@ title: Create AI settings screen with secure API key management
 status: To Do
 assignee: []
 created_date: '2025-07-19'
+updated_date: '2025-07-19'
 labels: []
-dependencies: []
+dependencies:
+  - task-010
 ---
 
 ## Description
