@@ -1,9 +1,11 @@
 ---
 id: task-017
 title: Fix threading issue causing IllegalStateException in quick record flow
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@copilot'
 created_date: '2025-07-19'
+updated_date: '2025-07-19'
 labels: []
 dependencies: []
 ---
