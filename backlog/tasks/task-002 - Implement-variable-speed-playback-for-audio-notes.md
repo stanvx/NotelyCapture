@@ -1,7 +1,7 @@
 ---
 id: task-002
 title: Implement variable speed playback for audio notes
-status: In Progress
+status: Done
 assignee:
   - '@stanvx'
 created_date: '2025-07-19'
