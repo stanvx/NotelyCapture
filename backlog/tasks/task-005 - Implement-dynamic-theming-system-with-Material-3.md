@@ -15,10 +15,10 @@ Create a modern, customizable theming system that supports light/dark modes and 
 
 ## Acceptance Criteria
 
-- [ ] Research Material 2 to Material 3 migration path
 - [ ] Light Dark and System theme modes implemented
 - [ ] User can select accent color from predefined palette
 - [ ] Theme preference stored in DataStore
 - [ ] Color scheme follows Material 3 guidelines
 - [ ] Dynamic theming applies across all screens
 - [ ] Theme changes are applied immediately without restart
+- [ ] Improve Material 3 theming consistency across components
