@@ -3,20 +3,20 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    # Run on Kotlin/Android files since this is a Kotlin Multiplatform project
+    paths:
+      - "shared/**/*.kt"
+      - "core/**/*.kt"
+      - "lib/**/*.kt"
+      - "iosApp/**/*.swift"
+      - "androidApp/**/*.kt"
+      - "build.gradle.kts"
+      - "gradle/**"
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Only run for PRs created by the repository owner
+    if: github.event.pull_request.user.login == 'stanvx'
     
     runs-on: ubuntu-latest
     permissions:
@@ -40,13 +40,17 @@ jobs:
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
           # model: "claude-opus-4-20250514"
           
-          # Direct prompt for automated review (no @claude mention needed)
+          # Customized prompt for Kotlin Multiplatform project
           direct_prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
+            Please review this Kotlin Multiplatform pull request and provide feedback on:
+            - Kotlin code quality and best practices
+            - Proper use of expect/actual patterns for platform-specific code
+            - Compose Multiplatform UI patterns and performance
+            - Clean Architecture layer boundaries (UI → Presentation → Domain → Data)
+            - Coroutines and StateFlow usage
+            - Dependency injection with Koin
             - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
+            - Security concerns (especially for audio processing and file I/O)
             - Test coverage
             
             Be constructive and helpful in your feedback.

@@ -13,10 +13,12 @@ on:
 jobs:
   claude:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.login == 'stanvx') ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && github.event.comment.user.login == 'stanvx') ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && github.event.review.user.login == 'stanvx') ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) && github.event.issue.user.login == 'stanvx')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -49,14 +51,20 @@ jobs:
           # Optional: Trigger when specific user is assigned to an issue
           # assignee_trigger: "claude-bot"
           
-          # Optional: Allow Claude to run specific commands
-          # allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
+          # Allow Claude to run Gradle and Android-specific commands
+          allowed_tools: "Bash(./gradlew build),Bash(./gradlew testDebug),Bash(./gradlew assembleDebug),Bash(./gradlew clean)"
           
-          # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
+          # Custom instructions for Kotlin Multiplatform project
+          custom_instructions: |
+            This is a Kotlin Multiplatform project (Notely Capture) with the following guidelines:
+            - Follow Clean Architecture patterns (UI → Presentation → Domain → Data)
+            - Use expect/actual for platform-specific code
+            - Prefer Compose Multiplatform for UI
+            - Use Koin for dependency injection
+            - Follow immutable data patterns with StateFlow
+            - Write tests for business logic in use cases
+            - Respect layer boundaries and use explicit mappers
+            - Focus on Android development primarily
           
           # Optional: Custom environment variables for Claude
           # claude_env: |
