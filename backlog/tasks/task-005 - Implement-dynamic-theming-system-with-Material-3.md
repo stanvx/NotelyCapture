@@ -4,6 +4,7 @@ title: Implement dynamic theming system with Material 3
 status: To Do
 assignee: []
 created_date: '2025-07-19'
+updated_date: '2025-07-19'
 labels: []
 dependencies: []
 ---
@@ -14,6 +15,7 @@ Create a modern, customizable theming system that supports light/dark modes and 
 
 ## Acceptance Criteria
 
+- [ ] Research Material 2 to Material 3 migration path
 - [ ] Light Dark and System theme modes implemented
 - [ ] User can select accent color from predefined palette
 - [ ] Theme preference stored in DataStore
