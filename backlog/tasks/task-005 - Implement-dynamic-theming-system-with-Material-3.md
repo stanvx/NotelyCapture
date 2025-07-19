@@ -1,8 +1,9 @@
 ---
 id: task-005
 title: Implement dynamic theming system with Material 3
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@myself'
 created_date: '2025-07-19'
 updated_date: '2025-07-19'
 labels: []
