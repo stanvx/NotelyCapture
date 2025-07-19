@@ -11,8 +11,7 @@ dependencies: []
 
 ## Description
 
-Create a modern, customizable theming system that supports light/dark modes and user-selectable accent colors. This enhances visual appeal and user personalization.
-
+Enhance the existing Material 3 theming system to support comprehensive customization including light/dark modes and user-selectable accent colors. This improves visual appeal and user personalization while ensuring Material 3 consistency.
 ## Acceptance Criteria
 
 - [ ] Light Dark and System theme modes implemented
