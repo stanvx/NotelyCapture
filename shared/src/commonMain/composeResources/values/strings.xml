@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Notely Voice</string>
+    <string name="app_name">Notely Capture</string>
     <string name="error">Error</string>
     <string name="close">Close</string>
     <string name="cancel">Cancel</string>
 
     <!-- TopBar -->
     <string name="top_bar_back">Back</string>
-    <string name="top_bar_notes">Notely Voice</string>
+    <string name="top_bar_notes">Notely Capture</string>
     <string name="top_bar_menu">Menu</string>
     <string name="top_bar_my_note">My Note</string>
     <string name="top_bar_export_audio_folder">Export Audio to Folder</string>
