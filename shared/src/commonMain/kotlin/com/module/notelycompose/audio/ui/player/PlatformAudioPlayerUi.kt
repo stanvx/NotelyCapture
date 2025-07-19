@@ -1,17 +1,22 @@
 package com.module.notelycompose.audio.ui.player
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +34,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -54,7 +61,9 @@ fun PlatformAudioPlayerUi(
     onLoadAudio: (filePath: String) -> Unit,
     onClear: () -> Unit,
     onSeekTo: (position: Int) -> Unit,
-    onTogglePlayPause: () -> Unit
+    onTogglePlayPause: () -> Unit,
+    onTogglePlaybackSpeed: () -> Unit,
+    hapticFeedback: com.module.notelycompose.platform.HapticFeedback? = null
 ) {
     // Load audio when the composable is first created
     LaunchedEffect(filePath) {
@@ -77,8 +86,19 @@ fun PlatformAudioPlayerUi(
 
             Box(modifier = Modifier.padding(horizontal = 4.dp)) {
                 IconButton(
-                    onClick = { onTogglePlayPause() },
-                    modifier = Modifier.size(28.dp),
+                    onClick = { 
+                        hapticFeedback?.light()
+                        onTogglePlayPause() 
+                    },
+                    modifier = Modifier
+                        .size(28.dp)
+                        .semantics {
+                            contentDescription = if (uiState.isPlaying) {
+                                "Pause audio playback"
+                            } else {
+                                "Play audio"
+                            }
+                        },
                     enabled = uiState.isLoaded
                 ) {
                     Icon(
@@ -129,6 +149,41 @@ fun PlatformAudioPlayerUi(
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
             }
+
+            Box(modifier = Modifier.padding(horizontal = 4.dp)) {
+                Button(
+                    onClick = { 
+                        hapticFeedback?.medium()
+                        onTogglePlaybackSpeed() 
+                    },
+                    modifier = Modifier
+                        .height(28.dp)
+                        .widthIn(min = 48.dp)
+                        .semantics {
+                            contentDescription = "Change playback speed. Current speed: ${uiState.playbackSpeed}x. Tap to cycle between 1x, 1.5x, and 2x speeds."
+                        },
+                    enabled = uiState.isLoaded,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LocalCustomColors.current.playerBoxBackgroundColor,
+                        contentColor = if (uiState.isLoaded) Color.DarkGray else Color.LightGray,
+                        disabledContainerColor = LocalCustomColors.current.playerBoxBackgroundColor,
+                        disabledContentColor = Color.LightGray
+                    ),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (uiState.isLoaded) Color.DarkGray.copy(alpha = 0.3f) else Color.LightGray.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    val speedText = remember(uiState.playbackSpeed) { "${uiState.playbackSpeed}x" }
+                    Text(
+                        text = speedText,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
     }
 }
@@ -152,7 +207,9 @@ fun AudioSlider(
         onValueChange = {
             sliderPosition = it
         },
-        modifier = modifier,
+        modifier = modifier.semantics {
+            contentDescription = "Audio progress slider. Current position: ${uiState.currentPosition.formatTimeToMMSS()} of ${uiState.duration.formatTimeToMMSS()}. Drag to seek to a different position."
+        },
         thumb = {
             Thumb(
                 interactionSource = interactionSource,

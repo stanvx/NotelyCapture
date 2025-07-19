@@ -2,8 +2,10 @@ package com.module.notelycompose.audio.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.Stable
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
+import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.platform.PlatformAudioPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,8 +14,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Platform-independent ViewModel for audio playback functionality
@@ -21,20 +26,66 @@ import kotlinx.coroutines.launch
 class AudioPlayerViewModel(
     private val audioPlayer: PlatformAudioPlayer,
     private val mapper: AudioPlayerPresentationToUiMapper,
+    private val preferencesRepository: PreferencesRepository,
 ):ViewModel(){
     private var progressUpdateJob: Job? = null
+    private val speedUpdateMutex = Mutex()
 
     private val _uiState = MutableStateFlow(AudioPlayerPresentationState())
     val uiState: StateFlow<AudioPlayerPresentationState> = _uiState.asStateFlow()
 
+    init {
+        // Load saved playback speed
+        viewModelScope.launch {
+            try {
+                val savedSpeed = preferencesRepository.getPlaybackSpeed().first()
+                _uiState.update { it.copy(playbackSpeed = savedSpeed) }
+                audioPlayer.setPlaybackSpeed(savedSpeed)
+            } catch (e: Exception) {
+                // Use default speed if unable to load preferences
+                println("Failed to load playback speed: ${e.message}")
+            }
+        }
+    }
+
     fun onGetUiState(presentationState: AudioPlayerPresentationState): AudioPlayerUiState {
         return mapper.mapToUiState(presentationState)
+    }
+
+    fun onTogglePlaybackSpeed() {
+        viewModelScope.launch {
+            speedUpdateMutex.withLock {
+                try {
+                    val currentSpeed = _uiState.value.playbackSpeed
+                    val nextSpeed = when (currentSpeed) {
+                        1.0f -> 1.5f
+                        1.5f -> 2.0f
+                        else -> 1.0f
+                    }
+                    
+                    // Apply speed to audio player first
+                    audioPlayer.setPlaybackSpeed(nextSpeed)
+                    
+                    // Update UI state
+                    _uiState.update { it.copy(playbackSpeed = nextSpeed) }
+                    
+                    // Save to preferences (validation happens here)
+                    preferencesRepository.setPlaybackSpeed(nextSpeed)
+                    
+                } catch (e: Exception) {
+                    println("Error setting playback speed: ${e.message}")
+                    // On error, keep current state unchanged
+                }
+            }
+        }
     }
 
     fun onLoadAudio(filePath: String) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val duration = audioPlayer.prepare(filePath)
+                val currentSpeed = _uiState.value.playbackSpeed
+                audioPlayer.setPlaybackSpeed(currentSpeed) // Apply current speed to new audio
                 _uiState.update { it.copy(
                     isLoaded = true,
                     duration = duration,
@@ -127,11 +178,13 @@ class AudioPlayerViewModel(
 /**
  * Data class representing the UI state of the audio player
  */
+@Stable
 data class AudioPlayerPresentationState(
     val isLoaded: Boolean = false,
     val isPlaying: Boolean = false,
     val currentPosition: Int = 0,
     val duration: Int = 0,
     val errorMessage: String? = null,
-    val filePath: String = ""
+    val filePath: String = "",
+    val playbackSpeed: Float = 1.0f
 )

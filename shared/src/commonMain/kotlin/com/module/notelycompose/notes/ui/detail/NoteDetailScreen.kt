@@ -394,7 +394,8 @@ private fun NoteContent(
                             onLoadAudio = audioPlayerViewModel::onLoadAudio,
                             onClear = audioPlayerViewModel::onClear,
                             onSeekTo = audioPlayerViewModel::onSeekTo,
-                            onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause
+                            onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
+                            onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed
                         )
                     }
                 )
