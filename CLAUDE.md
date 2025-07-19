@@ -151,6 +151,15 @@ open iosApp.xcworkspace
 - **Upstream Contributions**: Only contribute generic bug fixes or widely applicable features to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) repository
 - **Branch Strategy**: Use feature branches for development, merge to `main` when ready
 
+**CRITICAL: When creating PRs, always specify the base repository explicitly:**
+```bash
+# ✅ CORRECT - Create PR within this fork
+gh pr create --base main --head feature-branch --repo stanvx/NotelyCapture
+
+# ❌ WRONG - This creates PR against upstream by default
+gh pr create --title "..." --body "..."
+```
+
 ### Code Style
 - Follow Kotlin coding conventions
 - Use `camelCase` for functions, `PascalCase` for types
