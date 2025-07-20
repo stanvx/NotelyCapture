@@ -15,10 +15,10 @@ Update the project to use the new Kotlin Multiplatform Android source set layout
 
 ## Acceptance Criteria
 
-- [ ] Deprecated warning for androidTest directory is resolved
-- [ ] All existing Android instrumented tests continue to work
-- [ ] Build completes without Android source directory deprecation warnings
-- [ ] No test functionality is lost during migration
+- [x] Deprecated warning for androidTest directory is resolved
+- [x] All existing Android instrumented tests continue to work
+- [x] Build completes without Android source directory deprecation warnings
+- [x] No test functionality is lost during migration
 
 ## Implementation Plan
 
