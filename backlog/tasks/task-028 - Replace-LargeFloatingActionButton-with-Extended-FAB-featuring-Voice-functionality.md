@@ -3,9 +3,11 @@ id: task-028
 title: >-
   Replace LargeFloatingActionButton with Extended FAB featuring Voice
   functionality
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@claude'
 created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
