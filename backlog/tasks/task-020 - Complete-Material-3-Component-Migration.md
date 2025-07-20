@@ -1,10 +1,11 @@
 ---
 id: task-020
 title: Complete Material 3 Component Migration
-status: To Do
+status: In Progress
 assignee:
   - '@claude'
 created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
