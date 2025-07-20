@@ -40,12 +40,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.module.notelycompose.core.constants.AppConstants
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.platform.HapticFeedback
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.note_list_add_note
 import com.module.notelycompose.resources.note_list_quick_record
@@ -68,6 +73,7 @@ fun SpeedDialFAB(
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val hapticFeedback = remember { HapticFeedback() }
 
     // Define actions in a list for maintainability
     val fabActions = remember {
@@ -78,9 +84,9 @@ fun SpeedDialFAB(
     }
 
     // Material 3 motion specifications
-    val expandDuration = 300 // Based on M3 guidelines for medium transitions
-    val collapseDuration = 150 // Based on M3 guidelines for short transitions
-    val scrimFadeDuration = 150 // Based on M3 FAB fade guidelines
+    val expandDuration = AppConstants.Animation.MEDIUM_TRANSITION_DURATION.inWholeMilliseconds.toInt()
+    val collapseDuration = AppConstants.Animation.SHORT_TRANSITION_DURATION.inWholeMilliseconds.toInt()
+    val scrimFadeDuration = AppConstants.Animation.SCRIM_FADE_DURATION.inWholeMilliseconds.toInt()
     
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 45f else 0f,
@@ -114,7 +120,7 @@ fun SpeedDialFAB(
         ) {
             // Sub-FABs rendered from the list with staggered animation
             fabActions.forEachIndexed { index, action ->
-                val delay = (fabActions.size - 1 - index) * 50 // Staggered delay
+                val delay = (fabActions.size - 1 - index) * AppConstants.Animation.FAB_STAGGER_DELAY.inWholeMilliseconds.toInt()
                 AnimatedVisibility(
                     visible = isExpanded,
                     enter = scaleIn(
@@ -132,6 +138,7 @@ fun SpeedDialFAB(
                 ) {
                     SubFAB(
                         onClick = {
+                            hapticFeedback.medium()
                             isExpanded = false
                             action.onClick()
                         },
@@ -150,12 +157,34 @@ fun SpeedDialFAB(
 
             // Main FAB using Material 3 FloatingActionButton
             FloatingActionButton(
-                onClick = { isExpanded = !isExpanded },
+                onClick = { 
+                    hapticFeedback.light()
+                    isExpanded = !isExpanded
+                },
                 containerColor = LocalCustomColors.current.backgroundViewColor,
                 contentColor = LocalCustomColors.current.floatActionButtonIconColor,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
                 modifier = Modifier.semantics {
                     contentDescription = if (isExpanded) "Close speed dial" else "Open speed dial"
+                    stateDescription = if (isExpanded) "Expanded" else "Collapsed"
+                    customActions = listOf(
+                        CustomAccessibilityAction(
+                            label = "Quick record voice note",
+                            action = { 
+                                hapticFeedback.medium()
+                                onQuickRecordClick()
+                                true
+                            }
+                        ),
+                        CustomAccessibilityAction(
+                            label = "Create new note",
+                            action = { 
+                                hapticFeedback.medium()
+                                onNewNoteClick()
+                                true
+                            }
+                        )
+                    )
                 }
             ) {
                 Icon(
@@ -200,7 +229,8 @@ private fun SubFAB(
             contentColor = LocalCustomColors.current.floatActionButtonIconColor,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
             modifier = Modifier.semantics {
-                this.contentDescription = label
+                contentDescription = "$label button. Double tap to activate."
+                // Provide clear instructions for screen reader users
             }
         ) {
             icon()

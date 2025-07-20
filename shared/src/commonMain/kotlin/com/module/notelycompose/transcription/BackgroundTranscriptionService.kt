@@ -2,11 +2,16 @@ package com.module.notelycompose.transcription
 
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.core.validation.AudioFileValidator
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
 import com.module.notelycompose.notes.domain.model.TextAlignDomainModel
+import com.module.notelycompose.transcription.error.TranscriptionError
+import com.module.notelycompose.transcription.error.isRecoverable
+import com.module.notelycompose.transcription.error.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -19,6 +24,8 @@ import kotlinx.datetime.toLocalDateTime
 /**
  * Background transcription service that wraps TranscriptionViewModel
  * for quick record functionality. Handles automatic transcription and note creation.
+ * 
+ * Implements proper resource management with lifecycle awareness.
  */
 class BackgroundTranscriptionService(
     private val transcriptionViewModel: TranscriptionViewModel,
@@ -29,6 +36,8 @@ class BackgroundTranscriptionService(
     private val _state = MutableStateFlow<BackgroundTranscriptionState>(BackgroundTranscriptionState.Idle)
     val state: StateFlow<BackgroundTranscriptionState> = _state
     
+    private var isDisposed = false
+    
     /**
      * Start background transcription for a recorded audio file
      * @param audioFilePath Path to the recorded audio file
@@ -38,9 +47,29 @@ class BackgroundTranscriptionService(
     fun startTranscription(
         audioFilePath: String,
         onComplete: (noteId: Long) -> Unit = {},
-        onError: (error: String) -> Unit = {}
+        onError: (error: TranscriptionError) -> Unit = {}
     ) {
-        debugPrintln { "BackgroundTranscriptionService: Starting transcription for $audioFilePath" }
+        if (isDisposed) {
+            debugPrintln { "BackgroundTranscriptionService: Cannot start transcription - service is disposed" }
+            val error = TranscriptionError.ServiceDisposedError()
+            _state.value = BackgroundTranscriptionState.Error(error)
+            onError(error)
+            return
+        }
+        
+        debugPrintln { "BackgroundTranscriptionService: Starting transcription for ${AudioFileValidator.getSecureFileName(audioFilePath)}" }
+        
+        // Validate audio file before processing
+        AudioFileValidator.validateAudioFile(audioFilePath).onFailure { error ->
+            val transcriptionError = error as? TranscriptionError ?: TranscriptionError.AudioFileValidationError(
+                message = "Audio file validation failed: ${error.message}",
+                filePath = audioFilePath
+            )
+            debugPrintln { "BackgroundTranscriptionService: File validation failed: ${transcriptionError.message}" }
+            _state.value = BackgroundTranscriptionState.Error(transcriptionError)
+            onError(transcriptionError)
+            return
+        }
         
         _state.value = BackgroundTranscriptionState.Processing
         
@@ -55,10 +84,14 @@ class BackgroundTranscriptionService(
                     recognizerInitialized = true
                     debugPrintln { "BackgroundTranscriptionService: Model initialization completed, starting transcription" }
                 } catch (initError: Exception) {
-                    debugPrintln { "BackgroundTranscriptionService: Initialization failed: ${initError.message}" }
-                    _state.value = BackgroundTranscriptionState.Error("Failed to initialize transcription: ${initError.message}")
+                    val error = TranscriptionError.InitializationError(
+                        message = "Failed to initialize transcription: ${initError.message}",
+                        cause = initError
+                    )
+                    debugPrintln { "BackgroundTranscriptionService: Initialization failed: ${error.message}" }
+                    _state.value = BackgroundTranscriptionState.Error(error)
                     withContext(Dispatchers.Main) {
-                        onError("Failed to initialize transcription: ${initError.message}")
+                        onError(error)
                     }
                     return@launch
                 }
@@ -72,10 +105,23 @@ class BackgroundTranscriptionService(
                         cleanupCompleted = true
                         
                         // Create note with transcribed content
-                        val noteId = createNoteFromTranscription(
-                            transcribedText = uiState.originalText,
-                            audioFilePath = audioFilePath
-                        )
+                        val noteId = try {
+                            createNoteFromTranscription(
+                                transcribedText = uiState.originalText,
+                                audioFilePath = audioFilePath
+                            )
+                        } catch (noteError: Exception) {
+                            val error = TranscriptionError.NoteCreationError(
+                                message = "Failed to create note: ${noteError.message}",
+                                cause = noteError
+                            )
+                            debugPrintln { "BackgroundTranscriptionService: Note creation failed: ${error.message}" }
+                            _state.value = BackgroundTranscriptionState.Error(error)
+                            withContext(Dispatchers.Main) {
+                                onError(error)
+                            }
+                            return@collect
+                        }
                         
                         // Clean up transcription state
                         transcriptionViewModel.finishRecognizer()
@@ -94,12 +140,19 @@ class BackgroundTranscriptionService(
                 }
                 
             } catch (error: Exception) {
-                debugPrintln { "BackgroundTranscriptionService: Error during transcription: ${error.message}" }
-                _state.value = BackgroundTranscriptionState.Error(error.message ?: "Unknown transcription error")
+                val transcriptionError = when (error) {
+                    is TranscriptionError -> error
+                    else -> TranscriptionError.UnknownError(
+                        message = "Unknown transcription error: ${error.message}",
+                        cause = error
+                    )
+                }
+                debugPrintln { "BackgroundTranscriptionService: Error during transcription: ${transcriptionError.message}" }
+                _state.value = BackgroundTranscriptionState.Error(transcriptionError)
                 
                 // Switch to main thread before invoking callback to ensure UI updates are safe
                 withContext(Dispatchers.Main) {
-                    onError(error.message ?: "Unknown transcription error")
+                    onError(transcriptionError)
                 }
             } finally {
                 // Ensure cleanup happens only if not already done
@@ -144,8 +197,35 @@ class BackgroundTranscriptionService(
      * Reset the service state to idle
      */
     fun reset() {
+        if (!isDisposed) {
+            _state.value = BackgroundTranscriptionState.Idle
+        }
+    }
+    
+    /**
+     * Dispose of the service and cancel all ongoing operations.
+     * This should be called when the service is no longer needed to prevent memory leaks.
+     */
+    fun dispose() {
+        if (isDisposed) {
+            debugPrintln { "BackgroundTranscriptionService: Already disposed" }
+            return
+        }
+        
+        debugPrintln { "BackgroundTranscriptionService: Disposing service" }
+        isDisposed = true
+        
+        // Cancel all ongoing coroutines
+        serviceScope.cancel()
+        
+        // Reset state to idle
         _state.value = BackgroundTranscriptionState.Idle
     }
+    
+    /**
+     * Check if the service has been disposed
+     */
+    val disposed: Boolean get() = isDisposed
 }
 
 /**
@@ -170,5 +250,15 @@ sealed class BackgroundTranscriptionState {
     /**
      * An error occurred during transcription or note creation
      */
-    data class Error(val message: String) : BackgroundTranscriptionState()
+    data class Error(val error: TranscriptionError) : BackgroundTranscriptionState() {
+        /**
+         * Legacy message property for backward compatibility
+         */
+        val message: String get() = error.userMessage
+        
+        /**
+         * Check if this error is recoverable
+         */
+        val isRecoverable: Boolean get() = error.isRecoverable
+    }
 }

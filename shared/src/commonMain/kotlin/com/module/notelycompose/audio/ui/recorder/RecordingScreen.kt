@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
+import com.module.notelycompose.core.constants.AppConstants
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.transcription.BackgroundTranscriptionService
@@ -74,6 +75,8 @@ import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -146,40 +149,36 @@ fun RecordingScreen(
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     if (isQuickRecordMode) {
-                        // Wait for recording path to be available (handle race condition)
-                        var attempts = 0
-                        val maxAttempts = 10 // Wait up to 1 second
+                        // Wait for recording path to be available using reactive approach
+                        val recordingPath = withTimeoutOrNull(AppConstants.Recording.RECORDING_PATH_TIMEOUT) {
+                            viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }
+                        }?.recordingPath
                         
-                        while (recordingState.recordingPath.isEmpty() && attempts < maxAttempts) {
-                            delay(100) // Wait 100ms between checks
-                            attempts++
-                        }
-                        
-                        if (recordingState.recordingPath.isNotEmpty()) {
-                            debugPrintln { "Quick record completed: ${recordingState.recordingPath}" }
+                        if (!recordingPath.isNullOrEmpty()) {
+                            debugPrintln { "Quick record completed: $recordingPath" }
                             
                             backgroundTranscriptionService.startTranscription(
-                                audioFilePath = recordingState.recordingPath,
+                                audioFilePath = recordingPath,
                                 onComplete = { noteId ->
                                     debugPrintln { "Background transcription completed for note: $noteId" }
                                     // Navigate back to note list after successful transcription and note creation
                                     navigateBack()
                                 },
                                 onError = { error ->
-                                    debugPrintln { "Background transcription failed: $error" }
+                                    debugPrintln { "Background transcription failed: ${error.message}" }
                                     // Still update editor with recording path and navigate back
-                                    editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
+                                    editorViewModel.onUpdateRecordingPath(recordingPath)
                                     navigateBack()
                                 }
                             )
                         } else {
-                            debugPrintln { "Quick record failed: Recording path not available after ${maxAttempts * 100}ms" }
+                            debugPrintln { "Quick record failed: Recording path not available after ${AppConstants.Recording.RECORDING_PATH_TIMEOUT}" }
                             // Fallback: navigate back without transcription
                             navigateBack()
                         }
                     } else {
-                        // Traditional flow with 2-second delay
-                        delay(2000)
+                        // Traditional flow with configured delay
+                        delay(AppConstants.Recording.TRADITIONAL_FLOW_DELAY)
                         debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
                         editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
                         navigateBack()
