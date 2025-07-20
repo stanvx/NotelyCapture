@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -44,39 +45,75 @@ class BackgroundTranscriptionService(
         _state.value = BackgroundTranscriptionState.Processing
         
         serviceScope.launch {
+            var recognizerInitialized = false
+            var cleanupCompleted = false
+            
             try {
-                // Initialize the transcription ViewModel
-                transcriptionViewModel.initRecognizer()
-                
-                // Monitor transcription progress
-                var transcriptionCompleted = false
-                val transcriptionJob = launch {
-                    transcriptionViewModel.uiState.collect { uiState ->
-                        if (!uiState.inTranscription && !transcriptionCompleted && uiState.originalText.isNotEmpty()) {
-                            transcriptionCompleted = true
-                            
-                            // Create note with transcribed content
-                            val noteId = createNoteFromTranscription(
-                                transcribedText = uiState.originalText,
-                                audioFilePath = audioFilePath
-                            )
-                            
-                            // Clean up transcription state
-                            transcriptionViewModel.finishRecognizer()
-                            
-                            _state.value = BackgroundTranscriptionState.Complete
-                            onComplete(noteId)
-                        }
+                // Initialize the transcription ViewModel and wait for completion
+                try {
+                    transcriptionViewModel.initRecognizer()
+                    recognizerInitialized = true
+                    debugPrintln { "BackgroundTranscriptionService: Model initialization completed, starting transcription" }
+                } catch (initError: Exception) {
+                    debugPrintln { "BackgroundTranscriptionService: Initialization failed: ${initError.message}" }
+                    _state.value = BackgroundTranscriptionState.Error("Failed to initialize transcription: ${initError.message}")
+                    withContext(Dispatchers.Main) {
+                        onError("Failed to initialize transcription: ${initError.message}")
                     }
+                    return@launch
                 }
                 
-                // Start transcription
+                // Start transcription - model is now guaranteed to be ready
                 transcriptionViewModel.startRecognizer(audioFilePath)
+                
+                // Monitor transcription progress and wait for completion
+                transcriptionViewModel.uiState.collect { uiState ->
+                    if (!uiState.inTranscription && !cleanupCompleted && uiState.originalText.isNotEmpty()) {
+                        cleanupCompleted = true
+                        
+                        // Create note with transcribed content
+                        val noteId = createNoteFromTranscription(
+                            transcribedText = uiState.originalText,
+                            audioFilePath = audioFilePath
+                        )
+                        
+                        // Clean up transcription state
+                        transcriptionViewModel.finishRecognizer()
+                        debugPrintln { "BackgroundTranscriptionService: Cleanup completed in success path" }
+                        
+                        _state.value = BackgroundTranscriptionState.Complete
+                        
+                        // Switch to main thread before invoking callback to ensure UI updates are safe
+                        withContext(Dispatchers.Main) {
+                            onComplete(noteId)
+                        }
+                        
+                        // Cancel the collection since we're done
+                        return@collect
+                    }
+                }
                 
             } catch (error: Exception) {
                 debugPrintln { "BackgroundTranscriptionService: Error during transcription: ${error.message}" }
                 _state.value = BackgroundTranscriptionState.Error(error.message ?: "Unknown transcription error")
-                onError(error.message ?: "Unknown transcription error")
+                
+                // Switch to main thread before invoking callback to ensure UI updates are safe
+                withContext(Dispatchers.Main) {
+                    onError(error.message ?: "Unknown transcription error")
+                }
+            } finally {
+                // Ensure cleanup happens only if not already done
+                try {
+                    if (recognizerInitialized && !cleanupCompleted) {
+                        cleanupCompleted = true
+                        debugPrintln { "BackgroundTranscriptionService: Performing cleanup in finally block" }
+                        transcriptionViewModel.finishRecognizer()
+                    } else if (cleanupCompleted) {
+                        debugPrintln { "BackgroundTranscriptionService: Cleanup already completed, skipping finally block cleanup" }
+                    }
+                } catch (cleanupError: Exception) {
+                    debugPrintln { "BackgroundTranscriptionService: Error during cleanup: ${cleanupError.message}" }
+                }
             }
         }
     }

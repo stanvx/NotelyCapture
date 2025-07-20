@@ -33,6 +33,8 @@ import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.transcription.TranscriptionViewModel
+import com.module.notelycompose.transcription.data.repository.TranscriptionRepositoryImpl
+import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -65,6 +67,7 @@ val mapperModule = module {
 }
 val repositoryModule = module {
     singleOf(::PreferencesRepository)
+    single<TranscriptionRepository> { TranscriptionRepositoryImpl(get()) }
 }
 
 val viewModelModule = module {

@@ -68,10 +68,13 @@ fun TranscriptionScreen(
     LaunchedEffect(transcriptionUiState.originalText) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
-    DisposableEffect(Unit) {
+    LaunchedEffect(Unit) {
         viewModel.requestAudioPermission()
         viewModel.initRecognizer()
         viewModel.startRecognizer(editorState.recording.recordingPath)
+    }
+    
+    DisposableEffect(Unit) {
         onDispose {
             viewModel.stopRecognizer()
             viewModel.finishRecognizer()
