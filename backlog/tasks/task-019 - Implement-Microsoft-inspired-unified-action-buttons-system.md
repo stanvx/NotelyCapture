@@ -1,9 +1,11 @@
 ---
 id: task-019
 title: Implement Microsoft-inspired unified action buttons system
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@copilot'
 created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
