@@ -19,6 +19,7 @@ class PreferencesRepository(
 
     companion object {
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        private val KEY_MODEL_SETUP_COMPLETED = booleanPreferencesKey("model_setup_completed")
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_THEME = stringPreferencesKey("theme")
         private val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
@@ -49,6 +50,16 @@ class PreferencesRepository(
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { prefs ->
             prefs[KEY_ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    suspend fun hasCompletedModelSetup(): Boolean {
+        return dataStore.data.first()[KEY_MODEL_SETUP_COMPLETED] ?: false
+    }
+
+    suspend fun setModelSetupCompleted(completed: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_MODEL_SETUP_COMPLETED] = completed
         }
     }
 

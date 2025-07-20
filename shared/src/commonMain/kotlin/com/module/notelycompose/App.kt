@@ -29,9 +29,11 @@ import com.module.notelycompose.notes.ui.settings.LanguageSelectionScreen
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
+import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
+import com.module.notelycompose.onboarding.ui.ModelSetupPage
 import com.module.notelycompose.onboarding.ui.OnboardingWalkthrough
 import com.module.notelycompose.platform.Theme
 import com.module.notelycompose.platform.presentation.PlatformUiState
@@ -78,6 +80,20 @@ fun App(
                         onFinish = {
                             viewmodel.onCompleteOnboarding()
                         },
+                        platformState = platformUiState
+                    )
+                }
+
+                is OnboardingState.SettingUpModel -> {
+                    val downloaderViewModel = koinViewModel<ModelDownloaderViewModel>()
+                    ModelSetupPage(
+                        onComplete = {
+                            viewmodel.onModelSetupCompleted()
+                        },
+                        onError = { errorMessage ->
+                            viewmodel.onModelSetupError(errorMessage)
+                        },
+                        downloaderViewModel = downloaderViewModel,
                         platformState = platformUiState
                     )
                 }
