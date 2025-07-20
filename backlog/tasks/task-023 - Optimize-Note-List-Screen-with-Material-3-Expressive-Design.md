@@ -1,10 +1,11 @@
 ---
 id: task-023
 title: Optimize Note List Screen with Material 3 Expressive Design
-status: To Do
+status: In Progress
 assignee:
   - '@claude'
 created_date: '2025-07-20'
+updated_date: '2025-07-20'
 labels: []
 dependencies: []
 ---
