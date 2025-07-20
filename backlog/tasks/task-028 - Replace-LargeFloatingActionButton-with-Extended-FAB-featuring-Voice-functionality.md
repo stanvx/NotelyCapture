@@ -3,7 +3,7 @@ id: task-028
 title: >-
   Replace LargeFloatingActionButton with Extended FAB featuring Voice
   functionality
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2025-07-20'
@@ -18,13 +18,13 @@ Replace the current LargeFloatingActionButton on the homescreen with an Extended
 
 ## Acceptance Criteria
 
-- [ ] Extended FAB replaces LargeFloatingActionButton on home screen
-- [ ] FAB displays 'Voice' text with microphone icon
-- [ ] FAB links to existing Quick Record functionality
-- [ ] FAB minimizes/extends based on LazyListState scroll behavior
-- [ ] FAB follows Material 3 expressive design guidelines
-- [ ] Integration with unified action buttons system is seamless
-- [ ] Existing Quick Record functionality remains intact
+- [x] Extended FAB replaces LargeFloatingActionButton on home screen
+- [x] FAB displays 'Voice' text with microphone icon
+- [x] FAB links to existing Quick Record functionality
+- [x] FAB minimizes/extends based on LazyListState scroll behavior
+- [x] FAB follows Material 3 expressive design guidelines
+- [x] Integration with unified action buttons system is seamless
+- [x] Existing Quick Record functionality remains intact
 
 ## Implementation Plan
 
