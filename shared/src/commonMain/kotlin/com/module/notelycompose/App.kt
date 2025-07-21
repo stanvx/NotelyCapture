@@ -113,11 +113,21 @@ fun App(
 @Composable
 fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
+    
+    // State for calendar go-to-today functionality
+    var calendarGoToToday by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     MainScreenScaffold(
         navController = navController,
         onQuickRecordClick = {
             navController.navigateSingleTop(Routes.QuickRecord)
+        },
+        onGoToToday = { calendarGoToToday?.invoke() },
+        onNavigateToSettings = {
+            navController.navigateSingleTop(Routes.Settings)
+        },
+        onNavigateToMenu = {
+            navController.navigateSingleTop(Routes.Menu)
         }
     ) { onScrollStateChanged ->
         NavHost(
@@ -174,14 +184,13 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 composableWithSharedAxis<Routes.Capture> {
                 CaptureHubScreen(
                     onVoiceCapture = { navController.navigateSingleTop(Routes.QuickRecord) },
-                    onCameraCapture = { /* TODO: Implement camera capture */ },
-                    onVideoCapture = { /* TODO: Implement video capture */ },
+                    onCameraCapture = { navController.navigateSingleTop(Routes.QuickRecord) },
+                    onVideoCapture = { navController.navigateSingleTop(Routes.QuickRecord) },
                     onTextCapture = { 
-                        navController.navigateSingleTop(Routes.DetailsGraph)
                         navController.navigateSingleTop(Routes.Details(noteId = null))
                     },
-                    onWhiteboardCapture = { /* TODO: Implement whiteboard capture */ },
-                    onFileCapture = { /* TODO: Implement file capture */ },
+                    onWhiteboardCapture = { navController.navigateSingleTop(Routes.Details(noteId = null)) },
+                    onFileCapture = { navController.navigateSingleTop(Routes.Details(noteId = null)) },
                     navigateToQuickRecord = {
                         navController.navigateSingleTop(Routes.QuickRecord)
                     },

@@ -1,7 +1,11 @@
 package com.module.notelycompose.notes.ui.components
 
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,6 +39,9 @@ fun MainScreenScaffold(
     navController: NavHostController,
     onSearchActivated: () -> Unit = {},
     onQuickRecordClick: () -> Unit = {},
+    onGoToToday: (() -> Unit)? = null,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToMenu: () -> Unit = {},
     content: @Composable (onScrollStateChanged: (LazyStaggeredGridState) -> Unit) -> Unit
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -43,8 +50,35 @@ fun MainScreenScaffold(
     // State to hold the scroll state from NoteListScreen
     var lazyStaggeredGridState by remember { mutableStateOf<LazyStaggeredGridState?>(null) }
     
+    // Create a default LazyListState for Calendar and Capture screens
+    val defaultLazyListState = rememberLazyListState()
+    
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        topBar = {
+            when (currentRoute) {
+                Routes.List::class.qualifiedName -> {
+                    androidx.compose.material3.CenterAlignedTopAppBar(
+                        title = { androidx.compose.material3.Text("Notely", style = MaterialTheme.typography.headlineMedium) },
+                        actions = {
+                            androidx.compose.material3.IconButton(onClick = onNavigateToSettings) {
+                                MaterialIcon(
+                                    symbol = MaterialSymbols.Settings,
+                                    contentDescription = "Settings"
+                                )
+                            }
+                            androidx.compose.material3.IconButton(onClick = onNavigateToMenu) {
+                                MaterialIcon(
+                                    symbol = MaterialSymbols.Info,
+                                    contentDescription = "Menu"
+                                )
+                            }
+                        }
+                    )
+                }
+                // Calendar and Capture screens have their own topBars, so don't add one here
+            }
+        },
         bottomBar = {
             if (shouldShowNavigationBar(currentRoute)) {
                 AppNavigationBar(
@@ -77,7 +111,12 @@ fun MainScreenScaffold(
                         )
                     }
                 }
-                // Calendar and Capture screens now handle their own FABs
+                Routes.Calendar::class.qualifiedName, Routes.Capture::class.qualifiedName -> {
+                    ExtendedVoiceFAB(
+                        onQuickRecordClick = onQuickRecordClick,
+                        lazyListState = defaultLazyListState
+                    )
+                }
             }
         }
     ) { paddingValues ->

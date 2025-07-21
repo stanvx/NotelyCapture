@@ -54,6 +54,7 @@ object MaterialSymbols {
     const val Check = "\ue5ca"
     const val Home = "\ue88a"
     const val Settings = "\ue8b8"
+    const val Info = "\ue88e"
     const val TrendingUp = "\ue8e3"
     const val Dashboard = "\ue871"
     
@@ -67,6 +68,7 @@ object MaterialSymbols {
         const val Search = "\ue8b6"
         const val DateRange = "\ue916"
         const val Settings = "\ue8b8"
+        const val Info = "\ue88e"
         const val PlayArrow = "\ue037"
         const val Mic = "\ue029"
         const val Delete = "\ue872"
