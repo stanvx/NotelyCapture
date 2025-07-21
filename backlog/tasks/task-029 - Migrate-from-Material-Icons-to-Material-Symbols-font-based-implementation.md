@@ -1,9 +1,11 @@
 ---
 id: task-029
 title: Migrate from Material Icons to Material Symbols font-based implementation
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@assistant'
 created_date: '2025-07-21'
+updated_date: '2025-07-21'
 labels: []
 dependencies: []
 ---
