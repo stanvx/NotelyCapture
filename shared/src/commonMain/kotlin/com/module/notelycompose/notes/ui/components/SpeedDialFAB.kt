@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
@@ -45,11 +46,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.module.notelycompose.core.constants.AppConstants
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.notes.ui.theme.Material3ShapeTokens
 import com.module.notelycompose.platform.HapticFeedback
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.note_list_add_note
@@ -146,7 +146,7 @@ fun SpeedDialFAB(
                             Icon(
                                 imageVector = action.icon,
                                 contentDescription = null,
-                                tint = LocalCustomColors.current.floatActionButtonIconColor,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(20.dp)
                             )
                         },
@@ -155,14 +155,14 @@ fun SpeedDialFAB(
                 }
             }
 
-            // Main FAB using Material 3 FloatingActionButton
-            FloatingActionButton(
+            // Main FAB using Material 3 LargeFloatingActionButton with secondary tonal color
+            LargeFloatingActionButton(
                 onClick = { 
                     hapticFeedback.light()
                     isExpanded = !isExpanded
                 },
-                containerColor = LocalCustomColors.current.backgroundViewColor,
-                contentColor = LocalCustomColors.current.floatActionButtonIconColor,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
                 modifier = Modifier.semantics {
                     contentDescription = if (isExpanded) "Close speed dial" else "Open speed dial"
@@ -213,20 +213,18 @@ private fun SubFAB(
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            fontSize = 12.sp,
-            color = LocalCustomColors.current.bodyContentColor,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
-                .clip(CircleShape)
-                .background(LocalCustomColors.current.backgroundViewColor)
+                .clip(Material3ShapeTokens.chip)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         )
         
         // Sub-FAB Button - Material 3 SmallFloatingActionButton
         SmallFloatingActionButton(
             onClick = onClick,
-            containerColor = LocalCustomColors.current.backgroundViewColor,
-            contentColor = LocalCustomColors.current.floatActionButtonIconColor,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
             modifier = Modifier.semantics {
                 contentDescription = "$label button. Double tap to activate."

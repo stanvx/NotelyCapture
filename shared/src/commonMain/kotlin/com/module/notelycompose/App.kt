@@ -7,21 +7,29 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.module.notelycompose.Arguments.DEFAULT_NOTE_ID
 import com.module.notelycompose.audio.ui.recorder.RecordingScreen
 import com.module.notelycompose.core.Routes
-import com.module.notelycompose.core.composableNoAnimation
 import com.module.notelycompose.core.composableWithHorizontalSlide
+import com.module.notelycompose.core.composableWithSharedAxis
 import com.module.notelycompose.core.composableWithVerticalSlide
 import com.module.notelycompose.core.navigateSingleTop
+import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
+import com.module.notelycompose.notes.ui.calendar.CalendarScreen
+import com.module.notelycompose.notes.ui.capture.CaptureHubScreen
+import com.module.notelycompose.notes.ui.components.MainScreenScaffold
 import com.module.notelycompose.notes.ui.detail.NoteDetailScreen
 import com.module.notelycompose.notes.ui.list.InfoScreen
 import com.module.notelycompose.notes.ui.list.NoteListScreen
@@ -29,7 +37,6 @@ import com.module.notelycompose.notes.ui.settings.LanguageSelectionScreen
 import com.module.notelycompose.notes.ui.settings.SettingsScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.theme.MyApplicationTheme
-import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.onboarding.presentation.model.OnboardingState
@@ -55,14 +62,12 @@ fun App(
     preferencesRepository: PreferencesRepository = koinInject()
 ) {
     val uiMode by preferencesRepository.getTheme().collectAsState(Theme.SYSTEM.name)
-    val accentColor by preferencesRepository.getAccentColor().collectAsState(PreferencesRepository.DEFAULT_ACCENT_COLOR)
     MyApplicationTheme(
         darkTheme = when (uiMode) {
             Theme.DARK.name -> true
             Theme.LIGHT.name -> false
             else -> isSystemInDarkTheme()
-        },
-        accentColor = accentColor
+        }
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -108,45 +113,81 @@ fun App(
 @Composable
 fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
-    NavHost(
-        navController,
-        startDestination = Routes.Home::class,
-        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
-    ) {
-        navigation<Routes.Home>(startDestination = Routes.List::class) {
-            composableNoAnimation<Routes.List> {
-                NoteListScreen(
-                    navigateToSettings = {
-                        navController.navigateSingleTop(Routes.Settings)
+
+    MainScreenScaffold(
+        navController = navController,
+        onQuickRecordClick = {
+            navController.navigateSingleTop(Routes.QuickRecord)
+        }
+    ) { onScrollStateChanged ->
+        NavHost(
+            navController,
+            startDestination = Routes.Home::class,
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
+        ) {
+            navigation<Routes.Home>(startDestination = Routes.List::class) {
+                composableWithSharedAxis<Routes.List> {
+                    NoteListScreen(
+                        navigateToSettings = {
+                            navController.navigateSingleTop(Routes.Settings)
+                        },
+                        navigateToMenu = {
+                            navController.navigateSingleTop(Routes.Menu)
+                        },
+                        navigateToNoteDetails = { noteId ->
+                            navController.navigateSingleTop(Routes.Details(noteId))
+                        },
+                        navigateToQuickRecord = {
+                            navController.navigateSingleTop(Routes.QuickRecord)
+                        },
+                        platformUiState = platformUiState,
+                        onScrollStateChanged = onScrollStateChanged
+                    )
+                }
+                composableWithVerticalSlide<Routes.Menu> {
+                    InfoScreen(
+                        navigateBack = { navController.popBackStack() },
+                        onNavigateToWebPage = { title, url ->
+                            // navController.navigateSingleTopWithPopUp("${Routes.WEB_VIEW}/$title/$url")
+                        }
+                    )
+                }
+                composableWithVerticalSlide<Routes.Settings> {
+                    SettingsScreen(
+                        navigateBack = { navController.popBackStack() },
+                        navigateToLanguages = { navController.navigateSingleTop(Routes.Language) }
+                    )
+                }
+                composableWithVerticalSlide<Routes.Language> {
+                    LanguageSelectionScreen(
+                        navigateBack = { navController.popBackStack() }
+                    )
+                }
+                composableWithSharedAxis<Routes.Calendar> {
+                    CalendarScreen(
+                        navigateBack = { navController.popBackStack() },
+                        navigateToQuickRecord = {
+                            navController.navigateSingleTop(Routes.QuickRecord)
+                        }
+                    )
+                }
+                composableWithSharedAxis<Routes.Capture> {
+                CaptureHubScreen(
+                    onVoiceCapture = { navController.navigateSingleTop(Routes.QuickRecord) },
+                    onCameraCapture = { /* TODO: Implement camera capture */ },
+                    onVideoCapture = { /* TODO: Implement video capture */ },
+                    onTextCapture = { 
+                        navController.navigateSingleTop(Routes.DetailsGraph)
+                        navController.navigateSingleTop(Routes.Details(noteId = null))
                     },
-                    navigateToMenu = {
-                        navController.navigateSingleTop(Routes.Menu)
-                    },
-                    navigateToNoteDetails = { noteId ->
-                        navController.navigateSingleTop(Routes.Details(noteId))
-                    },
+                    onWhiteboardCapture = { /* TODO: Implement whiteboard capture */ },
+                    onFileCapture = { /* TODO: Implement file capture */ },
                     navigateToQuickRecord = {
                         navController.navigateSingleTop(Routes.QuickRecord)
                     },
-                    platformUiState = platformUiState
-                )
-            }
-            composableWithVerticalSlide<Routes.Menu> {
-                InfoScreen(
-                    navigateBack = { navController.popBackStack() },
-                    onNavigateToWebPage = { title, url ->
-                        // navController.navigateSingleTopWithPopUp("${Routes.WEB_VIEW}/$title/$url")
-                    }
-                )
-            }
-            composableWithVerticalSlide<Routes.Settings> {
-                SettingsScreen(
-                    navigateBack = { navController.popBackStack() },
-                    navigateToLanguages = { navController.navigateSingleTop(Routes.Language)}
-                )
-            }
-            composableWithVerticalSlide<Routes.Language> {
-                LanguageSelectionScreen(
+                    onNavigateToSettings = {
+                        navController.navigateSingleTop(Routes.Settings)
+                    },
                     navigateBack = { navController.popBackStack() }
                 )
             }
@@ -198,6 +239,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     isQuickRecordMode = false // Traditional recording flow
                 )
             }
+        }
         }
     }
 }

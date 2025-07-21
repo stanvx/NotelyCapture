@@ -18,21 +18,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.DismissDirection
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FabPosition
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.FloatingActionButtonDefaults.elevation
-import androidx.compose.material.FloatingActionButtonElevation
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SwipeToDismiss
-import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,7 +85,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteDetailScreen(
     noteId: String,
@@ -182,9 +178,8 @@ fun NoteDetailScreen(
                             color = LocalCustomColors.current.floatActionButtonBorderColor,
                             shape = CircleShape
                         ),
-                        backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { downloaderViewModel.checkTranscriptionAvailability() },
-                        elevation = elevation(defaultElevation = 2.dp)
+                        containerColor = LocalCustomColors.current.bodyBackgroundColor,
+                        onClick = { downloaderViewModel.checkTranscriptionAvailability() }
                     ) {
                         Icon(
                             painter = painterResource(Res.drawable.ic_transcription),
@@ -200,15 +195,14 @@ fun NoteDetailScreen(
                         color = LocalCustomColors.current.floatActionButtonBorderColor,
                         shape = CircleShape
                     ),
-                    backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
+                    containerColor = LocalCustomColors.current.bodyBackgroundColor,
                     onClick = {
                         if (!editorState.recording.isRecordingExist) {
                             navigateToRecorder("$currentNoteId")
                         } else {
                             showExistingRecordConfirmDialog = true
                         }
-                    },
-                    elevation = elevation(defaultElevation = 2.dp)
+                    }
                 ) {
                     Icon(
                         imageVector = Images.Icons.IcRecorder,
@@ -218,7 +212,6 @@ fun NoteDetailScreen(
                 }
             }
         },
-        floatingActionButtonPosition = FabPosition.End,
         bottomBar = {
             BottomNavigationBar(
                 isTextFieldFocused = isTextFieldFocused,
@@ -264,7 +257,7 @@ fun NoteDetailScreen(
             modifier = Modifier.height(100.dp),
             title = { Text(stringResource(resource = Res.string.download_dialog_error)) },
             onDismissRequest = { showErrorDialog = false },
-            buttons = {
+            confirmButton = {
                 Button(
                     onClick = {
                         showErrorDialog = false
@@ -321,7 +314,6 @@ fun NoteDetailScreen(
 }
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NoteContent(
     modifier: Modifier = Modifier,
@@ -338,7 +330,7 @@ private fun NoteContent(
     val coroutineScope = rememberCoroutineScope()
     var showDeleteRecordingDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-    val dismissState = rememberDismissState()
+    val dismissState = rememberSwipeToDismissBoxState()
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
@@ -360,16 +352,15 @@ private fun NoteContent(
 
             if (editorState.recording.isRecordingExist) {
 
-                if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+                if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
                     LaunchedEffect(Unit) {
                         showDeleteRecordingDialog = true
                     }
                 }
 
-                SwipeToDismiss(
+                SwipeToDismissBox(
                     state = dismissState,
-                    directions = setOf(DismissDirection.EndToStart),
-                    background = {
+                    backgroundContent = {
                         // Background that appears when swiping
                         Box(
                             modifier = Modifier
@@ -387,7 +378,7 @@ private fun NoteContent(
                             )
                         }
                     },
-                    dismissContent = {
+                    content = {
                         PlatformAudioPlayerUi(
                             filePath = editorState.recording.recordingPath,
                             uiState = audioPlayerUiState,

@@ -6,7 +6,13 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Material 3 ColorScheme generation with custom accent colors
+ * Material 3 Expressive ColorScheme generation with dynamic color and custom accent support
+ * 
+ * Features:
+ * - Dynamic color generation from seed colors
+ * - Material You integration for Android 12+
+ * - Custom accent color palettes
+ * - Platform-aware fallbacks
  */
 object Material3ColorScheme {
 
@@ -49,6 +55,12 @@ object Material3ColorScheme {
             lightVariant = Color(0xFF26A69A),
             dark = Color(0xFF26A69A),
             darkVariant = Color(0xFF4DB6AC)
+        ),
+        "Record Blue" to AccentColorPalette(
+            light = Color(0xFF1E88E5),
+            lightVariant = Color(0xFF42A5F5),
+            dark = Color(0xFF90CAF9),
+            darkVariant = Color(0xFFBBDEFB)
         )
     )
 
@@ -71,6 +83,135 @@ object Material3ColorScheme {
         } else {
             createLightColorScheme(accentPalette)
         }
+    }
+
+    /**
+     * Generate a dynamic ColorScheme from a seed color
+     * 
+     * @param seedColor The seed color to generate the palette from
+     * @param isDark Whether to generate dark or light theme
+     * @return A ColorScheme generated from the seed color
+     */
+    fun createDynamicColorScheme(seedColor: Color, isDark: Boolean): ColorScheme {
+        // Generate a dynamic accent palette from the seed color
+        val dynamicPalette = generateAccentPaletteFromSeed(seedColor)
+        
+        return if (isDark) {
+            createDarkColorScheme(dynamicPalette)
+        } else {
+            createLightColorScheme(dynamicPalette)
+        }
+    }
+
+    /**
+     * Create ColorScheme with enhanced Material You support
+     * 
+     * @param isDark Whether to use dark theme
+     * @param accentColorName Predefined accent color name
+     * @param seedColor Optional custom seed color for dynamic generation
+     * @param enableDynamicColor Whether to use dynamic color generation
+     * @return A ColorScheme optimized for Material 3 Expressive design
+     */
+    fun createExpressiveColorScheme(
+        isDark: Boolean,
+        accentColorName: String = "Material Blue",
+        seedColor: Color? = null,
+        enableDynamicColor: Boolean = false
+    ): ColorScheme {
+        return when {
+            enableDynamicColor && seedColor != null -> {
+                createDynamicColorScheme(seedColor, isDark)
+            }
+            else -> {
+                createColorScheme(isDark, accentColorName)
+            }
+        }
+    }
+
+    /**
+     * Generate an accent color palette from a seed color
+     * 
+     * This is a simplified implementation using basic color manipulation.
+     * For production use, consider using Material Color Utilities library.
+     */
+    private fun generateAccentPaletteFromSeed(seedColor: Color): AccentColorPalette {
+        // Generate light theme variants with tonal adjustments
+        val lightPrimary = seedColor
+        val lightVariant = adjustColorTone(seedColor, saturationFactor = 0.7f)
+        
+        // Generate dark theme variants
+        val darkPrimary = adjustColorTone(seedColor, brightnessFactor = 1.1f)
+        val darkVariant = adjustColorTone(seedColor, saturationFactor = 0.6f, brightnessFactor = 1.3f)
+        
+        return AccentColorPalette(
+            light = lightPrimary,
+            lightVariant = lightVariant,
+            dark = darkPrimary,
+            darkVariant = darkVariant
+        )
+    }
+
+    /**
+     * Adjust color tone using simple color manipulation
+     * 
+     * @param color The base color to adjust
+     * @param saturationFactor Factor to adjust saturation (1.0 = no change)
+     * @param brightnessFactor Factor to adjust brightness (1.0 = no change)
+     */
+    private fun adjustColorTone(
+        color: Color,
+        saturationFactor: Float = 1.0f,
+        brightnessFactor: Float = 1.0f
+    ): Color {
+        // Extract RGB components from ARGB value
+        val argb = color.value.toInt()
+        val red = ((argb shr 16) and 0xFF) / 255f
+        val green = ((argb shr 8) and 0xFF) / 255f
+        val blue = (argb and 0xFF) / 255f
+        
+        // Adjust saturation by interpolating with gray
+        val gray = (red + green + blue) / 3f
+        val newRed = lerp(gray, red, saturationFactor) * brightnessFactor
+        val newGreen = lerp(gray, green, saturationFactor) * brightnessFactor
+        val newBlue = lerp(gray, blue, saturationFactor) * brightnessFactor
+        
+        // Clamp values to valid range
+        val clampedRed = newRed.coerceIn(0f, 1f)
+        val clampedGreen = newGreen.coerceIn(0f, 1f)
+        val clampedBlue = newBlue.coerceIn(0f, 1f)
+        
+        return Color(clampedRed, clampedGreen, clampedBlue)
+    }
+
+    /**
+     * Linear interpolation between two values
+     */
+    private fun lerp(start: Float, stop: Float, fraction: Float): Float {
+        return start + fraction * (stop - start)
+    }
+
+    /**
+     * Predefined seed colors for dynamic color generation
+     */
+    object SeedColors {
+        val vibrantBlue = Color(0xFF1976D2)
+        val warmRed = Color(0xFFD32F2F) 
+        val freshGreen = Color(0xFF388E3C)
+        val royalPurple = Color(0xFF7B1FA2)
+        val sunsetOrange = Color(0xFFF57C00)
+        val oceanTeal = Color(0xFF00796B)
+        
+        /**
+         * Get all predefined seed colors
+         */
+        fun getAllSeedColors(): Map<String, Color> = mapOf(
+            "Vibrant Blue" to vibrantBlue,
+            "Warm Red" to warmRed,
+            "Fresh Green" to freshGreen,
+            "Royal Purple" to royalPurple,
+            "Sunset Orange" to sunsetOrange,
+            "Ocean Teal" to oceanTeal
+        )
     }
 
     private fun createLightColorScheme(accent: AccentColorPalette): ColorScheme {

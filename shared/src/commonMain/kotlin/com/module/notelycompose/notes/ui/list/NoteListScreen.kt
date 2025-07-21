@@ -4,22 +4,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.FabPosition
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.FloatingActionButtonDefaults.elevation
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -35,6 +41,7 @@ import com.module.notelycompose.resources.note_list_add_note
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteListScreen(
     navigateToSettings: () -> Unit,
@@ -42,67 +49,68 @@ fun NoteListScreen(
     navigateToNoteDetails: (String) -> Unit,
     navigateToQuickRecord: () -> Unit,
     viewModel: NoteListViewModel = koinViewModel(),
-    platformUiState: PlatformUiState
+    platformUiState: PlatformUiState,
+    onScrollStateChanged: (LazyStaggeredGridState) -> Unit = {}
 ) {
     val notesListState by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
+    val lazyStaggeredGridState = rememberLazyStaggeredGridState()
+    
+    // Pass scroll state to parent
+    onScrollStateChanged(lazyStaggeredGridState)
+    
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    Scaffold(
-            topBar = {
-                TopBar(
-                    onMenuClicked = {
-                       navigateToMenu()
-                    },
-                    onSettingsClicked = {
-                      navigateToSettings()
-                    }
-                )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) {
+        // TopBar
+        TopBar(
+            onMenuClicked = {
+               navigateToMenu()
             },
-            isFloatingActionButtonDocked = true,
-            floatingActionButtonPosition = FabPosition.End,
-            floatingActionButton = {
-                SpeedDialFAB(
-                    onNewNoteClick = {
-                        navigateToNoteDetails("0")
-                    },
-                    onQuickRecordClick = {
-                        navigateToQuickRecord()
-                    }
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(LocalCustomColors.current.bodyBackgroundColor)
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = {
-                            focusManager.clearFocus()
-                        })
-                    }
-            ) {
-                SearchBar(
-                    onSearchByKeyword = { keyword ->
-                        viewModel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
-                    }
-                )
+            onSettingsClicked = {
+              navigateToSettings()
+            },
+            scrollBehavior = scrollBehavior
+        )
+        
+        // Content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
+        ) {
+                // Filter Tab Bar (first item)
                 FilterTabBar(
                     selectedTabTitle = notesListState.selectedTabTitle,
                     onFilterTabItemClicked = { title ->
                         viewModel.onProcessIntent(NoteListIntent.OnFilterNote(title))
                     }
                 )
-                NoteList(
-                    noteList = viewModel.onGetUiState(notesListState),
-                    onNoteClicked = { id ->
-                        navigateToNoteDetails("$id")
-                    },
-                    onNoteDeleteClicked = {
-                        viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(it))
-                    }
-                )
-                if(notesListState.showEmptyContent) EmptyNoteUi(platformUiState.isTablet)
+                
+                // Note List Content (takes remaining space)
+                if(notesListState.showEmptyContent) {
+                    EmptyNoteUi(platformUiState.isTablet)
+                } else {
+                    NoteList(
+                        noteList = viewModel.onGetUiState(notesListState),
+                        onNoteClicked = { id ->
+                            navigateToNoteDetails("$id")
+                        },
+                        onNoteDeleteClicked = {
+                            viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(it))
+                        },
+                        lazyStaggeredGridState = lazyStaggeredGridState
+                    )
+                }
             }
         }
 

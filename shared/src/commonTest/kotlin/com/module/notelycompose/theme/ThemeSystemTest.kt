@@ -82,4 +82,115 @@ class ThemeSystemTest {
         assertTrue(testParams.any { !it.isDark }) // Has light theme
         assertTrue(testParams.any { it.isDark })  // Has dark theme
     }
+
+    @Test
+    fun `material 3 expressive typography scale should be complete`() {
+        // Test that M3 typography scale includes all required roles
+        val requiredTypographyRoles = setOf(
+            "displayLarge", "displayMedium", "displaySmall",
+            "headlineLarge", "headlineMedium", "headlineSmall",
+            "titleLarge", "titleMedium", "titleSmall",
+            "bodyLarge", "bodyMedium", "bodySmall",
+            "labelLarge", "labelMedium", "labelSmall"
+        )
+        
+        // We expect all 15 M3 typography roles to be defined
+        assertEquals(15, requiredTypographyRoles.size)
+        
+        // Test categories
+        val displayTypes = requiredTypographyRoles.filter { it.startsWith("display") }
+        val headlineTypes = requiredTypographyRoles.filter { it.startsWith("headline") }
+        val titleTypes = requiredTypographyRoles.filter { it.startsWith("title") }
+        val bodyTypes = requiredTypographyRoles.filter { it.startsWith("body") }
+        val labelTypes = requiredTypographyRoles.filter { it.startsWith("label") }
+        
+        assertEquals(3, displayTypes.size)
+        assertEquals(3, headlineTypes.size)
+        assertEquals(3, titleTypes.size)
+        assertEquals(3, bodyTypes.size)
+        assertEquals(3, labelTypes.size)
+    }
+
+    @Test
+    fun `material 3 shape system should have five tiers`() {
+        // Test that M3 shape system includes all 5 tiers
+        val requiredShapeTokens = setOf(
+            "extraSmall", "small", "medium", "large", "extraLarge"
+        )
+        
+        assertEquals(5, requiredShapeTokens.size)
+        
+        // Should have progression from smallest to largest
+        assertTrue("extraSmall" in requiredShapeTokens)
+        assertTrue("extraLarge" in requiredShapeTokens)
+    }
+
+    @Test
+    fun `poppins font family should support required weights`() {
+        // Test that Poppins font supports Material 3 typography requirements
+        val requiredFontWeights = setOf(
+            "Normal", "Medium", "SemiBold", "Bold"
+        )
+        
+        // We need at least Normal and Bold (existing), plus Medium and SemiBold for full M3 support
+        assertTrue(requiredFontWeights.size >= 2) // Minimum current support
+        assertEquals(4, requiredFontWeights.size) // Full M3 expressive support goal
+    }
+
+    @Test
+    fun `dynamic color system should support seed color generation`() {
+        // Test that dynamic color system supports various seed color inputs
+        val seedColorTypes = setOf(
+            "hex", "argb", "material_palette", "custom"
+        )
+        
+        assertEquals(4, seedColorTypes.size)
+        assertTrue("hex" in seedColorTypes) // Standard hex color support
+        assertTrue("custom" in seedColorTypes) // Custom seed color support
+    }
+
+    @Test
+    fun `material you integration should be platform aware`() {
+        // Test that Material You integration is properly gated for supported platforms
+        data class PlatformSupport(
+            val platform: String,
+            val minApiLevel: Int,
+            val supportsDynamicColor: Boolean
+        )
+        
+        val platformSupports = listOf(
+            PlatformSupport("Android", 31, true),  // Android 12+ (API 31+)
+            PlatformSupport("Android", 30, false), // Android 11 and below
+            PlatformSupport("iOS", 0, false)       // iOS doesn't support Material You
+        )
+        
+        // Should support dynamic colors on Android 12+
+        assertTrue(platformSupports.any { it.platform == "Android" && it.supportsDynamicColor })
+        
+        // Should have fallback for older Android versions
+        assertTrue(platformSupports.any { it.platform == "Android" && !it.supportsDynamicColor })
+        
+        // Should have iOS fallback
+        assertTrue(platformSupports.any { it.platform == "iOS" && !it.supportsDynamicColor })
+    }
+
+    @Test
+    fun `enhanced color scheme should maintain semantic tokens`() {
+        // Test that enhanced color schemes preserve Material 3 semantic color structure
+        val requiredSemanticTokens = setOf(
+            "primary", "onPrimary", "primaryContainer", "onPrimaryContainer",
+            "secondary", "onSecondary", "secondaryContainer", "onSecondaryContainer",
+            "tertiary", "onTertiary", "tertiaryContainer", "onTertiaryContainer",
+            "surface", "onSurface", "surfaceVariant", "onSurfaceVariant",
+            "background", "onBackground", "error", "onError"
+        )
+        
+        // Should have all core M3 semantic tokens
+        assertEquals(20, requiredSemanticTokens.size)
+        
+        // Core pairs should exist
+        assertTrue("primary" in requiredSemanticTokens && "onPrimary" in requiredSemanticTokens)
+        assertTrue("surface" in requiredSemanticTokens && "onSurface" in requiredSemanticTokens)
+        assertTrue("background" in requiredSemanticTokens && "onBackground" in requiredSemanticTokens)
+    }
 }

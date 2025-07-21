@@ -41,6 +41,12 @@ sealed interface Routes {
     data object Menu : Routes
 
     @Serializable
+    data object Calendar : Routes
+
+    @Serializable
+    data object Capture : Routes
+
+    @Serializable
     data object Downloader : Routes
 
 }
