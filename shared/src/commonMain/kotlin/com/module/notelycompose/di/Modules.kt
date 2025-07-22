@@ -1,6 +1,7 @@
 package com.module.notelycompose.di
 
 
+import com.module.notelycompose.audio.domain.AmplitudeCollector
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
@@ -23,6 +24,7 @@ import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.presentation.helpers.TextEditorHelper
+import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.presentation.list.mapper.NotesFilterMapper
 import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUiStateMapper
@@ -65,6 +67,8 @@ val mapperModule = module {
     single { TextFormatPresentationMapper() }
     single { TextAlignPresentationMapper() }
     single { TextEditorHelper() }
+    single { RichTextEditorHelper() }
+    single { AmplitudeCollector() }
 }
 val repositoryModule = module {
     singleOf(::PreferencesRepository)

@@ -88,7 +88,29 @@ fun NoteListScreen(
                     })
                 }
         ) {
-                // Filter Tab Bar (first item)
+                // Vibrant header with note count and search
+                NoteListHeader(
+                    onSearchClick = {
+                        viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(true))
+                    },
+                    noteCount = notesListState.filteredNotes.size,
+                    isTablet = platformUiState.isTablet
+                )
+                
+                // Search Bar (shown when search is active)
+                if (notesListState.isSearchActive) {
+                    SearchBar(
+                        onSearchByKeyword = { keyword ->
+                            viewModel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
+                        },
+                        onActiveChange = { isActive ->
+                            viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(isActive))
+                        },
+                        externalActivation = true
+                    )
+                }
+                
+                // Filter Tab Bar
                 FilterTabBar(
                     selectedTabTitle = notesListState.selectedTabTitle,
                     onFilterTabItemClicked = { title ->

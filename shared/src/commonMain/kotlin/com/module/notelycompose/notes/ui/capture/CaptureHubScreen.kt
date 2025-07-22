@@ -75,6 +75,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import com.module.notelycompose.notes.ui.components.ExtendedVoiceFAB
+import com.module.notelycompose.notes.ui.theme.voiceNoteIndicatorContainer
+import com.module.notelycompose.notes.ui.theme.onVoiceNoteIndicatorContainer
+import com.module.notelycompose.notes.ui.theme.textNoteIndicatorContainer
+import com.module.notelycompose.notes.ui.theme.onTextNoteIndicatorContainer
 
 /**
  * Material 3 Expressive Capture Hub Screen for Notely Capture.
@@ -287,7 +291,9 @@ private fun HeroSection() {
                     text = "Ideas • Moments • Memories",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.9f),
-                    letterSpacing = 1.sp
+                    letterSpacing = 1.sp,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -468,7 +474,7 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                     
                     Surface(
                         shape = CircleShape,
-                        color = Color(0xFFE3F2FD).copy(alpha = 0.8f), // Same light blue as Voice capture
+                        color = MaterialTheme.colorScheme.voiceNoteIndicatorContainer,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Box(
@@ -478,7 +484,7 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                             MaterialIcon(
                                 symbol = MaterialSymbols.Mic,
                                 contentDescription = null,
-                                tint = Color(0xFF1976D2), // Same blue as Voice capture icon
+                                tint = MaterialTheme.colorScheme.onVoiceNoteIndicatorContainer,
                                 size = 16.dp,
                                 style = MaterialIconStyle.Filled
                             )
@@ -661,13 +667,14 @@ data class PinnedTemplate(
 )
 
 // Data providers
+@Composable
 private fun getCaptureMethodsList(): List<CaptureMethod> = listOf(
     CaptureMethod(
         type = CaptureType.Voice,
         name = "Voice",
         icon = MaterialSymbols.Mic,
-        backgroundColor = Color(0xFFE3F2FD), // Light Blue pastel
-        iconBackgroundColor = Color(0xFF1976D2)
+        backgroundColor = MaterialTheme.colorScheme.voiceNoteIndicatorContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onVoiceNoteIndicatorContainer
     ),
     CaptureMethod(
         type = CaptureType.Camera,
@@ -687,8 +694,8 @@ private fun getCaptureMethodsList(): List<CaptureMethod> = listOf(
         type = CaptureType.Text,
         name = "Text",
         icon = MaterialSymbols.Edit,
-        backgroundColor = Color(0xFFFFFDE7), // Light Yellow pastel
-        iconBackgroundColor = Color(0xFFF57F17)
+        backgroundColor = MaterialTheme.colorScheme.textNoteIndicatorContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onTextNoteIndicatorContainer
     ),
     CaptureMethod(
         type = CaptureType.Whiteboard,

@@ -36,6 +36,11 @@ object MaterialSymbols {
     const val CameraAlt = "\ue4e6"
     const val PhotoCamera = "\ue412"
     
+    // Cloud & Translation
+    const val CloudUpload = "\ue2c6"
+    const val CloudDownload = "\ue2c0"
+    const val Translate = "\ue8e2"
+    
     // Communication & Social
     const val Share = "\ue80d"
     const val Delete = "\ue872"
@@ -87,6 +92,9 @@ object MaterialSymbols {
         const val Clear = "\ue14c"
         const val ArrowForward = "\ue5c8"
         const val TextFields = "\ue272"
+        const val CloudUpload = "\ue2c6"
+        const val CloudDownload = "\ue2c0"
+        const val Translate = "\ue8e2"
     }
     
     object AutoMirrored {

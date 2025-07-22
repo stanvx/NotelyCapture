@@ -15,6 +15,7 @@ import com.module.notelycompose.notes.presentation.detail.model.EditorPresentati
 import com.module.notelycompose.notes.presentation.detail.model.RecordingPathPresentationModel
 import com.module.notelycompose.notes.presentation.detail.model.TextPresentationFormat
 import com.module.notelycompose.notes.presentation.helpers.TextEditorHelper
+import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
 import com.module.notelycompose.notes.presentation.helpers.formattedDate
 import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUiStateMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
@@ -43,7 +44,8 @@ class TextEditorViewModel(
     private val editorPresentationToUiStateMapper: EditorPresentationToUiStateMapper,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
-    private val textEditorHelper: TextEditorHelper
+    private val textEditorHelper: TextEditorHelper,
+    private val richTextEditorHelper: RichTextEditorHelper
 ) : ViewModel() {
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
@@ -52,6 +54,9 @@ class TextEditorViewModel(
 
     internal val currentNoteId: StateFlow<Long?> = _currentNoteId.asStateFlow()
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
+    
+    // Expose rich text state for UI components
+    val richTextState: StateFlow<com.mohamedrejeb.richeditor.model.RichTextState> = richTextEditorHelper.richTextState
 
     init {
         viewModelScope.launch {
@@ -91,6 +96,8 @@ class TextEditorViewModel(
 
     fun onUpdateContent(newContent: TextFieldValue) {
         updateContent(newContent)
+        // Sync to rich text state
+        syncContentToRichText(newContent.text)
         createOrUpdateEvent(
             title = newContent.text,
             content = newContent.text,
@@ -98,6 +105,24 @@ class TextEditorViewModel(
             formatting = _editorPresentationState.value.formats,
             textAlign = _editorPresentationState.value.textAlign,
             recordingPath = _editorPresentationState.value.recording.recordingPath,
+        )
+    }
+    
+    /**
+     * Handles content updates from the RichTextEditor.
+     * This method processes changes from the rich text editor and synchronizes
+     * them with the existing text formatting system.
+     */
+    fun onUpdateRichContent() {
+        syncContentFromRichText()
+        val currentState = _editorPresentationState.value
+        createOrUpdateEvent(
+            title = currentState.content.text,
+            content = currentState.content.text,
+            starred = currentState.starred,
+            formatting = currentState.formats,
+            textAlign = currentState.textAlign,
+            recordingPath = currentState.recording.recordingPath,
         )
     }
 
@@ -142,6 +167,32 @@ class TextEditorViewModel(
                 starred = starred,
                 createdAt = createdAt
             )
+        }
+        
+        // Synchronize content to rich text state
+        syncContentToRichText(content)
+    }
+    
+    /**
+     * Synchronizes content from plain text to RichTextState.
+     * This ensures both text systems are kept in sync when loading notes.
+     */
+    private fun syncContentToRichText(content: String) {
+        richTextEditorHelper.setContent(content)
+    }
+    
+    /**
+     * Synchronizes content from RichTextState back to TextFieldValue.
+     * This is used when the rich text editor content changes.
+     */
+    private fun syncContentFromRichText() {
+        val richTextContent = richTextEditorHelper.getPlainText()
+        val currentState = _editorPresentationState.value
+        
+        if (currentState.content.text != richTextContent) {
+            _editorPresentationState.update {
+                it.copy(content = TextFieldValue(richTextContent))
+            }
         }
     }
 
@@ -276,6 +327,8 @@ class TextEditorViewModel(
                 _editorPresentationState.update { newState }
             }
         )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleBold()
         refreshSelection()
     }
 
@@ -287,6 +340,8 @@ class TextEditorViewModel(
                 _editorPresentationState.update { newState }
             }
         )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleItalic()
         refreshSelection()
     }
 
@@ -309,6 +364,8 @@ class TextEditorViewModel(
                 _editorPresentationState.update { newState }
             }
         )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleUnderline()
         refreshSelection()
     }
 
@@ -347,5 +404,61 @@ class TextEditorViewModel(
                 _editorPresentationState.update { newState }
             }
         )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleUnorderedList()
+    }
+    
+    /**
+     * Toggles ordered list formatting using the RichTextEditor.
+     */
+    fun onToggleOrderedList() {
+        richTextEditorHelper.toggleOrderedList()
+        // Sync changes back to traditional state
+        onUpdateRichContent()
+    }
+    
+    /**
+     * Adds a heading of the specified level using the RichTextEditor.
+     * 
+     * @param level The heading level (1-6)
+     */
+    fun onAddHeading(level: Int) {
+        richTextEditorHelper.addHeading(level)
+        // Sync changes back to traditional state
+        onUpdateRichContent()
+    }
+    
+    /**
+     * Clears all rich text formatting.
+     */
+    fun onClearFormatting() {
+        richTextEditorHelper.clearFormatting()
+        // Also clear traditional formatting
+        _editorPresentationState.update {
+            it.copy(formats = emptyList())
+        }
+        // Sync changes back
+        onUpdateRichContent()
+    }
+    
+    /**
+     * Gets the current formatting state from the RichTextEditor.
+     * This can be used to update toolbar button states.
+     */
+    fun getRichTextFormattingState(): RichTextFormattingState {
+        return RichTextFormattingState(
+            isBold = richTextEditorHelper.isSelectionBold(),
+            isItalic = richTextEditorHelper.isSelectionItalic(),
+            isUnderlined = richTextEditorHelper.isSelectionUnderlined()
+        )
     }
 }
+
+/**
+ * Data class representing the current formatting state of the rich text editor.
+ */
+data class RichTextFormattingState(
+    val isBold: Boolean = false,
+    val isItalic: Boolean = false,
+    val isUnderlined: Boolean = false
+)

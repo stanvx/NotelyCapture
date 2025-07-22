@@ -85,6 +85,9 @@ kotlin {
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
+            
+            // Rich text editor
+            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc05")
 
             implementation(project(":core:audio"))
         }
@@ -192,6 +195,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            // Disable compose debugging overlays in release builds
+            manifestPlaceholders["composeInspectionMode"] = false
+        }
+        getByName("debug") {
+            // Allow compose inspection in debug builds but can be disabled
+            manifestPlaceholders["composeInspectionMode"] = false
         }
     }
     compileOptions {

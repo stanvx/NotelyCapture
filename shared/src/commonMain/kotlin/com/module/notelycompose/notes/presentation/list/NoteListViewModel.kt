@@ -68,6 +68,7 @@ class NoteListViewModel(
             is NoteListIntent.OnNoteDeleted -> handleNoteDeletion(intent.note)
             is NoteListIntent.OnFilterNote -> setSelectedTab(intent.filter)
             is NoteListIntent.OnSearchNote -> searchQuery.value = intent.keyword
+            is NoteListIntent.OnToggleSearch -> handleToggleSearch(intent.isActive)
             
             // Quick Record Intents
             is NoteListIntent.OnQuickRecordStarted -> handleQuickRecordStarted()
@@ -95,6 +96,7 @@ class NoteListViewModel(
             title = note.title.trim().takeIf { it.isNotEmpty() }
                 ?.returnFirstLine()
                 ?.truncateWithEllipsis()
+                ?: note.content.trim().returnFirstLine().truncateWithEllipsis().takeIf { it.isNotEmpty() }
                 ?: DEFAULT_TITLE,
             content = note.content.trim().takeIf { it.isNotEmpty() }
                 ?.getFirstNonEmptyLineAfterFirst()
@@ -175,6 +177,16 @@ class NoteListViewModel(
 
     private fun isStarred(note: NotePresentationModel): Boolean {
         return note.isStarred
+    }
+
+    private fun handleToggleSearch(isActive: Boolean) {
+        _state.update { currentState ->
+            currentState.copy(isSearchActive = isActive)
+        }
+        // Clear search when closing search
+        if (!isActive) {
+            searchQuery.value = ""
+        }
     }
 
     // Quick Record Handler Methods

@@ -38,14 +38,15 @@ fun NoteList(
         )
     ) {
         itemsIndexed(items = noteList) { index, note ->
-            NoteItem(
+            ModernNoteItem(
                 note = note,
-                onNoteClick = {
-                    onNoteClicked(note.id)
+                onNoteClick = { noteId ->
+                    onNoteClicked(noteId)
                 },
-                onDeleteClick = {
+                onDeleteClick = { noteId ->
                     onNoteDeleteClicked(note)
-                }
+                },
+                index = index // Pass index for staggered animation
             )
         }
     }

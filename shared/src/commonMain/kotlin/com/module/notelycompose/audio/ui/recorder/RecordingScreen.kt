@@ -92,7 +92,7 @@ fun RecordingScreen(
     noteId: Long?,
     navigateBack: () -> Unit,
     viewModel: AudioRecorderViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel,
+    editorViewModel: TextEditorViewModel = koinViewModel(),
     isQuickRecordMode: Boolean = false,
     backgroundTranscriptionService: BackgroundTranscriptionService = koinInject()
 ) {

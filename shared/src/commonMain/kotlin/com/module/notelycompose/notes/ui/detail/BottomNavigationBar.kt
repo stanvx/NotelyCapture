@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.notes.presentation.detail.RichTextFormattingState
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.notes.ui.extensions.showKeyboard
 import com.module.notelycompose.resources.vectors.IcDetailList
@@ -88,47 +89,19 @@ fun BottomNavigationBar(
         }
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        AnimatedVisibility(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            visible = showFormatBar,
-            enter = fadeIn(
-                animationSpec = tween(durationMillis = 250)
-            )
-        ) {
-            FormatBar(
-                modifier = Modifier.fillMaxWidth(),
-                selectedFormat = selectedFormat,
-                onFormatSelected = {
-                    selectedFormat = it
-                    textSizeSelectedFormats(it) { textSize ->
-                        editorViewModel.setTextSize(textSize)
-                    }
-                },
-                onClose = {
-                    onShowTextFormatBar(false)
-                },
-                onToggleBold = editorViewModel::onToggleBold,
-                onToggleItalic = editorViewModel::onToggleItalic,
-                onToggleUnderline = editorViewModel::onToggleUnderline,
-                onSetAlignment = editorViewModel::onSetAlignment
-            )
-        }
-    }
+    // Removed old floating toolbar - now using ScrollableRichTextToolbar in NoteDetailScreen
 
     if (!showFormatBar) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(LocalCustomColors.current.bodyBackgroundColor)
-                .padding(8.dp)
-                .padding(start = 8.dp, end = 48.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+                .padding(16.dp)
+                .padding(end = 48.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Text formatting trigger button
             IconButton(onClick = {
                 onShowTextFormatBar(true)
             }) {
@@ -138,13 +111,8 @@ fun BottomNavigationBar(
                     tint = LocalCustomColors.current.bodyContentColor
                 )
             }
-            IconButton(onClick = editorViewModel::onToggleBulletList) {
-                Icon(
-                    imageVector = Images.Icons.IcDetailList,
-                    contentDescription = stringResource(Res.string.bottom_navigation_bullet_list),
-                    tint = LocalCustomColors.current.bodyContentColor
-                )
-            }
+            
+            // Star/favorite button
             IconButton(onClick = editorViewModel::onToggleStar) {
                 Icon(
                     imageVector = if(isStarred) {
@@ -156,6 +124,8 @@ fun BottomNavigationBar(
                     tint = LocalCustomColors.current.starredColor
                 )
             }
+            
+            // Delete button
             IconButton(onClick = { showDeleteDialog = true }) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
@@ -163,6 +133,8 @@ fun BottomNavigationBar(
                     tint = LocalCustomColors.current.bodyContentColor
                 )
             }
+            
+            // Keyboard toggle button
             IconButton(onClick = {
                 debugPrintln{"****************** ${imeHeight}"}
                 textFieldFocusRequester.showKeyboard(imeHeight>0, keyboardController)

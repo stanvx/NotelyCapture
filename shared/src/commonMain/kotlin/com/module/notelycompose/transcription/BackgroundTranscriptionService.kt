@@ -172,16 +172,16 @@ class BackgroundTranscriptionService(
     }
     
     /**
-     * Create a new note with the transcribed content and timestamp-based title
+     * Create a new note with the transcribed content and empty title for smart UI-based naming
      */
     private suspend fun createNoteFromTranscription(
         transcribedText: String,
         audioFilePath: String
     ): Long {
-        val timestamp = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        val title = "Quick Record ${timestamp.date} ${timestamp.hour}:${timestamp.minute.toString().padStart(2, '0')}"
+        // Use empty title to leverage existing UI smart title generation from content
+        val title = ""
         
-        debugPrintln { "BackgroundTranscriptionService: Creating note with title: $title" }
+        debugPrintln { "BackgroundTranscriptionService: Creating note with empty title for smart naming" }
         
         return insertNoteUseCase.execute(
             title = title,

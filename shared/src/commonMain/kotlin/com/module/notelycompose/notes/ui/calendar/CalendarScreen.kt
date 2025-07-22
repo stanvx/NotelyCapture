@@ -64,6 +64,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -97,6 +98,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
+import com.module.notelycompose.notes.ui.calendar.CalendarDateMatcher
 import com.module.notelycompose.notes.ui.calendar.YearMonthKt
 import com.module.notelycompose.notes.ui.calendar.parseToLocalDate
 import com.module.notelycompose.notes.ui.calendar.parseToTimeString
@@ -130,13 +132,33 @@ fun CalendarScreen(
     var currentMonth by remember { mutableStateOf(YearMonthKt(today.year, today.month)) }
     var selectedDate by remember { mutableStateOf(today) }
     
+    // Run date parsing validation on first load (can be disabled in production)
+    LaunchedEffect(Unit) {
+        val validationResults = CalendarDateMatcher.validateDateParsing()
+        println("[Calendar] Date parsing validation completed. Results: $validationResults")
+        println(CalendarDateMatcher.checkTimezoneConsistency())
+    }
+    
     // Memoize calendar data calculations
     val calendarData by remember(notesState.filteredNotes, currentMonth, selectedDate) {
         derivedStateOf {
+            // Debug validation - can be disabled in production
+            if (notesState.filteredNotes.isNotEmpty()) {
+                val debugInfo = CalendarDateMatcher.debugNotesForDate(
+                    notes = notesState.filteredNotes.map { it.id to it.createdAt },
+                    targetDate = selectedDate
+                )
+                println(debugInfo)
+            }
+            
             CalendarData(
                 notesForSelectedDate = notesState.filteredNotes.filter { note ->
-                    val noteDate = note.createdAt.parseToLocalDate()
-                    noteDate != null && noteDate == selectedDate
+                    CalendarDateMatcher.matchesDate(
+                        noteCreatedAt = note.createdAt,
+                        targetDate = selectedDate,
+                        noteId = note.id,
+                        enableDebugLogging = false // Individual note logging disabled to reduce noise
+                    )
                 },
                 notesData = notesState.filteredNotes,
                 selectedDate = selectedDate,
@@ -668,7 +690,8 @@ private fun CalendarGrid(
                 items(daysInMonth) { day ->
                     val date = currentMonth.atDay(day + 1)
                     val notesForDay = notesData.filter { note ->
-                        note.createdAt.parseToLocalDate() == date
+                        val noteDate = note.createdAt.parseToLocalDate()
+                        noteDate == date
                     }
                     
                     ModernCalendarDay(
@@ -900,7 +923,8 @@ private fun CompactCalendarGrid(
                                     val day = cellIndex - (firstDayOfWeek - 1) + 1
                                     val date = currentMonth.atDay(day)
                                     val notesForDay = notesData.filter { note ->
-                                        note.createdAt.parseToLocalDate() == date
+                                        val noteDate = note.createdAt.parseToLocalDate()
+                                        noteDate == date
                                     }
                                     
                                     CompactCalendarDay(

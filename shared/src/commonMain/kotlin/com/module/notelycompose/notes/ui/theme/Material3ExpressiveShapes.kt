@@ -50,6 +50,7 @@ object Material3ShapeTokens {
     val dialogContainer = RoundedCornerShape(12.dp)    // Medium - dialogs, bottom sheets
     val cardContainer = RoundedCornerShape(12.dp)      // Medium - content cards
     val surfaceContainer = RoundedCornerShape(16.dp)   // Large - major surfaces
+    val richTextToolbar = RoundedCornerShape(16.dp)    // Large - floating rich text toolbar
     
     // Chip and badge shapes
     val chip = RoundedCornerShape(4.dp)                // Extra small - chips, tags

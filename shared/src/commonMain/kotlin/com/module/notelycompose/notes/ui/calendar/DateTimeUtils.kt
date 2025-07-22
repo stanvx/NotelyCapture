@@ -25,6 +25,14 @@ fun String.parseToLocalDate(): LocalDate? {
             this.length >= 10 && this.contains("-") -> {
                 LocalDate.parse(this.substring(0, 10))
             }
+            // Human-readable format from NotePresentationMapper: "21 July at 14:30"
+            this.contains(" at ") -> {
+                parseHumanReadableDate(this)
+            }
+            // Alternative formats: "21 July 2025" (without time)
+            this.matches(Regex("""\d{1,2} \w+ \d{4}""")) -> {
+                parseHumanReadableDateWithoutTime(this)
+            }
             // Other formats - try to extract date
             else -> {
                 // Try to extract YYYY-MM-DD pattern
@@ -36,6 +44,106 @@ fun String.parseToLocalDate(): LocalDate? {
     } catch (e: Exception) {
         println("Failed to parse date: $this, error: ${e.message}")
         null
+    }
+}
+
+// Helper function to parse dates like "21 July 2025"
+private fun parseHumanReadableDateWithoutTime(dateString: String): LocalDate? {
+    return try {
+        val parts = dateString.split(" ")
+        if (parts.size == 3) {
+            val day = parts[0].toIntOrNull() ?: return null
+            val monthName = parts[1]
+            val year = parts[2].toIntOrNull() ?: return null
+            
+            val month = parseMonthName(monthName) ?: return null
+            
+            // Validate day is within month bounds
+            val maxDaysInMonth = when (month) {
+                Month.JANUARY, Month.MARCH, Month.MAY, Month.JULY, 
+                Month.AUGUST, Month.OCTOBER, Month.DECEMBER -> 31
+                Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
+                Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
+                else -> 31
+            }
+            
+            if (day in 1..maxDaysInMonth) {
+                LocalDate(year, month, day)
+            } else {
+                println("Invalid day $day for month $month in year $year")
+                null
+            }
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        println("Failed to parse date without time: $dateString, error: ${e.message}")
+        null
+    }
+}
+
+// Helper function to parse human-readable date format like "21 July at 14:30"
+private fun parseHumanReadableDate(dateString: String): LocalDate? {
+    return try {
+        // Extract the date part before " at "
+        val datePart = dateString.substringBefore(" at ")
+        val parts = datePart.split(" ")
+        
+        if (parts.size >= 2) {
+            val day = parts[0].toIntOrNull() ?: return null
+            val monthName = parts[1]
+            
+            // Get current year or try to extract from remaining parts
+            val year = if (parts.size >= 3) {
+                parts[2].toIntOrNull() ?: Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+            } else {
+                // For dates without year, use current year
+                // This assumes notes were created in the current year
+                Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).year
+            }
+            
+            val month = parseMonthName(monthName) ?: return null
+            
+            // Validate day is within month bounds
+            val maxDaysInMonth = when (month) {
+                Month.JANUARY, Month.MARCH, Month.MAY, Month.JULY, 
+                Month.AUGUST, Month.OCTOBER, Month.DECEMBER -> 31
+                Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
+                Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
+                else -> 31
+            }
+            
+            if (day in 1..maxDaysInMonth) {
+                LocalDate(year, month, day)
+            } else {
+                println("Invalid day $day for month $month in year $year")
+                null
+            }
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        println("Failed to parse human-readable date: $dateString, error: ${e.message}")
+        null
+    }
+}
+
+// Helper function to convert month name to Month enum
+private fun parseMonthName(monthName: String): Month? {
+    return when (monthName.lowercase()) {
+        "january", "jan" -> Month.JANUARY
+        "february", "feb" -> Month.FEBRUARY
+        "march", "mar" -> Month.MARCH
+        "april", "apr" -> Month.APRIL
+        "may" -> Month.MAY
+        "june", "jun" -> Month.JUNE
+        "july", "jul" -> Month.JULY
+        "august", "aug" -> Month.AUGUST
+        "september", "sep" -> Month.SEPTEMBER
+        "october", "oct" -> Month.OCTOBER
+        "november", "nov" -> Month.NOVEMBER
+        "december", "dec" -> Month.DECEMBER
+        else -> null
     }
 }
 
@@ -150,3 +258,6 @@ data class YearMonthKt(val year: Int, val month: Month) {
         return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
     }
 }
+
+// Standalone helper function for leap year calculation (used by parseHumanReadableDate)
+private fun isLeapYear(year: Int): Boolean = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)

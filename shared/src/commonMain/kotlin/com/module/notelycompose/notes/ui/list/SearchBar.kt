@@ -2,29 +2,29 @@ package com.module.notelycompose.notes.ui.list
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DockedSearchBar
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.search_bar_search_description
 import com.module.notelycompose.resources.search_bar_search_text
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBar(
     onSearchByKeyword: (String) -> Unit,
@@ -32,34 +32,26 @@ fun SearchBar(
     externalActivation: Boolean = false
 ) {
     var searchText by remember { mutableStateOf("") }
-    var isActive by remember(externalActivation) { mutableStateOf(externalActivation) }
 
-    DockedSearchBar(
-        query = searchText,
-        onQueryChange = { newText ->
+    OutlinedTextField(
+        value = searchText,
+        onValueChange = { newText ->
             searchText = newText
             onSearchByKeyword(newText)
-        },
-        onSearch = { query ->
-            onSearchByKeyword(query)
-            isActive = false
-        },
-        active = isActive,
-        onActiveChange = { active ->
-            isActive = active
-            onActiveChange(active)
         },
         placeholder = {
             Text(
                 text = stringResource(Res.string.search_bar_search_text),
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         leadingIcon = {
             Icon(
-                imageVector = Icons.Default.Search,
+                imageVector = Icons.Filled.Search,
                 contentDescription = stringResource(Res.string.search_bar_search_description),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
             )
         },
         trailingIcon = {
@@ -76,19 +68,31 @@ fun SearchBar(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            } else {
+                // Show close button when search is empty to close the search UI
+                IconButton(
+                    onClick = {
+                        onActiveChange(false)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Close search",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
-        colors = SearchBarDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            dividerColor = MaterialTheme.colorScheme.outline
+        shape = RoundedCornerShape(28.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            focusedBorderColor = MaterialTheme.colorScheme.outline,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         ),
-        tonalElevation = 2.dp,
+        singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        // Content shown when search bar is active/expanded
-        // This could include search suggestions, recent searches, etc.
-        // For now, keeping it empty as per the original implementation
-    }
+    )
 }

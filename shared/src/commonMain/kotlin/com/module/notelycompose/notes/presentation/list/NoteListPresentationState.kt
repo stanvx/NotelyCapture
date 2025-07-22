@@ -9,5 +9,6 @@ data class NoteListPresentationState(
     val selectedTabTitle: String="All",
     val showEmptyContent: Boolean = false,
     val quickRecordState: QuickRecordState = QuickRecordState.Idle,
-    val quickRecordError: String? = null
+    val quickRecordError: String? = null,
+    val isSearchActive: Boolean = false
 )

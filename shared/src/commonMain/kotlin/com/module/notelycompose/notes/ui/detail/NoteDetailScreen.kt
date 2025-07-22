@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,7 +64,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
-import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
+import com.module.notelycompose.audio.ui.player.ModernAudioPlayer
+import com.module.notelycompose.audio.ui.player.CompactAudioPlayer
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
@@ -69,6 +73,9 @@ import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.audio.ui.importing.ImportingAudioStateHost
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
+import com.module.notelycompose.notes.ui.detail.EditorUiState
+import com.module.notelycompose.notes.ui.detail.RecordingConfirmationUiModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformViewModel
@@ -84,6 +91,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun NoteDetailScreen(
@@ -95,7 +103,8 @@ fun NoteDetailScreen(
     downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
     platformViewModel: PlatformViewModel = koinViewModel(),
     audioImportViewModel: AudioImportViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel
+    editorViewModel: TextEditorViewModel = koinViewModel(),
+    richTextEditorHelper: RichTextEditorHelper = koinInject()
 ) {
     val currentNoteId by editorViewModel.currentNoteId.collectAsStateWithLifecycle()
     val importingState by audioImportViewModel.importingAudioState.collectAsStateWithLifecycle()
@@ -155,6 +164,7 @@ fun NoteDetailScreen(
     Scaffold(
         topBar = {
             DetailNoteTopBar(
+                title = editorState.content.text,
                 onNavigateBack = navigateBack,
                 onShare = {
                     showShareDialog = true
@@ -166,79 +176,65 @@ fun NoteDetailScreen(
                     audioPlayerViewModel.releasePlayer()
                     audioImportViewModel.importAudio()
                 },
-                isRecordingExist = editorState.recording.isRecordingExist
-            )
-        },
-        floatingActionButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (editorState.recording.isRecordingExist) {
-                    FloatingActionButton(
-                        modifier = Modifier.border(
-                            width = 1.dp,
-                            color = LocalCustomColors.current.floatActionButtonBorderColor,
-                            shape = CircleShape
-                        ),
-                        containerColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { downloaderViewModel.checkTranscriptionAvailability() }
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_transcription),
-                            contentDescription = stringResource(Res.string.transcription_icon),
-                            tint = LocalCustomColors.current.bodyContentColor
-                        )
+                onRecordClick = {
+                    if (editorState.recording.isRecordingExist) {
+                        showExistingRecordConfirmDialog = true
+                    } else {
+                        navigateToRecorder("$currentNoteId")
                     }
-                }
-
-                FloatingActionButton(
-                    modifier = Modifier.border(
-                        width = 1.dp,
-                        color = LocalCustomColors.current.floatActionButtonBorderColor,
-                        shape = CircleShape
-                    ),
-                    containerColor = LocalCustomColors.current.bodyBackgroundColor,
-                    onClick = {
-                        if (!editorState.recording.isRecordingExist) {
-                            navigateToRecorder("$currentNoteId")
-                        } else {
-                            showExistingRecordConfirmDialog = true
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Images.Icons.IcRecorder,
-                        contentDescription = stringResource(Res.string.note_detail_recorder),
-                        tint = LocalCustomColors.current.bodyContentColor
-                    )
-                }
-            }
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                isTextFieldFocused = isTextFieldFocused,
-                selectionSize = editorState.selectionSize,
-                isStarred = editorState.isStarred,
-                showFormatBar = showFormatBar,
-                textFieldFocusRequester = focusRequester,
-                onShowTextFormatBar = { showFormatBar = it },
-                editorViewModel = editorViewModel,
-                navigateBack = navigateBack
+                },
+                onTranscribeClick = {
+                    downloaderViewModel.checkTranscriptionAvailability()
+                },
+                onStarClick = {
+                    editorViewModel.onToggleStar()
+                },
+                onDeleteClick = {
+                    editorViewModel.onDeleteNote()
+                },
+                isRecordingExist = editorState.recording.isRecordingExist,
+                isStarred = editorState.isStarred
             )
         }
     ) { paddingValues ->
-
-        NoteContent(
-            paddingValues = paddingValues,
-            newNoteDateString = editorState.createdAt,
-            editorState = editorState,
-            showFormatBar = showFormatBar,
-            focusRequester = focusRequester,
-            audioPlayerUiState = audioPlayerUiState,
-            textEditorViewModel = editorViewModel,
-            audioPlayerViewModel = audioPlayerViewModel,
-            onFocusChange = {
-                isTextFieldFocused = it
-            },
-        )
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            NoteContent(
+                paddingValues = paddingValues,
+                newNoteDateString = editorState.createdAt,
+                editorState = editorState,
+                showFormatBar = showFormatBar,
+                focusRequester = focusRequester,
+                audioPlayerUiState = audioPlayerUiState,
+                textEditorViewModel = editorViewModel,
+                audioPlayerViewModel = audioPlayerViewModel,
+                richTextEditorHelper = richTextEditorHelper,
+                onFocusChange = {
+                    isTextFieldFocused = it
+                },
+            )
+            
+            // Scrollable rich text toolbar positioned above keyboard
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .imePadding()
+            ) {
+                ScrollableRichTextToolbar(
+                    isVisible = showFormatBar,
+                    formattingState = editorViewModel.getRichTextFormattingState(),
+                    onToggleBold = editorViewModel::onToggleBold,
+                    onToggleItalic = editorViewModel::onToggleItalic,
+                    onToggleUnderline = editorViewModel::onToggleUnderline,
+                    onSetAlignment = editorViewModel::onSetAlignment,
+                    onToggleOrderedList = editorViewModel::onToggleOrderedList,
+                    onToggleUnorderedList = editorViewModel::onToggleBulletList,
+                    onAddHeading = editorViewModel::onAddHeading,
+                    onClearFormatting = editorViewModel::onClearFormatting
+                )
+            }
+        }
     }
 
 
@@ -325,7 +321,8 @@ private fun NoteContent(
     onFocusChange: (Boolean) -> Unit,
     audioPlayerUiState: AudioPlayerUiState,
     textEditorViewModel: TextEditorViewModel,
-    audioPlayerViewModel: AudioPlayerViewModel
+    audioPlayerViewModel: AudioPlayerViewModel,
+    richTextEditorHelper: RichTextEditorHelper
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showDeleteRecordingDialog by remember { mutableStateOf(false) }
@@ -364,29 +361,29 @@ private fun NoteContent(
                         // Background that appears when swiping
                         Box(
                             modifier = Modifier
-                                .width(800.dp)
-                                .height(36.dp)
-                                .padding(horizontal = 16.dp, vertical = 0.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .fillMaxWidth()
+                                .height(60.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color.Red),
                             contentAlignment = Alignment.CenterEnd
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete",
-                                tint = Color.White
+                                tint = Color.White,
+                                modifier = Modifier.padding(end = 16.dp)
                             )
                         }
                     },
                     content = {
-                        PlatformAudioPlayerUi(
+                        CompactAudioPlayer(
                             filePath = editorState.recording.recordingPath,
                             uiState = audioPlayerUiState,
                             onLoadAudio = audioPlayerViewModel::onLoadAudio,
-                            onClear = audioPlayerViewModel::onClear,
-                            onSeekTo = audioPlayerViewModel::onSeekTo,
                             onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
-                            onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed
+                            onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
                 )
@@ -398,7 +395,8 @@ private fun NoteContent(
                 showFormatBar = showFormatBar,
                 focusRequester = focusRequester,
                 onFocusChange = onFocusChange,
-                textEditorViewModel = textEditorViewModel
+                textEditorViewModel = textEditorViewModel,
+                richTextEditorHelper = richTextEditorHelper
             )
         }
     }
@@ -434,51 +432,35 @@ private fun NoteEditor(
     showFormatBar: Boolean,
     focusRequester: FocusRequester,
     onFocusChange: (Boolean) -> Unit,
-    textEditorViewModel: TextEditorViewModel
+    textEditorViewModel: TextEditorViewModel,
+    richTextEditorHelper: RichTextEditorHelper
 ) {
 
-    val transformation = VisualTransformation { text ->
-        TransformedText(
-            buildAnnotatedString {
-                append(text)
-                editorState.formats.forEach { format ->
-                    addStyle(
-                        SpanStyle(
-                            fontWeight = if (format.isBold) FontWeight.Bold else null,
-                            fontStyle = if (format.isItalic) FontStyle.Italic else null,
-                            textDecoration = if (format.isUnderline)
-                                TextDecoration.Underline else null,
-                            fontSize = format.textSize?.sp ?: TextUnit.Unspecified
-                        ),
-                        format.range.first.coerceIn(0, text.length),
-                        format.range.last.coerceIn(0, text.length)
-                    )
-                }
-            },
-            OffsetMapping.Identity
-        )
+    val richTextState by richTextEditorHelper.richTextState.collectAsState()
+    
+    // Initialize rich text state with current content if needed
+    LaunchedEffect(editorState.content.text) {
+        if (richTextState.annotatedString.text != editorState.content.text) {
+            richTextState.setHtml(editorState.content.text)
+        }
     }
 
-    BasicTextField(
-        value = editorState.content,
-        onValueChange = textEditorViewModel::onUpdateContent,
-        modifier =
-            modifier
-                .focusRequester(focusRequester)
-                .padding(horizontal = 16.dp)
-                .onFocusChanged {
-                    onFocusChange(it.isFocused)
-                },
+    RichTextEditor(
+        state = richTextState,
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .padding(horizontal = 16.dp)
+            .onFocusChanged {
+                onFocusChange(it.isFocused)
+            },
         textStyle = TextStyle(
             color = LocalCustomColors.current.bodyContentColor,
             textAlign = editorState.textAlign
         ),
-        cursorBrush = SolidColor(LocalCustomColors.current.bodyContentColor),
         readOnly = showFormatBar,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences
-        ),
-        visualTransformation = transformation
+        )
     )
 }
 
