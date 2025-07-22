@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.isSystemInDarkTheme
 
 // Material 3 Color Palette - Generated from Material Theme Builder
 val primaryLight = Color(0xFF415F91)
@@ -196,24 +197,24 @@ val LocalCustomColors = compositionLocalOf {
 
 // Extension properties for ColorScheme to provide semantic color tokens
 val ColorScheme.recordButtonContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) recordPinkDark else recordPinkLight
+    @Composable get() = if (isSystemInDarkTheme()) recordPinkDark else recordPinkLight
 
 val ColorScheme.onRecordButtonContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) onRecordPinkDark else onRecordPinkLight
+    @Composable get() = if (isSystemInDarkTheme()) onRecordPinkDark else onRecordPinkLight
 
 // Calendar Note Item colors - Voice notes
 val ColorScheme.voiceNoteIndicatorContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) Color(0xFF1A237E) else Color(0xFFE8F0FE)
+    @Composable get() = if (isSystemInDarkTheme()) Color(0xFF1A237E) else Color(0xFFE8F0FE)
 
 val ColorScheme.onVoiceNoteIndicatorContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) Color(0xFF90CAF9) else Color(0xFF4285F4)
+    @Composable get() = LocalCustomColors.current.onVoiceNoteIndicatorContainer
 
 // Calendar Note Item colors - Text notes  
 val ColorScheme.textNoteIndicatorContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) Color(0xFFE65100) else Color(0xFFFFF8E1)
+    @Composable get() = if (isSystemInDarkTheme()) Color(0xFFE65100) else Color(0xFFFFF8E1)
 
 val ColorScheme.onTextNoteIndicatorContainer: Color
-    @Composable get() = if(LocalCustomColors.current.bodyBackgroundColor == backgroundDark) Color(0xFFFFB74D) else Color(0xFFFF9800)
+    @Composable get() = if (isSystemInDarkTheme()) Color(0xFFFFB74D) else Color(0xFFFF9800)
 
 // Additional semantic colors for unified theming
 val ColorScheme.captureMethodContainer: Color
@@ -227,3 +228,125 @@ val ColorScheme.statsCardBackground: Color
 
 val ColorScheme.onStatsCardBackground: Color
     @Composable get() = onSurface
+
+// Capture method specific colors - theme-aware replacements for hardcoded colors
+val ColorScheme.capturePhotographyContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF1B5E20) // Dark green
+    } else {
+        Color(0xFFE8F5E9) // Light green
+    }
+
+val ColorScheme.onCapturePhotographyContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF81C784) // Light green for dark theme
+    } else {
+        Color(0xFF388E3C) // Dark green for light theme
+    }
+
+val ColorScheme.captureVideoContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF8E0000) // Dark red
+    } else {
+        Color(0xFFFFEBEE) // Light red
+    }
+
+val ColorScheme.onCaptureVideoContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFFFF8A80) // Light red for dark theme
+    } else {
+        Color(0xFFD32F2F) // Dark red for light theme
+    }
+
+val ColorScheme.captureWhiteboardContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF4A148C) // Dark purple
+    } else {
+        Color(0xFFF3E5F5) // Light purple
+    }
+
+val ColorScheme.onCaptureWhiteboardContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFFCE93D8) // Light purple for dark theme
+    } else {
+        Color(0xFF7B1FA2) // Dark purple for light theme
+    }
+
+val ColorScheme.captureFilesContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF263238) // Dark blue grey
+    } else {
+        Color(0xFFECEFF1) // Light blue grey
+    }
+
+val ColorScheme.onCaptureFilesContainer: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF90A4AE) // Light blue grey for dark theme
+    } else {
+        Color(0xFF455A64) // Dark blue grey for light theme
+    }
+
+// Hero section gradient colors - theme-aware replacements for hardcoded gradient
+val ColorScheme.heroGradientStart: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        primaryContainer.copy(alpha = 0.9f)
+    } else {
+        primaryContainer.copy(alpha = 0.8f)
+    }
+
+val ColorScheme.heroGradientMiddle: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        tertiaryContainer.copy(alpha = 0.7f)
+    } else {
+        tertiaryContainer.copy(alpha = 0.6f)
+    }
+
+val ColorScheme.heroGradientEnd: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        secondaryContainer.copy(alpha = 0.5f)
+    } else {
+        secondaryContainer.copy(alpha = 0.4f)
+    }
+
+// Pinned template colors - theme-aware semantic colors
+val ColorScheme.pinnedTemplateGreen: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF689F38) // Darker green for dark theme
+    } else {
+        Color(0xFF8BC34A) // Original light green
+    }
+
+val ColorScheme.pinnedTemplateOrange: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFFE65100) // Darker orange for dark theme
+    } else {
+        Color(0xFFFF9800) // Original orange
+    }
+
+val ColorScheme.pinnedTemplateTeal: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF00695C) // Darker teal for dark theme
+    } else {
+        Color(0xFF009688) // Original teal
+    }
+
+val ColorScheme.pinnedTemplatePurple: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF512DA8) // Darker purple for dark theme
+    } else {
+        Color(0xFF673AB7) // Original purple
+    }
+
+val ColorScheme.pinnedTemplateBrown: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFF5D4037) // Darker brown for dark theme
+    } else {
+        Color(0xFF795548) // Original brown
+    }
+
+val ColorScheme.pinnedTemplatePink: Color
+    @Composable get() = if (isSystemInDarkTheme()) {
+        Color(0xFFC2185B) // Darker pink for dark theme
+    } else {
+        Color(0xFFE91E63) // Original pink
+    }

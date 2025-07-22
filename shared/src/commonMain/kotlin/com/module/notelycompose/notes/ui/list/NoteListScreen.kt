@@ -3,12 +3,16 @@ package com.module.notelycompose.notes.ui.list
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -30,9 +34,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.notes.presentation.list.NoteListIntent
+import com.module.notelycompose.notes.presentation.list.NoteListPresentationState
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.ui.components.SpeedDialFAB
+import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformUiState
 import kotlinx.coroutines.launch
@@ -77,8 +84,8 @@ fun NoteListScreen(
             scrollBehavior = scrollBehavior
         )
         
-        // Content
-        Column(
+        // Content - Single scrollable container
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -88,10 +95,85 @@ fun NoteListScreen(
                     })
                 }
         ) {
+            if(notesListState.showEmptyContent) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Vibrant header with note count and search
+                    NoteListHeader(
+                        onSearchClick = {
+                            viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(!notesListState.isSearchActive))
+                        },
+                        noteCount = notesListState.filteredNotes.size,
+                        isTablet = platformUiState.isTablet
+                    )
+                    
+                    // Search Bar (shown when search is active)
+                    if (notesListState.isSearchActive) {
+                        SearchBar(
+                            onSearchByKeyword = { keyword ->
+                                viewModel.onProcessIntent(NoteListIntent.OnSearchNote(keyword))
+                            },
+                            onActiveChange = { isActive ->
+                                viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(isActive))
+                            },
+                            externalActivation = true
+                        )
+                    }
+                    
+                    // Filter Tab Bar
+                    FilterTabBar(
+                        selectedTabTitle = notesListState.selectedTabTitle,
+                        onFilterTabItemClicked = { title ->
+                            viewModel.onProcessIntent(NoteListIntent.OnFilterNote(title))
+                        }
+                    )
+                    
+                    EmptyNoteUi(platformUiState.isTablet)
+                }
+            } else {
+                NoteListWithHeader(
+                    noteList = viewModel.onGetUiState(notesListState),
+                    notesListState = notesListState,
+                    platformUiState = platformUiState,
+                    viewModel = viewModel,
+                    lazyStaggeredGridState = lazyStaggeredGridState,
+                    navigateToNoteDetails = navigateToNoteDetails
+                )
+            }
+        }
+    }
+
+}
+
+@Composable
+private fun NoteListWithHeader(
+    noteList: List<NoteUiModel>,
+    notesListState: NoteListPresentationState,
+    platformUiState: PlatformUiState,
+    viewModel: NoteListViewModel,
+    lazyStaggeredGridState: LazyStaggeredGridState,
+    navigateToNoteDetails: (String) -> Unit
+) {
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Adaptive(minSize = 280.dp), // Reduced from 300dp for wider cards
+        state = lazyStaggeredGridState,
+        modifier = Modifier.fillMaxSize(),
+        verticalItemSpacing = 8.dp,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(
+            start = 8.dp, // Further reduced for cards closer to edges
+            end = 8.dp,   // Further reduced for cards closer to edges
+            bottom = 88.dp // Extra padding for FAB
+        )
+    ) {
+        // Header as the first item in the grid
+        item(span = androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.FullLine) {
+            Column {
                 // Vibrant header with note count and search
                 NoteListHeader(
                     onSearchClick = {
-                        viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(true))
+                        viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(!notesListState.isSearchActive))
                     },
                     noteCount = notesListState.filteredNotes.size,
                     isTablet = platformUiState.isTablet
@@ -117,23 +199,27 @@ fun NoteListScreen(
                         viewModel.onProcessIntent(NoteListIntent.OnFilterNote(title))
                     }
                 )
-                
-                // Note List Content (takes remaining space)
-                if(notesListState.showEmptyContent) {
-                    EmptyNoteUi(platformUiState.isTablet)
-                } else {
-                    NoteList(
-                        noteList = viewModel.onGetUiState(notesListState),
-                        onNoteClicked = { id ->
-                            navigateToNoteDetails("$id")
-                        },
-                        onNoteDeleteClicked = {
-                            viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(it))
-                        },
-                        lazyStaggeredGridState = lazyStaggeredGridState
-                    )
-                }
             }
         }
-
+        
+        // Note items
+        itemsIndexed(items = noteList) { index, note ->
+            // Each note gets its own audio player instance
+            val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
+            val audioPlayerUiState by audioPlayerViewModel.uiState.collectAsState()
+            
+            EnhancedNoteItem(
+                note = note,
+                onNoteClick = { noteId ->
+                    navigateToNoteDetails("$noteId")
+                },
+                onDeleteClick = { noteId ->
+                    viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(note))
+                },
+                index = index, // Pass index for staggered animation
+                audioPlayerViewModel = audioPlayerViewModel,
+                audioPlayerUiState = audioPlayerViewModel.onGetUiState(audioPlayerUiState)
+            )
+        }
+    }
 }

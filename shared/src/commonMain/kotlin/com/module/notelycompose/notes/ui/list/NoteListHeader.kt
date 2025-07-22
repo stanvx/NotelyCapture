@@ -3,6 +3,7 @@ package com.module.notelycompose.notes.ui.list
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,25 +41,38 @@ fun NoteListHeader(
     modifier: Modifier = Modifier,
     isTablet: Boolean = false
 ) {
-    val infiniteTransition = rememberInfiniteTransition()
+    val infiniteTransition = rememberInfiniteTransition(label = "header_animation")
     
-    // Floating animation for background elements
+    // Enhanced floating animation for background elements
     val floatingOffset1 by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = 10f,
+        targetValue = 12f,
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        )
+        ),
+        label = "floating_1"
     )
     
     val floatingOffset2 by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = -8f,
+        targetValue = -10f,
         animationSpec = infiniteRepeatable(
             animation = tween(4000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
-        )
+        ),
+        label = "floating_2"
+    )
+    
+    // Add gradient animation like capture screen for more visual impact
+    val gradientOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 800f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(15000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "gradient_offset"
     )
     
     Card(
@@ -71,62 +85,70 @@ fun NoteListHeader(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(if (isTablet) 140.dp else 120.dp)
+                .height(if (isTablet) 160.dp else 140.dp)
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
-                            MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.7f),
-                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f)
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.4f)
                         ),
-                        start = Offset(0f, 0f),
-                        end = Offset(1000f, 200f)
+                        start = Offset(gradientOffset, 0f),
+                        end = Offset(gradientOffset + 600f, 200f)
                     )
                 )
         ) {
+            // Extract theme values outside Canvas
+            val isDark = isSystemInDarkTheme()
+            val circleBaseColor = if (isDark) {
+                Color.White
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+            
             // Floating background elements
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val centerX = size.width / 2f
                 val centerY = size.height / 2f
                 
-                // Large background circle
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.08f),
-                    radius = 120f,
-                    center = Offset(
-                        x = size.width * 0.15f,
-                        y = centerY + floatingOffset1
+                // Enhanced floating particles effect with more layers
+                val particleCount = 6
+                for (i in 0 until particleCount) {
+                    // Large background circles with varied opacity
+                    drawCircle(
+                        color = circleBaseColor.copy(alpha = if (isDark) 0.08f - (i * 0.01f) else 0.04f - (i * 0.005f)),
+                        radius = (120f - i * 15f),
+                        center = Offset(
+                            x = size.width * (0.1f + i * 0.15f),
+                            y = centerY + floatingOffset1 + (i * 8f)
+                        )
                     )
-                )
+                }
                 
-                // Medium circle
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.06f),
-                    radius = 80f,
-                    center = Offset(
-                        x = size.width * 0.85f,
-                        y = centerY + floatingOffset2
+                // Additional floating accent circles
+                for (i in 0 until 4) {
+                    drawCircle(
+                        color = circleBaseColor.copy(alpha = if (isDark) 0.06f else 0.03f),
+                        radius = (40f + i * 10f),
+                        center = Offset(
+                            x = size.width * (0.2f + i * 0.2f),
+                            y = size.height * (0.3f + (i % 2) * 0.4f) + floatingOffset2 * 0.8f
+                        )
                     )
-                )
+                }
                 
-                // Small accent circles
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.04f),
-                    radius = 40f,
-                    center = Offset(
-                        x = size.width * 0.75f,
-                        y = size.height * 0.2f + floatingOffset1 * 0.5f
+                // Additional micro particles for richness
+                for (i in 0 until 8) {
+                    drawCircle(
+                        color = circleBaseColor.copy(alpha = if (isDark) 0.04f else 0.02f),
+                        radius = (8f + i * 2f),
+                        center = Offset(
+                            x = size.width * (0.15f + i * 0.1f),
+                            y = size.height * (0.1f + (i % 3) * 0.3f) + floatingOffset1 * 0.3f
+                        )
                     )
-                )
-                
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.05f),
-                    radius = 60f,
-                    center = Offset(
-                        x = size.width * 0.25f,
-                        y = size.height * 0.8f + floatingOffset2 * 0.7f
-                    )
-                )
+                }
             }
             
             Column(
@@ -135,14 +157,15 @@ fun NoteListHeader(
                     .padding(24.dp),
                 verticalArrangement = Arrangement.Center
             ) {
-                // Main title
+                // Enhanced main title with more visual impact
                 Text(
                     text = "Your Thoughts",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = if (isTablet) 32.sp else 28.sp
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontSize = if (isTablet) 36.sp else 32.sp,
+                        letterSpacing = 0.5.sp
                     ),
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))

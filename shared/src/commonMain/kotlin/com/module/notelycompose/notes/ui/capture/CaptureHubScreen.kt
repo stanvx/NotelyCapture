@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -79,6 +80,23 @@ import com.module.notelycompose.notes.ui.theme.voiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.onVoiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.textNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.onTextNoteIndicatorContainer
+import com.module.notelycompose.notes.ui.theme.heroGradientStart
+import com.module.notelycompose.notes.ui.theme.heroGradientMiddle
+import com.module.notelycompose.notes.ui.theme.heroGradientEnd
+import com.module.notelycompose.notes.ui.theme.capturePhotographyContainer
+import com.module.notelycompose.notes.ui.theme.onCapturePhotographyContainer
+import com.module.notelycompose.notes.ui.theme.captureVideoContainer
+import com.module.notelycompose.notes.ui.theme.onCaptureVideoContainer
+import com.module.notelycompose.notes.ui.theme.captureWhiteboardContainer
+import com.module.notelycompose.notes.ui.theme.onCaptureWhiteboardContainer
+import com.module.notelycompose.notes.ui.theme.captureFilesContainer
+import com.module.notelycompose.notes.ui.theme.onCaptureFilesContainer
+import com.module.notelycompose.notes.ui.theme.pinnedTemplateGreen
+import com.module.notelycompose.notes.ui.theme.pinnedTemplateOrange
+import com.module.notelycompose.notes.ui.theme.pinnedTemplateTeal
+import com.module.notelycompose.notes.ui.theme.pinnedTemplatePurple
+import com.module.notelycompose.notes.ui.theme.pinnedTemplateBrown
+import com.module.notelycompose.notes.ui.theme.pinnedTemplatePink
 
 /**
  * Material 3 Expressive Capture Hub Screen for Notely Capture.
@@ -242,25 +260,35 @@ private fun HeroSection() {
                 label = "gradient_offset"
             )
             
+            // Extract theme colors outside Canvas
+            val gradientColors = listOf(
+                MaterialTheme.colorScheme.heroGradientStart,
+                MaterialTheme.colorScheme.heroGradientMiddle,
+                MaterialTheme.colorScheme.heroGradientEnd,
+                MaterialTheme.colorScheme.heroGradientStart
+            )
+            
+            val isDark = isSystemInDarkTheme()
+            val particleColor = if (isDark) {
+                Color.White.copy(alpha = 0.1f)
+            } else {
+                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)
+            }
+            
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawRect(
                     brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF6B5B95), // Ultra Violet
-                            Color(0xFF88B0D3), // Powder Blue
-                            Color(0xFF82B1FF), // Light Blue
-                            Color(0xFF6B5B95)
-                        ),
+                        colors = gradientColors,
                         start = Offset(animatedOffset, 0f),
                         end = Offset(animatedOffset + size.width, size.height)
                     )
                 )
                 
-                // Floating particles effect
+                // Theme-aware floating particles effect
                 val particleCount = 8
                 for (i in 0 until particleCount) {
                     drawCircle(
-                        color = Color.White.copy(alpha = 0.1f),
+                        color = particleColor,
                         radius = (8 + i * 3).dp.toPx(),
                         center = Offset(
                             x = size.width * (0.1f + i * 0.12f),
@@ -281,7 +309,11 @@ private fun HeroSection() {
                 Text(
                     text = "Capture Everything",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color.White,
+                    color = if (isSystemInDarkTheme()) {
+                        Color.White
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    },
                     fontWeight = FontWeight.Bold
                 )
                 
@@ -290,7 +322,11 @@ private fun HeroSection() {
                 Text(
                     text = "Ideas • Moments • Memories",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = if (isSystemInDarkTheme()) {
+                        Color.White.copy(alpha = 0.9f)
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    },
                     letterSpacing = 1.sp,
                     maxLines = 2,
                     textAlign = TextAlign.Center
@@ -393,11 +429,12 @@ private fun PinnedTemplatesSection() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        val pinnedTemplates = getPinnedTemplates()
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
-            items(getPinnedTemplates()) { template ->
+            items(pinnedTemplates) { template ->
                 PinnedTemplateCard(template = template)
             }
         }
@@ -680,15 +717,15 @@ private fun getCaptureMethodsList(): List<CaptureMethod> = listOf(
         type = CaptureType.Camera,
         name = "Camera",
         icon = MaterialSymbols.PhotoCamera,
-        backgroundColor = Color(0xFFE8F5E9), // Light Green pastel
-        iconBackgroundColor = Color(0xFF388E3C)
+        backgroundColor = MaterialTheme.colorScheme.capturePhotographyContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onCapturePhotographyContainer
     ),
     CaptureMethod(
         type = CaptureType.Video,
         name = "Video",
         icon = MaterialSymbols.Videocam,
-        backgroundColor = Color(0xFFFFEBEE), // Light Red pastel
-        iconBackgroundColor = Color(0xFFD32F2F)
+        backgroundColor = MaterialTheme.colorScheme.captureVideoContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onCaptureVideoContainer
     ),
     CaptureMethod(
         type = CaptureType.Text,
@@ -701,25 +738,25 @@ private fun getCaptureMethodsList(): List<CaptureMethod> = listOf(
         type = CaptureType.Whiteboard,
         name = "Whiteboard",
         icon = MaterialSymbols.Create,
-        backgroundColor = Color(0xFFF3E5F5), // Light Purple pastel
-        iconBackgroundColor = Color(0xFF7B1FA2)
+        backgroundColor = MaterialTheme.colorScheme.captureWhiteboardContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onCaptureWhiteboardContainer
     ),
     CaptureMethod(
         type = CaptureType.Files,
         name = "Files",
         icon = MaterialSymbols.FolderOpen,
-        backgroundColor = Color(0xFFECEFF1), // Light Blue Grey pastel
-        iconBackgroundColor = Color(0xFF455A64)
+        backgroundColor = MaterialTheme.colorScheme.captureFilesContainer,
+        iconBackgroundColor = MaterialTheme.colorScheme.onCaptureFilesContainer
     )
 )
 
 private fun getPinnedTemplates(): List<PinnedTemplate> = listOf(
-    PinnedTemplate("CBTLogEntry", Color(0xFF8BC34A)),
-    PinnedTemplate("Journal", Color(0xFFFF9800)),
-    PinnedTemplate("Idea", Color(0xFF009688)),
-    PinnedTemplate("Resource", Color(0xFF673AB7)),
-    PinnedTemplate("Memo", Color(0xFF795548)),
-    PinnedTemplate("Brainstorm", Color(0xFFE91E63))
+    PinnedTemplate("CBTLogEntry", MaterialTheme.colorScheme.pinnedTemplateGreen),
+    PinnedTemplate("Journal", MaterialTheme.colorScheme.pinnedTemplateOrange),
+    PinnedTemplate("Idea", MaterialTheme.colorScheme.pinnedTemplateTeal),
+    PinnedTemplate("Resource", MaterialTheme.colorScheme.pinnedTemplatePurple),
+    PinnedTemplate("Memo", MaterialTheme.colorScheme.pinnedTemplateBrown),
+    PinnedTemplate("Brainstorm", MaterialTheme.colorScheme.pinnedTemplatePink)
 )
 
 private fun getQuickTags(): List<String> = listOf(

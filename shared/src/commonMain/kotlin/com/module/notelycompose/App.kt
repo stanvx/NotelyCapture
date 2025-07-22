@@ -176,6 +176,9 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 composableWithSharedAxis<Routes.Calendar> {
                     CalendarScreen(
                         navigateBack = { navController.popBackStack() },
+                        navigateToNoteDetails = { noteId ->
+                            navController.navigateSingleTop(Routes.Details(noteId = noteId))
+                        },
                         navigateToQuickRecord = {
                             navController.navigateSingleTop(Routes.QuickRecord)
                         }

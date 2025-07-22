@@ -88,10 +88,12 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
 import com.module.notelycompose.notes.ui.components.ExtendedVoiceFAB
+import com.module.notelycompose.notes.ui.components.MaterialIcon
 import com.module.notelycompose.notes.ui.theme.voiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.onVoiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.textNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.onTextNoteIndicatorContainer
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -121,6 +123,7 @@ import com.module.notelycompose.notes.ui.calendar.MonthlyStatsSummary
 @Composable
 fun CalendarScreen(
     navigateBack: () -> Unit,
+    navigateToNoteDetails: (String) -> Unit,
     navigateToQuickRecord: (() -> Unit)? = null,
     viewModel: NoteListViewModel = koinViewModel()
 ) {
@@ -273,7 +276,22 @@ fun CalendarScreen(
                     items = calendarData.notesForSelectedDate,
                     key = { it.id }
                 ) { note ->
-                    CalendarNoteItem(note = note)
+                    OptimizedCalendarNoteCard(
+                        note = note,
+                        onNoteClick = { noteId ->
+                            // Expand instead of navigate - Edit option in menu navigates
+                        },
+                        onDeleteClick = { noteId ->
+                            // TODO: Implement delete functionality
+                        },
+                        onShareClick = { noteId ->
+                            // TODO: Implement share functionality
+                        },
+                        onEditClick = { noteId ->
+                            navigateToNoteDetails(noteId.toString())
+                        },
+                        maxContentLines = 4
+                    )
                 }
             }
         }
@@ -1155,6 +1173,7 @@ private fun EmptyDateView() {
 @Composable
 private fun CalendarNoteItem(
     note: NotePresentationModel,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -1176,7 +1195,11 @@ private fun CalendarNoteItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        onClick = { isExpanded = !isExpanded }
+        onClick = { 
+            isExpanded = !isExpanded
+            // Also call the onClick for navigation
+            onClick()
+        }
     ) {
         Column {
             Row(
@@ -1224,15 +1247,15 @@ private fun CalendarNoteItem(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        Icon(
-                            imageVector = if (note.isVoice) {
-                                Icons.Filled.Star
+                        MaterialIcon(
+                            symbol = if (note.isVoice) {
+                                MaterialSymbols.Mic
                             } else {
-                                Icons.Filled.Edit
+                                MaterialSymbols.Edit
                             },
-                            contentDescription = null,
+                            contentDescription = if (note.isVoice) "Voice note" else "Text note",
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
+                            size = 24.dp
                         )
                     }
                 }
