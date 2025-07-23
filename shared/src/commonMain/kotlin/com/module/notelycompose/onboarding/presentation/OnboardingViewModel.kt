@@ -17,7 +17,7 @@ class OnboardingViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val modelAvailabilityService: ModelAvailabilityService,
 ) : ViewModel(){
-    private val _onboardingState = MutableStateFlow<OnboardingState>(OnboardingState.Completed)
+    private val _onboardingState = MutableStateFlow<OnboardingState>(OnboardingState.Initial)
     val onboardingState: StateFlow<OnboardingState> = _onboardingState.asStateFlow()
 
     init {
