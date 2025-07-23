@@ -55,12 +55,7 @@ fun ModernAudioPlayer(
         uiState.currentPosition.toFloat() / uiState.duration.toFloat()
     } else 0f
     
-    // Load audio when component is created
-    LaunchedEffect(filePath) {
-        if (filePath.isNotEmpty()) {
-            onLoadAudio(filePath)
-        }
-    }
+    // Audio loading is now manual - user must tap play to load and start audio
     
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -215,7 +210,11 @@ private fun ControlPanel(
                 isLoaded = isLoaded,
                 onClick = {
                     hapticFeedback?.medium()
-                    onTogglePlayPause()
+                    if (!isLoaded && filePath.isNotEmpty()) {
+                        onLoadAudio(filePath)
+                    } else {
+                        onTogglePlayPause()
+                    }
                 }
             )
             

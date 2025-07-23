@@ -74,6 +74,10 @@ import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.audio.ui.importing.ImportingAudioStateHost
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
+import com.module.notelycompose.notes.ui.richtext.RichTextToolbarViewModel
+import com.module.notelycompose.notes.ui.richtext.createRichTextToolbarViewModel
+import com.module.notelycompose.notes.ui.richtext.rememberKeyboardHeight
+import com.module.notelycompose.notes.ui.richtext.rememberSystemInsets
 import com.module.notelycompose.notes.ui.detail.EditorUiState
 import com.module.notelycompose.notes.ui.detail.RecordingConfirmationUiModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
@@ -111,19 +115,36 @@ fun NoteDetailScreen(
     val downloaderUiState by downloaderViewModel.uiState.collectAsStateWithLifecycle()
     val editorState = editorViewModel.editorPresentationState.collectAsStateWithLifecycle().value
         .let { editorViewModel.onGetUiState(it) }
+    
+    // Create RichTextToolbarViewModel for centralized state management
+    val richTextToolbarViewModel = remember { createRichTextToolbarViewModel(richTextEditorHelper) }
+    val formattingState by richTextToolbarViewModel.formattingState.collectAsStateWithLifecycle()
+    val isToolbarVisible by richTextToolbarViewModel.isToolbarVisible.collectAsStateWithLifecycle()
+    
+    // Keyboard and system positioning awareness
+    val keyboardHeight = rememberKeyboardHeight()
+    val systemInsets = rememberSystemInsets()
 
     val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsStateWithLifecycle().value
         .let { audioPlayerViewModel.onGetUiState(it) }
 
-    var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     var showLoadingDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
-    var isTextFieldFocused by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
+    
+    // Update keyboard visibility state based on actual keyboard height
+    LaunchedEffect(keyboardHeight) {
+        richTextToolbarViewModel.setKeyboardVisible(keyboardHeight > 0)
+    }
+    
+    // Initialize toolbar as visible when screen loads
+    LaunchedEffect(Unit) {
+        richTextToolbarViewModel.showToolbar()
+    }
 
     LaunchedEffect(Unit) {
         if (noteId.toLong() > 0L) {
@@ -204,36 +225,36 @@ fun NoteDetailScreen(
                 paddingValues = paddingValues,
                 newNoteDateString = editorState.createdAt,
                 editorState = editorState,
-                showFormatBar = showFormatBar,
                 focusRequester = focusRequester,
                 audioPlayerUiState = audioPlayerUiState,
                 textEditorViewModel = editorViewModel,
                 audioPlayerViewModel = audioPlayerViewModel,
                 richTextEditorHelper = richTextEditorHelper,
-                onFocusChange = {
-                    isTextFieldFocused = it
+                richTextToolbarViewModel = richTextToolbarViewModel,
+                onFocusChange = { focused ->
+                    richTextToolbarViewModel.setTextFieldFocused(focused)
+                    if (focused) {
+                        richTextToolbarViewModel.refreshFormattingState()
+                    }
                 },
             )
             
-            // Scrollable rich text toolbar positioned above keyboard
-            Box(
+            // Scrollable rich text toolbar - always visible, positioned above keyboard when present
+            ScrollableRichTextToolbar(
+                isVisible = isToolbarVisible,
+                formattingState = formattingState,
+                onToggleBold = richTextToolbarViewModel::toggleBold,
+                onToggleItalic = richTextToolbarViewModel::toggleItalic,
+                onToggleUnderline = richTextToolbarViewModel::toggleUnderline,
+                onSetAlignment = richTextToolbarViewModel::setAlignment,
+                onToggleOrderedList = richTextToolbarViewModel::toggleOrderedList,
+                onToggleUnorderedList = richTextToolbarViewModel::toggleUnorderedList,
+                onAddHeading = richTextToolbarViewModel::addHeading,
+                onClearFormatting = richTextToolbarViewModel::clearFormatting,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .imePadding()
-            ) {
-                ScrollableRichTextToolbar(
-                    isVisible = showFormatBar,
-                    formattingState = editorViewModel.getRichTextFormattingState(),
-                    onToggleBold = editorViewModel::onToggleBold,
-                    onToggleItalic = editorViewModel::onToggleItalic,
-                    onToggleUnderline = editorViewModel::onToggleUnderline,
-                    onSetAlignment = editorViewModel::onSetAlignment,
-                    onToggleOrderedList = editorViewModel::onToggleOrderedList,
-                    onToggleUnorderedList = editorViewModel::onToggleBulletList,
-                    onAddHeading = editorViewModel::onAddHeading,
-                    onClearFormatting = editorViewModel::onClearFormatting
-                )
-            }
+            )
         }
     }
 
@@ -316,20 +337,30 @@ private fun NoteContent(
     paddingValues: PaddingValues,
     newNoteDateString: String,
     editorState: EditorUiState,
-    showFormatBar: Boolean,
     focusRequester: FocusRequester,
     onFocusChange: (Boolean) -> Unit,
     audioPlayerUiState: AudioPlayerUiState,
     textEditorViewModel: TextEditorViewModel,
     audioPlayerViewModel: AudioPlayerViewModel,
-    richTextEditorHelper: RichTextEditorHelper
+    richTextEditorHelper: RichTextEditorHelper,
+    richTextToolbarViewModel: RichTextToolbarViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showDeleteRecordingDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     val dismissState = rememberSwipeToDismissBoxState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
+    }
+    
+    // Smart keyboard dismissal on scroll
+    LaunchedEffect(scrollState.isScrollInProgress) {
+        if (scrollState.isScrollInProgress) {
+            keyboardController?.hide()
+            richTextToolbarViewModel.hideToolbar()
+        }
     }
 
     Column(
@@ -392,11 +423,11 @@ private fun NoteContent(
             NoteEditor(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 editorState = editorState,
-                showFormatBar = showFormatBar,
                 focusRequester = focusRequester,
                 onFocusChange = onFocusChange,
                 textEditorViewModel = textEditorViewModel,
-                richTextEditorHelper = richTextEditorHelper
+                richTextEditorHelper = richTextEditorHelper,
+                richTextToolbarViewModel = richTextToolbarViewModel
             )
         }
     }
@@ -429,11 +460,11 @@ private fun DateHeader(dateString: String) {
 private fun NoteEditor(
     modifier: Modifier = Modifier,
     editorState: EditorUiState,
-    showFormatBar: Boolean,
     focusRequester: FocusRequester,
     onFocusChange: (Boolean) -> Unit,
     textEditorViewModel: TextEditorViewModel,
-    richTextEditorHelper: RichTextEditorHelper
+    richTextEditorHelper: RichTextEditorHelper,
+    richTextToolbarViewModel: RichTextToolbarViewModel
 ) {
 
     val richTextState by richTextEditorHelper.richTextState.collectAsState()
@@ -443,6 +474,11 @@ private fun NoteEditor(
         if (richTextState.annotatedString.text != editorState.content.text) {
             richTextState.setHtml(editorState.content.text)
         }
+    }
+    
+    // Update toolbar formatting state when rich text state changes
+    LaunchedEffect(richTextState.selection) {
+        richTextToolbarViewModel.refreshFormattingState()
     }
 
     RichTextEditor(
@@ -457,7 +493,7 @@ private fun NoteEditor(
             color = LocalCustomColors.current.bodyContentColor,
             textAlign = editorState.textAlign
         ),
-        readOnly = showFormatBar,
+        readOnly = false,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences
         )

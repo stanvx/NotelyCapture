@@ -66,12 +66,7 @@ fun CompactAudioPlayer(
         uiState.currentPosition.toFloat() / uiState.duration.toFloat()
     } else 0f
 
-    // Load audio when component is created
-    LaunchedEffect(filePath) {
-        if (filePath.isNotEmpty()) {
-            onLoadAudio(filePath)
-        }
-    }
+    // Audio loading is now manual - user must tap play to load and start audio
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -99,7 +94,11 @@ fun CompactAudioPlayer(
                     isLoaded = uiState.isLoaded,
                     onClick = {
                         hapticFeedback?.light()
-                        onTogglePlayPause()
+                        if (!uiState.isLoaded && filePath.isNotEmpty()) {
+                            onLoadAudio(filePath)
+                        } else {
+                            onTogglePlayPause()
+                        }
                     }
                 )
 

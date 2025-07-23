@@ -750,6 +750,7 @@ private fun getCaptureMethodsList(): List<CaptureMethod> = listOf(
     )
 )
 
+@Composable
 private fun getPinnedTemplates(): List<PinnedTemplate> = listOf(
     PinnedTemplate("CBTLogEntry", MaterialTheme.colorScheme.pinnedTemplateGreen),
     PinnedTemplate("Journal", MaterialTheme.colorScheme.pinnedTemplateOrange),

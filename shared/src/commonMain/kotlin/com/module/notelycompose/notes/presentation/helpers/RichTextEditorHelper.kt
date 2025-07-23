@@ -1,6 +1,13 @@
 package com.module.notelycompose.notes.presentation.helpers
 
 import com.mohamedrejeb.richeditor.model.RichTextState
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,90 +54,130 @@ class RichTextEditorHelper {
     
     /**
      * Applies bold formatting to selected text.
-     * TODO: Implement when RichSpanStyle API is available
      */
     fun toggleBold() {
-        // Will be implemented when RichSpanStyle API is available
+        _richTextState.value.toggleSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
     }
     
     /**
      * Applies italic formatting to selected text.
-     * TODO: Implement when RichSpanStyle API is available
      */
     fun toggleItalic() {
-        // Will be implemented when RichSpanStyle API is available
+        _richTextState.value.toggleSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
     }
     
     /**
      * Applies underline formatting to selected text.
-     * TODO: Implement when RichSpanStyle API is available
      */
     fun toggleUnderline() {
-        // Will be implemented when RichSpanStyle API is available
+        _richTextState.value.toggleSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
     }
     
     /**
      * Toggles unordered list formatting.
-     * TODO: Implement when RichParagraphStyle API is available
      */
     fun toggleUnorderedList() {
-        // Will be implemented when RichParagraphStyle API is available
+        _richTextState.value.toggleUnorderedList()
     }
     
     /**
      * Toggles ordered list formatting.
-     * TODO: Implement when RichParagraphStyle API is available
      */
     fun toggleOrderedList() {
-        // Will be implemented when RichParagraphStyle API is available
+        _richTextState.value.toggleOrderedList()
     }
     
     /**
      * Adds a heading of the specified level.
-     * TODO: Implement when RichParagraphStyle API is available
      * 
      * @param level The heading level (1-6)
      */
     fun addHeading(level: Int) {
-        // Will be implemented when RichParagraphStyle API is available
+        val fontSize = when (level) {
+            1 -> 28.sp
+            2 -> 24.sp
+            3 -> 20.sp
+            4 -> 18.sp
+            5 -> 16.sp
+            6 -> 14.sp
+            else -> 16.sp
+        }
+        _richTextState.value.toggleSpanStyle(
+            SpanStyle(
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold
+            )
+        )
     }
     
     /**
      * Clears all formatting from selected text.
-     * TODO: Implement when RichSpanStyle API is available
      */
     fun clearFormatting() {
-        // Will be implemented when RichSpanStyle API is available
+        _richTextState.value.removeSpanStyle(SpanStyle())
     }
     
     /**
      * Checks if the current selection has bold formatting.
-     * TODO: Implement when RichSpanStyle API is available
      * 
      * @return True if the selection is bold
      */
     fun isSelectionBold(): Boolean {
-        return false // Will be implemented when RichSpanStyle API is available
+        return _richTextState.value.currentSpanStyle.fontWeight == FontWeight.Bold
     }
     
     /**
      * Checks if the current selection has italic formatting.
-     * TODO: Implement when RichSpanStyle API is available
      * 
      * @return True if the selection is italic
      */
     fun isSelectionItalic(): Boolean {
-        return false // Will be implemented when RichSpanStyle API is available
+        return _richTextState.value.currentSpanStyle.fontStyle == FontStyle.Italic
     }
     
     /**
      * Checks if the current selection has underline formatting.
-     * TODO: Implement when RichSpanStyle API is available
      * 
      * @return True if the selection is underlined
      */
     fun isSelectionUnderlined(): Boolean {
-        return false // Will be implemented when RichSpanStyle API is available
+        return _richTextState.value.currentSpanStyle.textDecoration?.contains(TextDecoration.Underline) == true
+    }
+    
+    /**
+     * Checks if the current paragraph is an unordered list.
+     * 
+     * @return True if the current paragraph is an unordered list
+     */
+    fun isUnorderedList(): Boolean {
+        return _richTextState.value.isUnorderedList
+    }
+    
+    /**
+     * Checks if the current paragraph is an ordered list.
+     * 
+     * @return True if the current paragraph is an ordered list
+     */
+    fun isOrderedList(): Boolean {
+        return _richTextState.value.isOrderedList
+    }
+    
+    /**
+     * Sets text alignment for the current paragraph.
+     * 
+     * @param textAlign The text alignment to apply
+     */
+    fun setAlignment(textAlign: TextAlign) {
+        _richTextState.value.addParagraphStyle(ParagraphStyle(textAlign = textAlign))
+    }
+    
+    /**
+     * Gets the current text alignment.
+     * 
+     * @return Current text alignment
+     */
+    fun getCurrentAlignment(): TextAlign {
+        return _richTextState.value.currentParagraphStyle.textAlign ?: TextAlign.Start
     }
     
     /**

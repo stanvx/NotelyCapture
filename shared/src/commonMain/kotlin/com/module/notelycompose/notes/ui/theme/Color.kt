@@ -143,7 +143,8 @@ val DarkCustomColors = CustomColors(
     languageSearchUnfocusedColor = onSurfaceVariantDark,
     shareDialogBackgroundColor = surfaceContainerHighDark,
     shareDialogButtonColor = onSurfaceDark,
-    statusBarBackgroundColor = surfaceContainerHighestDark
+    statusBarBackgroundColor = surfaceContainerHighestDark,
+    onVoiceNoteIndicatorContainer = onRecordBlueDark
 )
 
 // Material 3 Custom Colors for Light Theme
@@ -186,7 +187,8 @@ val LightCustomColors = CustomColors(
     languageSearchUnfocusedColor = onSurfaceVariantLight,
     shareDialogBackgroundColor = surfaceContainerHighLight,
     shareDialogButtonColor = onSurfaceLight,
-    statusBarBackgroundColor = surfaceContainerHighestLight
+    statusBarBackgroundColor = surfaceContainerHighestLight,
+    onVoiceNoteIndicatorContainer = onRecordBlueLight
 )
 
 // Material 3 Custom Colors - Semantic color tokens using Material 3 palette

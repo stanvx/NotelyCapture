@@ -64,6 +64,7 @@ kotlin {
             implementation(compose.material)
             implementation(compose.material3)
             implementation(libs.material.icons.core)
+            implementation(libs.material.icons.extended)
             implementation(compose.components.resources)
 
             implementation(compose.components.resources)
@@ -87,7 +88,7 @@ kotlin {
             implementation(libs.datastore)
             
             // Rich text editor
-            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc05")
+            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
 
             implementation(project(":core:audio"))
         }

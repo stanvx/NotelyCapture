@@ -380,6 +380,8 @@ class TextEditorViewModel(
 
     fun onSetAlignment(alignment: TextAlign) {
         _editorPresentationState.update { it.copy(textAlign = alignment) }
+        // Apply to rich text state as well
+        richTextEditorHelper.setAlignment(alignment)
         val content = _editorPresentationState.value.content
         val formats = _editorPresentationState.value.formats
         val textAlign = _editorPresentationState.value.textAlign
@@ -449,7 +451,10 @@ class TextEditorViewModel(
         return RichTextFormattingState(
             isBold = richTextEditorHelper.isSelectionBold(),
             isItalic = richTextEditorHelper.isSelectionItalic(),
-            isUnderlined = richTextEditorHelper.isSelectionUnderlined()
+            isUnderlined = richTextEditorHelper.isSelectionUnderlined(),
+            isUnorderedList = richTextEditorHelper.isUnorderedList(),
+            isOrderedList = richTextEditorHelper.isOrderedList(),
+            currentAlignment = richTextEditorHelper.getCurrentAlignment()
         )
     }
 }
@@ -460,5 +465,15 @@ class TextEditorViewModel(
 data class RichTextFormattingState(
     val isBold: Boolean = false,
     val isItalic: Boolean = false,
-    val isUnderlined: Boolean = false
+    val isUnderlined: Boolean = false,
+    val isUnorderedList: Boolean = false,
+    val isOrderedList: Boolean = false,
+    val currentAlignment: TextAlign = TextAlign.Start,
+    val currentHeadingLevel: Int? = null,
+    val hasTextColor: Boolean = false,
+    val hasHighlight: Boolean = false,
+    val indentLevel: Int = 0,
+    val hasLink: Boolean = false,
+    val isCodeBlock: Boolean = false,
+    val isQuoteBlock: Boolean = false
 )
