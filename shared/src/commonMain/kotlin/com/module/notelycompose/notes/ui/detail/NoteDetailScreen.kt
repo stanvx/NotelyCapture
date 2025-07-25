@@ -231,6 +231,7 @@ fun NoteDetailScreen(
                 audioPlayerViewModel = audioPlayerViewModel,
                 richTextEditorHelper = richTextEditorHelper,
                 richTextToolbarViewModel = richTextToolbarViewModel,
+                noteId = noteId,
                 onFocusChange = { focused ->
                     richTextToolbarViewModel.setTextFieldFocused(focused)
                     if (focused) {
@@ -343,7 +344,8 @@ private fun NoteContent(
     textEditorViewModel: TextEditorViewModel,
     audioPlayerViewModel: AudioPlayerViewModel,
     richTextEditorHelper: RichTextEditorHelper,
-    richTextToolbarViewModel: RichTextToolbarViewModel
+    richTextToolbarViewModel: RichTextToolbarViewModel,
+    noteId: String
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showDeleteRecordingDialog by remember { mutableStateOf(false) }
@@ -378,8 +380,8 @@ private fun NoteContent(
         ) {
             DateHeader(newNoteDateString)
 
+            // Always show audio player, with swipe-to-delete only when recording exists
             if (editorState.recording.isRecordingExist) {
-
                 if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
                     LaunchedEffect(Unit) {
                         showDeleteRecordingDialog = true
@@ -410,13 +412,31 @@ private fun NoteContent(
                     content = {
                         CompactAudioPlayer(
                             filePath = editorState.recording.recordingPath,
+                            noteId = noteId.toLongOrNull() ?: 0L,
+                            noteDurationMs = editorState.recording.audioDurationMs,
                             uiState = audioPlayerUiState,
                             onLoadAudio = audioPlayerViewModel::onLoadAudio,
                             onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
                             onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                            isNoteCurrentlyPlaying = audioPlayerViewModel::isNoteCurrentlyPlaying,
+                            isNoteLoaded = audioPlayerViewModel::isNoteLoaded,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
+                )
+            } else {
+                // Show audio player without swipe-to-delete when no recording exists
+                CompactAudioPlayer(
+                    filePath = editorState.recording.recordingPath,
+                    noteId = noteId.toLongOrNull() ?: 0L,
+                    noteDurationMs = editorState.recording.audioDurationMs,
+                    uiState = audioPlayerUiState,
+                    onLoadAudio = audioPlayerViewModel::onLoadAudio,
+                    onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
+                    onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                    isNoteCurrentlyPlaying = audioPlayerViewModel::isNoteCurrentlyPlaying,
+                    isNoteLoaded = audioPlayerViewModel::isNoteLoaded,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
 

@@ -2,6 +2,7 @@ package com.module.notelycompose.di
 
 
 import com.module.notelycompose.audio.domain.AmplitudeCollector
+import com.module.notelycompose.audio.domain.AudioWaveformExtractor
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
@@ -63,12 +64,13 @@ val mapperModule = module {
     single { NoteDomainMapper(get()) }
     single { TextFormatMapper() }
     single { NotesFilterMapper() }
-    single { NotePresentationMapper() }
+    single { NotePresentationMapper(get()) }
     single { TextFormatPresentationMapper() }
     single { TextAlignPresentationMapper() }
     single { TextEditorHelper() }
     single { RichTextEditorHelper() }
     single { AmplitudeCollector() }
+    single { AudioWaveformExtractor() }
 }
 val repositoryModule = module {
     singleOf(::PreferencesRepository)

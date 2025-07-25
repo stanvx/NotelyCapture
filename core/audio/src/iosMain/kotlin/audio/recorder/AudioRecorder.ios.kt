@@ -5,6 +5,14 @@ import io.github.aakira.napier.Napier
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import platform.AVFAudio.AVAudioQualityHigh
 import platform.AVFAudio.AVAudioRecorder
 import platform.AVFAudio.AVAudioSession
@@ -19,6 +27,7 @@ import platform.AVFAudio.setActive
 import platform.CoreAudioTypes.kAudioFormatLinearPCM
 import platform.Foundation.NSURL
 import kotlin.coroutines.resume
+import kotlin.math.pow
 
 actual class AudioRecorder {
 
@@ -26,6 +35,13 @@ actual class AudioRecorder {
     private var recordingSession: AVAudioSession = AVAudioSession.sharedInstance()
     private var recordingURL: NSURL? = null
     private var isCurrentlyPaused = false
+    
+    // Amplitude flow management
+    private val _amplitudeFlow = MutableStateFlow(0f)
+    actual val amplitudeFlow: Flow<Float> = _amplitudeFlow.asStateFlow()
+    
+    private var amplitudeCollectionJob: Job? = null
+    private val amplitudeScope = CoroutineScope(Dispatchers.Main)
 
     /**
      * Call when entering recording screen
@@ -83,8 +99,10 @@ actual class AudioRecorder {
         )
         audioRecorder = AVAudioRecorder(recordingURL!!, settings, null)
         if (audioRecorder?.prepareToRecord() == true) {
+            audioRecorder?.meteringEnabled = true // Enable metering for amplitude data
             val isRecording = audioRecorder?.record()
             isCurrentlyPaused = false
+            startAmplitudeCollection()
             Napier.d { "Recording started successfully $isRecording" }
         } else {
             Napier.d { "Failed to prepare recording" }
@@ -95,6 +113,7 @@ actual class AudioRecorder {
 
     @OptIn(ExperimentalForeignApi::class)
     actual fun stopRecording() {
+        stopAmplitudeCollection()
         audioRecorder?.let { recorder ->
             if (recorder.isRecording()) {
                 recorder.stop()
@@ -102,6 +121,7 @@ actual class AudioRecorder {
         }
 
         audioRecorder = null
+        _amplitudeFlow.value = 0f
         isCurrentlyPaused = false
     }
 
@@ -129,9 +149,11 @@ actual class AudioRecorder {
 
     actual fun pauseRecording() {
         if (isRecording() && !isCurrentlyPaused) {
+            stopAmplitudeCollection()
             audioRecorder?.let { recorder ->
                 recorder.pause()
                 isCurrentlyPaused = true
+                _amplitudeFlow.value = 0f
                 Napier.d { "Recording paused successfully" }
             }
         }
@@ -142,6 +164,7 @@ actual class AudioRecorder {
             audioRecorder?.let { recorder ->
                 recorder.record()
                 isCurrentlyPaused = false
+                startAmplitudeCollection()
                 Napier.d { "Recording resumed successfully" }
             }
         }
@@ -149,5 +172,50 @@ actual class AudioRecorder {
 
     actual fun isPaused(): Boolean {
         return isCurrentlyPaused
+    }
+    
+    /**
+     * Starts collecting amplitude data from the AVAudioRecorder.
+     */
+    private fun startAmplitudeCollection() {
+        stopAmplitudeCollection() // Ensure no duplicate jobs
+        
+        amplitudeCollectionJob = amplitudeScope.launch {
+            while (isRecording() && !isCurrentlyPaused) {
+                try {
+                    audioRecorder?.updateMeters()
+                    val averagePower = audioRecorder?.averagePowerForChannel(0u) ?: -160f
+                    val normalizedAmplitude = normalizeAmplitude(averagePower)
+                    _amplitudeFlow.value = normalizedAmplitude
+                    delay(50) // Update every 50ms for smooth visualization
+                } catch (e: Exception) {
+                    // Handle potential exceptions from accessing averagePower
+                    _amplitudeFlow.value = 0f
+                    break
+                }
+            }
+        }
+    }
+    
+    /**
+     * Stops collecting amplitude data.
+     */
+    private fun stopAmplitudeCollection() {
+        amplitudeCollectionJob?.cancel()
+        amplitudeCollectionJob = null
+    }
+    
+    /**
+     * Normalizes the average power value from AVAudioRecorder to a 0-1 range.
+     * AVAudioRecorder.averagePower returns dB values typically from -160dB to 0dB.
+     */
+    private fun normalizeAmplitude(averagePowerDb: Float): Float {
+        if (averagePowerDb <= -160f) return 0f
+        
+        // Convert dB range (-60dB to 0dB) to 0-1 range for better sensitivity
+        val clampedDb = averagePowerDb.coerceIn(-60f, 0f)
+        val normalizedDb = (clampedDb + 60f) / 60f
+        
+        return normalizedDb.coerceIn(0f, 1f)
     }
 }

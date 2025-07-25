@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.Stable
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
-import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.audio.domain.AudioWaveformExtractor
 import com.module.notelycompose.platform.PlatformAudioPlayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.module.notelycompose.onboarding.data.PreferencesRepository
 
 /**
  * Platform-independent ViewModel for audio playback functionality
@@ -27,6 +28,7 @@ class AudioPlayerViewModel(
     private val audioPlayer: PlatformAudioPlayer,
     private val mapper: AudioPlayerPresentationToUiMapper,
     private val preferencesRepository: PreferencesRepository,
+    private val waveformExtractor: AudioWaveformExtractor,
 ):ViewModel(){
     private var progressUpdateJob: Job? = null
     private val speedUpdateMutex = Mutex()
@@ -50,6 +52,15 @@ class AudioPlayerViewModel(
 
     fun onGetUiState(presentationState: AudioPlayerPresentationState): AudioPlayerUiState {
         return mapper.mapToUiState(presentationState)
+    }
+
+    fun isNoteCurrentlyPlaying(noteId: Long): Boolean {
+        val currentState = _uiState.value
+        return currentState.currentPlayingNoteId == noteId && currentState.isPlaying
+    }
+
+    fun isNoteLoaded(noteId: Long): Boolean {
+        return _uiState.value.currentPlayingNoteId == noteId && _uiState.value.isLoaded
     }
 
     fun onTogglePlaybackSpeed() {
@@ -80,18 +91,30 @@ class AudioPlayerViewModel(
         }
     }
 
-    fun onLoadAudio(filePath: String) {
+    fun onLoadAudio(filePath: String, noteId: Long) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
+                // Stop any currently playing audio
+                if (_uiState.value.isPlaying) {
+                    audioPlayer.pause()
+                    onStopProgressUpdates()
+                }
+                
                 val duration = audioPlayer.prepare(filePath)
                 val currentSpeed = _uiState.value.playbackSpeed
                 audioPlayer.setPlaybackSpeed(currentSpeed) // Apply current speed to new audio
+                
+                // Extract waveform data in parallel
+                val amplitudes = waveformExtractor.extractAmplitudesForDuration(filePath, duration)
+                
                 _uiState.update { it.copy(
                     isLoaded = true,
                     duration = duration,
                     isPlaying = false,
                     currentPosition = 0,
-                    filePath = filePath
+                    filePath = filePath,
+                    currentPlayingNoteId = noteId,
+                    waveformAmplitudes = amplitudes
                 ) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(
@@ -101,11 +124,16 @@ class AudioPlayerViewModel(
         }
     }
 
-    fun onTogglePlayPause() {
-        if (_uiState.value.isPlaying) {
-            onPause()
-        } else {
-            onPlay()
+    fun onTogglePlayPause(noteId: Long) {
+        val currentState = _uiState.value
+        
+        // Only allow play/pause if this note is the currently loaded note
+        if (currentState.currentPlayingNoteId == noteId) {
+            if (currentState.isPlaying) {
+                onPause()
+            } else {
+                onPlay()
+            }
         }
     }
 
@@ -186,5 +214,7 @@ data class AudioPlayerPresentationState(
     val duration: Int = 0,
     val errorMessage: String? = null,
     val filePath: String = "",
-    val playbackSpeed: Float = 1.0f
+    val playbackSpeed: Float = 1.0f,
+    val currentPlayingNoteId: Long? = null,
+    val waveformAmplitudes: List<Float> = emptyList()
 )

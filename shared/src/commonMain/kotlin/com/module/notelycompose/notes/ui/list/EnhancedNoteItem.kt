@@ -300,11 +300,15 @@ fun EnhancedNoteItem(
                         exit = fadeOut() + shrinkVertically()
                     ) {
                         CompactAudioPlayer(
-                            filePath = note.recordingPath ?: "",
+                            filePath = note.recordingPath,
+                            noteId = note.id,
+                            noteDurationMs = note.audioDurationMs,
                             uiState = audioPlayerUiState,
                             onLoadAudio = audioPlayerViewModel::onLoadAudio,
                             onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
                             onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                            isNoteCurrentlyPlaying = audioPlayerViewModel::isNoteCurrentlyPlaying,
+                            isNoteLoaded = audioPlayerViewModel::isNoteLoaded,
                             modifier = Modifier.padding(top = 12.dp)
                         )
                     }

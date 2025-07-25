@@ -45,7 +45,8 @@ class TextEditorViewModel(
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
     private val textEditorHelper: TextEditorHelper,
-    private val richTextEditorHelper: RichTextEditorHelper
+    private val richTextEditorHelper: RichTextEditorHelper,
+    private val audioPlayer: com.module.notelycompose.platform.PlatformAudioPlayer
 ) : ViewModel() {
 
     private val _editorPresentationState = MutableStateFlow(EditorPresentationState())
@@ -74,18 +75,20 @@ class TextEditorViewModel(
     }
 
     private fun processNote(retrievedNote: NoteDomainModel) {
-        loadNote(
-            content = retrievedNote.content,
-            formats = retrievedNote.formatting.map {
-                textFormatPresentationMapper.mapToPresentationModel(it)
-            },
-            textAlign = textAlignPresentationMapper.mapToComposeTextAlign(
-                retrievedNote.textAlign
-            ),
-            recordingPath = retrievedNote.recordingPath,
-            starred = retrievedNote.starred,
-            createdAt = getFormattedDate(retrievedNote.createdAt)
-        )
+        viewModelScope.launch {
+            loadNote(
+                content = retrievedNote.content,
+                formats = retrievedNote.formatting.map {
+                    textFormatPresentationMapper.mapToPresentationModel(it)
+                },
+                textAlign = textAlignPresentationMapper.mapToComposeTextAlign(
+                    retrievedNote.textAlign
+                ),
+                recordingPath = retrievedNote.recordingPath,
+                starred = retrievedNote.starred,
+                createdAt = getFormattedDate(retrievedNote.createdAt)
+            )
+        }
     }
 
     fun onGetNoteById(id: String) {
@@ -127,30 +130,54 @@ class TextEditorViewModel(
     }
 
     fun onUpdateRecordingPath(recordingPath: String) {
-        _editorPresentationState.update {
-            it.copy(
-                recording = recordingPath(recordingPath)
-            )
+        viewModelScope.launch {
+            val recordingModel = recordingPath(recordingPath)
+            _editorPresentationState.update {
+                it.copy(recording = recordingModel)
+            }
+            onUpdateContent(newContent = _editorPresentationState.value.content)
         }
-        onUpdateContent(newContent = _editorPresentationState.value.content)
     }
 
     fun onDeleteRecord() {
         deleteFile(_editorPresentationState.value.recording.recordingPath)
-        _editorPresentationState.update {
-            it.copy(
-                recording = recordingPath(/*reset record path */"")
-            )
+        viewModelScope.launch {
+            val recordingModel = recordingPath(/*reset record path */"")
+            _editorPresentationState.update {
+                it.copy(recording = recordingModel)
+            }
+            onUpdateContent(newContent = _editorPresentationState.value.content)
         }
-        onUpdateContent(newContent = _editorPresentationState.value.content)
     }
 
-    private fun recordingPath(recordingPath: String) = RecordingPathPresentationModel(
-        recordingPath = recordingPath,
-        isRecordingExist = recordingPath.isNotEmpty()
-    )
+    private suspend fun recordingPath(recordingPath: String): RecordingPathPresentationModel {
+        val audioDuration = if (recordingPath.isNotEmpty()) {
+            getAudioDuration(recordingPath)
+        } else {
+            0
+        }
+        
+        return RecordingPathPresentationModel(
+            recordingPath = recordingPath,
+            isRecordingExist = recordingPath.isNotEmpty(),
+            audioDurationMs = audioDuration
+        )
+    }
+    
+    private suspend fun getAudioDuration(recordingPath: String): Int {
+        return if (recordingPath.isNotEmpty()) {
+            try {
+                audioPlayer.prepare(recordingPath)
+            } catch (e: Exception) {
+                println("Failed to get audio duration for $recordingPath: ${e.message}")
+                0
+            }
+        } else {
+            0
+        }
+    }
 
-    private fun loadNote(
+    private suspend fun loadNote(
         content: String,
         formats: List<TextPresentationFormat>,
         textAlign: TextAlign,
@@ -158,12 +185,13 @@ class TextEditorViewModel(
         starred: Boolean,
         createdAt: String
     ) {
+        val recordingModel = recordingPath(recordingPath)
         _editorPresentationState.update {
             it.copy(
                 content = TextFieldValue(content),
                 formats = formats,
                 textAlign = textAlign,
-                recording = recordingPath(recordingPath),
+                recording = recordingModel,
                 starred = starred,
                 createdAt = createdAt
             )

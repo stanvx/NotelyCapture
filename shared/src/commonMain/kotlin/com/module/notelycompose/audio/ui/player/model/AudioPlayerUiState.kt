@@ -9,5 +9,6 @@ data class AudioPlayerUiState(
     val currentPosition: Int,
     val duration: Int,
     val errorMessage: String,
-    val playbackSpeed: Float
+    val playbackSpeed: Float,
+    val waveformAmplitudes: List<Float> = emptyList()
 )

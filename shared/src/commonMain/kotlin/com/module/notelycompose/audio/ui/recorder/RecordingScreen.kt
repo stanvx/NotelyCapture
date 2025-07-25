@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.module.notelycompose.audio.ui.uicomponents.AudioReactiveLottie
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -134,6 +136,7 @@ fun RecordingScreen(
 
             ScreenState.Recording -> RecordingInProgressScreen(
                 counterTimeString = recordingState.recordCounterString,
+                currentAmplitude = recordingState.currentAmplitude,
                 onStopRecording = {
                     debugPrintln { "onStop recording" }
                     viewModel.onStopRecording()
@@ -220,26 +223,27 @@ private fun RecordingInitialScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(80.dp)
                     .clip(CircleShape)
-                    .background(Color.Green)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { onTapToRecord() },
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.Icon(
                     imageVector = Images.Icons.IcRecorder,
                     contentDescription = stringResource(Res.string.recording_ui_microphone),
-                    tint = LocalCustomColors.current.bodyBackgroundColor,
-                    modifier = Modifier.size(32.dp)
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(36.dp)
                 )
             }
 
             Text(
                 text = stringResource(Res.string.recording_ui_tap_start_record),
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                color = LocalCustomColors.current.bodyContentColor,
-                modifier = Modifier.padding(top = 16.dp)
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 16.dp),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -248,6 +252,7 @@ private fun RecordingInitialScreen(
 @Composable
 private fun RecordingInProgressScreen(
     counterTimeString: String,
+    currentAmplitude: Float,
     onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit,
     onPauseRecording: () -> Unit,
@@ -268,22 +273,26 @@ private fun RecordingInProgressScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(200.dp)
-            ) {
-                LoadingAnimation(
-                    isRecordPaused = isRecordPaused
-                )
-                Text(
-                    text = counterTimeString,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Normal,
-                    color = LocalCustomColors.current.bodyContentColor
-                )
-            }
+            // Main recording indicator - full-size gradient animation
+            AudioReactiveLottie(
+                amplitude = if (isRecordPaused) 0f else currentAmplitude,
+                isRecording = !isRecordPaused,
+                modifier = Modifier
+                    .size(320.dp)  // Large, prominent size for beautiful gradient display
+            )
+            
+            // Timer display positioned below the animation
+            Text(
+                text = counterTimeString,
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 32.sp
+            )
+            
         }
 
         Box(
@@ -303,54 +312,61 @@ private fun RecordingInProgressScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
-                            .padding(vertical = 2.dp, horizontal = 2.dp),
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = CircleShape
+                            )
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                if (isRecordPaused) {
+                                    onResumeRecording()
+                                } else {
+                                    onPauseRecording()
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (!isRecordPaused) Images.Icons.IcPause else Icons.Filled.PlayArrow,
-                            contentDescription = stringResource(Res.string.transcription_icon),
-                            tint = LocalCustomColors.current.bodyContentColor,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clickable {
-                                    if (isRecordPaused) {
-                                        onResumeRecording()
-                                    } else {
-                                        onPauseRecording()
-                                    }
-                                }
+                            contentDescription = if (!isRecordPaused) "Pause recording" else "Resume recording",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
-                            .padding(2.dp),
+                            .background(
+                                color = MaterialTheme.colorScheme.error,
+                                shape = CircleShape
+                            )
+                            .clickable { onStopRecording() },
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.Red)
-                                .clickable {
-                                    onStopRecording()
-                                }
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.onError)
                         )
                     }
                 }
 
                 Text(
                     text = stringResource(Res.string.recording_ui_tap_stop_record),
-                    color = LocalCustomColors.current.bodyContentColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(top = 24.dp)
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 24.dp),
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }

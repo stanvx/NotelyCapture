@@ -63,7 +63,11 @@ fun NoteListScreen(
     val focusManager = LocalFocusManager.current
     val lazyStaggeredGridState = rememberLazyStaggeredGridState()
     
-    // Pass scroll state to parent
+    // Single shared audio player for all notes
+    val sharedAudioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
+    val sharedAudioPlayerUiState by sharedAudioPlayerViewModel.uiState.collectAsState()
+    
+    // Pass scroll state to parent  
     onScrollStateChanged(lazyStaggeredGridState)
     
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -138,7 +142,9 @@ fun NoteListScreen(
                     platformUiState = platformUiState,
                     viewModel = viewModel,
                     lazyStaggeredGridState = lazyStaggeredGridState,
-                    navigateToNoteDetails = navigateToNoteDetails
+                    navigateToNoteDetails = navigateToNoteDetails,
+                    sharedAudioPlayerViewModel = sharedAudioPlayerViewModel,
+                    sharedAudioPlayerUiState = sharedAudioPlayerUiState
                 )
             }
         }
@@ -153,7 +159,9 @@ private fun NoteListWithHeader(
     platformUiState: PlatformUiState,
     viewModel: NoteListViewModel,
     lazyStaggeredGridState: LazyStaggeredGridState,
-    navigateToNoteDetails: (String) -> Unit
+    navigateToNoteDetails: (String) -> Unit,
+    sharedAudioPlayerViewModel: AudioPlayerViewModel,
+    sharedAudioPlayerUiState: com.module.notelycompose.audio.presentation.AudioPlayerPresentationState
 ) {
     LazyVerticalStaggeredGrid(
         columns = StaggeredGridCells.Adaptive(minSize = 280.dp), // Reduced from 300dp for wider cards
@@ -204,10 +212,6 @@ private fun NoteListWithHeader(
         
         // Note items
         itemsIndexed(items = noteList) { index, note ->
-            // Each note gets its own audio player instance
-            val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
-            val audioPlayerUiState by audioPlayerViewModel.uiState.collectAsState()
-            
             EnhancedNoteItem(
                 note = note,
                 onNoteClick = { noteId ->
@@ -217,8 +221,8 @@ private fun NoteListWithHeader(
                     viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(note))
                 },
                 index = index, // Pass index for staggered animation
-                audioPlayerViewModel = audioPlayerViewModel,
-                audioPlayerUiState = audioPlayerViewModel.onGetUiState(audioPlayerUiState)
+                audioPlayerViewModel = sharedAudioPlayerViewModel,
+                audioPlayerUiState = sharedAudioPlayerViewModel.onGetUiState(sharedAudioPlayerUiState)
             )
         }
     }

@@ -15,11 +15,15 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.search_bar_search_description
 import com.module.notelycompose.resources.search_bar_search_text
@@ -32,6 +36,15 @@ fun SearchBar(
     externalActivation: Boolean = false
 ) {
     var searchText by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
+    LaunchedEffect(externalActivation) {
+        if (externalActivation) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     OutlinedTextField(
         value = searchText,
@@ -94,5 +107,6 @@ fun SearchBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
+            .focusRequester(focusRequester)
     )
 }

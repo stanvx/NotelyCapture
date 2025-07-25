@@ -21,6 +21,7 @@ animationAndroid = "1.8.3"
 composeMultiplatform = "1.8.2"
 compose-ui-tooling = "1.8.3"
 composeVectorizeCore = "1.0.2"
+lottie-compose = "6.6.6"
 materialIconsCore = "1.7.3"
 materialIconsExtended = "1.7.3"
 navigation-compose = "2.9.0-beta03"
@@ -58,6 +59,7 @@ androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", versi
 androidx-compose-ui-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-ui-tooling" }
 androidx-compose-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 compose-vectorize-core = { module = "dev.sergiobelda.compose.vectorize:compose-vectorize-core", version.ref = "composeVectorizeCore" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie-compose" }
 material-icons-core = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsCore" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation-compose" }

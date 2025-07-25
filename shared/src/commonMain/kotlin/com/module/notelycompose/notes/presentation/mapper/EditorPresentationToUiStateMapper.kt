@@ -44,6 +44,7 @@ class EditorPresentationToUiStateMapper {
         presentation: RecordingPathPresentationModel
     ) = RecordingPathUiModel(
         recordingPath = presentation.recordingPath,
-        isRecordingExist = presentation.isRecordingExist
+        isRecordingExist = presentation.isRecordingExist,
+        audioDurationMs = presentation.audioDurationMs
     )
 }

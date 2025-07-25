@@ -18,6 +18,7 @@ import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -86,11 +87,13 @@ class NoteListViewModel(
             ) { notes, filter ->
             Pair(notes, filter)
         }.onEach { (notes, filter) ->
-            handleNotesUpdate(notes, filter, "")
+            viewModelScope.launch {
+                handleNotesUpdate(notes, filter, "")
+            }
         }.launchIn(viewModelScope)
     }
 
-    private fun domainToPresentationModel(note: NoteDomainModel): NotePresentationModel {
+    private suspend fun domainToPresentationModel(note: NoteDomainModel): NotePresentationModel {
         val retrievedNote = notePresentationMapper.mapToPresentationModel(note)
         return retrievedNote.copy(
             title = note.title.trim().takeIf { it.isNotEmpty() }
@@ -124,13 +127,15 @@ class NoteListViewModel(
         }
     }
 
-    private fun handleNotesUpdate(
+    private suspend fun handleNotesUpdate(
         notes: List<NoteDomainModel>,
         filter: String,
         query: String
     ) {
-
-        val presentationNotes = notes.map { domainToPresentationModel(it) }
+        // Map notes to presentation models with async duration calculation
+        val presentationNotes = notes.map { note ->
+            domainToPresentationModel(note)
+        }
 
         _state.update { currentState ->
             currentState.copy(

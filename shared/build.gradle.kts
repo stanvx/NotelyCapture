@@ -50,6 +50,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
 
+            // animations
+            implementation(libs.lottie.compose)
+
             // splash
             implementation(libs.core.splashscreen)
             implementation(libs.androidx.compose.documentfile)

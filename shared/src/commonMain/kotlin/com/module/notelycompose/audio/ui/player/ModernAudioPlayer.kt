@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.ui.formatTimeToMMSS
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
-import com.module.notelycompose.audio.ui.uicomponents.PlaybackWaveform
 import com.module.notelycompose.notes.ui.theme.Material3ShapeTokens
 import com.module.notelycompose.platform.HapticFeedback
 import kotlinx.coroutines.delay
@@ -73,7 +72,7 @@ fun ModernAudioPlayer(
         ) {
             // Waveform section with enhanced styling
             WaveformSection(
-                amplitudes = amplitudes,
+                amplitudes = uiState.waveformAmplitudes,
                 progress = progress,
                 isPlaying = uiState.isPlaying,
                 isLoading = isLoading,
@@ -124,12 +123,17 @@ private fun WaveformSection(
         if (isLoading) {
             LoadingWaveform()
         } else {
-            PlaybackWaveform(
+            // Placeholder for waveform - PlaybackWaveform was removed
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                amplitudes = amplitudes,
-                progress = progress,
-                isPlaying = isPlaying
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Audio Waveform",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

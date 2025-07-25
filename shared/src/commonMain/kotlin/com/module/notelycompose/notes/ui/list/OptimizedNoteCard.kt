@@ -205,9 +205,9 @@ fun OptimizedNoteCard(
                                     onClick = {
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         if (!audioPlayerUiState.isLoaded && !note.recordingPath.isNullOrEmpty()) {
-                                            audioPlayerViewModel.onLoadAudio(note.recordingPath)
+                                            audioPlayerViewModel.onLoadAudio(note.recordingPath, note.id)
                                         }
-                                        audioPlayerViewModel.onTogglePlayPause()
+                                        audioPlayerViewModel.onTogglePlayPause(note.id)
                                     },
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.primary,

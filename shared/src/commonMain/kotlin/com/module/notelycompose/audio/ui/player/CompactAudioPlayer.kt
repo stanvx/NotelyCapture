@@ -55,15 +55,26 @@ import com.module.notelycompose.platform.HapticFeedback
 @Composable
 fun CompactAudioPlayer(
     filePath: String,
+    noteId: Long,
+    noteDurationMs: Int,
     uiState: AudioPlayerUiState,
-    onLoadAudio: (String) -> Unit,
-    onTogglePlayPause: () -> Unit,
+    onLoadAudio: (String, Long) -> Unit,
+    onTogglePlayPause: (Long) -> Unit,
     onTogglePlaybackSpeed: () -> Unit,
+    isNoteCurrentlyPlaying: (Long) -> Boolean,
+    isNoteLoaded: (Long) -> Boolean,
     modifier: Modifier = Modifier,
     hapticFeedback: HapticFeedback? = null
 ) {
-    val progress = if (uiState.duration > 0) {
-        uiState.currentPosition.toFloat() / uiState.duration.toFloat()
+    val isCurrentlyLoaded = isNoteLoaded(noteId)
+    val isCurrentlyPlaying = isNoteCurrentlyPlaying(noteId)
+    
+    // Use shared state for currently loaded note, otherwise use note-specific data
+    val displayDuration = if (isCurrentlyLoaded) uiState.duration else noteDurationMs
+    val displayPosition = if (isCurrentlyLoaded) uiState.currentPosition else 0
+    
+    val progress = if (displayDuration > 0) {
+        displayPosition.toFloat() / displayDuration.toFloat()
     } else 0f
 
     // Audio loading is now manual - user must tap play to load and start audio
@@ -90,15 +101,16 @@ fun CompactAudioPlayer(
             ) {
                 // Play/Pause button
                 CompactPlayButton(
-                    isPlaying = uiState.isPlaying,
-                    isLoaded = uiState.isLoaded,
+                    isPlaying = isCurrentlyPlaying,
+                    isLoaded = isCurrentlyLoaded || (noteDurationMs > 0 && filePath.isNotEmpty()), // Show as loaded if we have valid audio
                     onClick = {
                         hapticFeedback?.light()
-                        if (!uiState.isLoaded && filePath.isNotEmpty()) {
-                            onLoadAudio(filePath)
-                        } else {
-                            onTogglePlayPause()
+                        if (!isCurrentlyLoaded && filePath.isNotEmpty()) {
+                            onLoadAudio(filePath, noteId)
+                        } else if (isCurrentlyLoaded) {
+                            onTogglePlayPause(noteId)
                         }
+                        // Do nothing if no valid audio file path
                     }
                 )
 
@@ -113,7 +125,7 @@ fun CompactAudioPlayer(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${uiState.currentPosition.formatTimeToMMSS()} / ${uiState.duration.formatTimeToMMSS()}",
+                            text = "${displayPosition.formatTimeToMMSS()} / ${displayDuration.formatTimeToMMSS()}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontWeight = FontWeight.Medium
@@ -122,7 +134,7 @@ fun CompactAudioPlayer(
                         // Simplified speed control: x1, x1.5, x2
                         SpeedControl(
                             playbackSpeed = uiState.playbackSpeed,
-                            isEnabled = uiState.isLoaded,
+                            isEnabled = isCurrentlyLoaded,
                             onToggleSpeed = onTogglePlaybackSpeed
                         )
                     }
