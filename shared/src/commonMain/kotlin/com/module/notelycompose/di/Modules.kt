@@ -1,11 +1,14 @@
 package com.module.notelycompose.di
 
 
+import com.module.notelycompose.audio.domain.AmplitudeCollector
+import com.module.notelycompose.audio.domain.AudioWaveformExtractor
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
 import com.module.notelycompose.audio.presentation.mappers.AudioPlayerPresentationToUiMapper
 import com.module.notelycompose.audio.presentation.mappers.AudioRecorderPresentationToUiMapper
 import com.module.notelycompose.database.NoteDatabase
+import com.module.notelycompose.modelDownloader.ModelAvailabilityService
 import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.notes.data.NoteSqlDelightDataSource
 import com.module.notelycompose.notes.domain.DeleteNoteById
@@ -22,6 +25,7 @@ import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.notes.presentation.detail.NoteDetailScreenViewModel
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 import com.module.notelycompose.notes.presentation.helpers.TextEditorHelper
+import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.presentation.list.mapper.NotesFilterMapper
 import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUiStateMapper
@@ -31,7 +35,10 @@ import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentation
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.platform.presentation.PlatformViewModel
+import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.transcription.TranscriptionViewModel
+import com.module.notelycompose.transcription.data.repository.TranscriptionRepositoryImpl
+import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -57,13 +64,17 @@ val mapperModule = module {
     single { NoteDomainMapper(get()) }
     single { TextFormatMapper() }
     single { NotesFilterMapper() }
-    single { NotePresentationMapper() }
+    single { NotePresentationMapper(get()) }
     single { TextFormatPresentationMapper() }
     single { TextAlignPresentationMapper() }
     single { TextEditorHelper() }
+    single { RichTextEditorHelper() }
+    single { AmplitudeCollector() }
+    single { AudioWaveformExtractor() }
 }
 val repositoryModule = module {
     singleOf(::PreferencesRepository)
+    single<TranscriptionRepository> { TranscriptionRepositoryImpl(get()) }
 }
 
 val viewModelModule = module {
@@ -87,4 +98,6 @@ val useCaseModule = module {
     factory { InsertNoteUseCase(get(), get(), get()) }
     factory { SearchNotesUseCase(get(), get()) }
     factory { UpdateNoteUseCase(get(), get(), get()) }
+    factory { ModelAvailabilityService(get(), get()) }
+    factory { BackgroundTranscriptionService(get(), get()) }
 }

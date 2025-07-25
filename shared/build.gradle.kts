@@ -50,6 +50,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(project(":lib"))
 
+            // animations
+            implementation(libs.lottie.compose)
+
             // splash
             implementation(libs.core.splashscreen)
             implementation(libs.androidx.compose.documentfile)
@@ -64,6 +67,7 @@ kotlin {
             implementation(compose.material)
             implementation(compose.material3)
             implementation(libs.material.icons.core)
+            implementation(libs.material.icons.extended)
             implementation(compose.components.resources)
 
             implementation(compose.components.resources)
@@ -85,6 +89,9 @@ kotlin {
             // Data store
             implementation(libs.datastore.preferences)
             implementation(libs.datastore)
+            
+            // Rich text editor
+            implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
 
             implementation(project(":core:audio"))
         }
@@ -103,6 +110,7 @@ kotlin {
                 implementation(libs.datastore.preferences)
             }
         }
+
     }
 
     targets.all {
@@ -191,6 +199,12 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            // Disable compose debugging overlays in release builds
+            manifestPlaceholders["composeInspectionMode"] = false
+        }
+        getByName("debug") {
+            // Allow compose inspection in debug builds but can be disabled
+            manifestPlaceholders["composeInspectionMode"] = false
         }
     }
     compileOptions {

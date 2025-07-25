@@ -1,7 +1,7 @@
 # Notely Capture
 
-[![Kotlin](https://img.shields.io/badge/kotlin-2.1.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
-[![Compose](https://img.shields.io/badge/compose-1.8.0-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.2.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Compose](https://img.shields.io/badge/compose-1.8.2-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
 A Personalised, cross-platform note-taking application with powerful Whisper AI Voice to Text capabilities built with Compose Multiplatform.
@@ -109,6 +109,14 @@ Notely is built with Clean Architecture principles, separating the app into dist
 
 `iosApp/`: Contains iOS-specific code.
 
+### Source Set Layout
+The project uses Kotlin Multiplatform Android source set layout V2 for modern KMP best practices:
+- `shared/src/androidMain/` - Android-specific implementation code
+- `shared/src/androidInstrumentedTest/` - Android instrumented tests
+- `shared/src/commonMain/` - Shared code across platforms
+- `shared/src/commonTest/` - Shared tests
+- `shared/src/iosMain/` - iOS-specific implementation code
+
 ## Fork Management
 
 ### Upstream Synchronization
@@ -194,8 +202,8 @@ To create a new release with APK distribution:
 
 - Android Studio Ladybug or newer
 - XCode 16.1
-- JDK 11 or higher
-- Kotlin 2.0.21 or higher
+- JDK 17 or higher
+- Kotlin 2.2.0 or higher
 
 ### Installation
 

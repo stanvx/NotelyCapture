@@ -12,6 +12,61 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
 
+@PublishedApi
+internal val screenOrder = listOf(
+    Routes.List::class.qualifiedName,
+    Routes.Calendar::class.qualifiedName,
+    Routes.Capture::class.qualifiedName
+)
+
+@PublishedApi
+internal fun isForwardTransition(initialRoute: String?, targetRoute: String?): Boolean {
+    if (initialRoute == null || targetRoute == null) return true
+    val initialIndex = screenOrder.indexOf(initialRoute)
+    val targetIndex = screenOrder.indexOf(targetRoute)
+    return if (initialIndex != -1 && targetIndex != -1) {
+        targetIndex > initialIndex
+    } else {
+        true // Default for transitions not between main screens
+    }
+}
+
+inline fun <reified T : @Serializable Any> NavGraphBuilder.composableWithSharedAxis(
+    deepLinks: List<NavDeepLink> = emptyList(),
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
+) = composable<T>(
+    deepLinks = deepLinks,
+    enterTransition = {
+        val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
+        slideIntoContainer(
+            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
+            animationSpec = tween(300)
+        )
+    },
+    exitTransition = {
+        val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
+        slideOutOfContainer(
+            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
+            animationSpec = tween(300)
+        )
+    },
+    popEnterTransition = {
+        val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
+        slideIntoContainer(
+            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
+            animationSpec = tween(300)
+        )
+    },
+    popExitTransition = {
+        val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
+        slideOutOfContainer(
+            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
+            animationSpec = tween(300)
+        )
+    },
+    content = content
+)
+
 inline fun <reified T : @Serializable Any> NavGraphBuilder.composableWithHorizontalSlide(
     deepLinks: List<NavDeepLink> = emptyList(),
     noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit

@@ -9,8 +9,12 @@ import audio.utils.LauncherHolder
 import audio.utils.generateWavFile
 import com.github.squti.androidwaverecorder.WaveRecorder
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import kotlin.coroutines.resume
+import kotlin.math.log10
 
 private const val DEFAULT = "recording.wav"
 
@@ -25,6 +29,10 @@ actual class AudioRecorder(
     private var isCurrentlyPaused = false
     private var permissionContinuation: ((Boolean) -> Unit)? = null
     private var currentRecordingPath: String? = null
+    
+    // Amplitude flow management
+    private val _amplitudeFlow = MutableStateFlow(0f)
+    actual val amplitudeFlow: Flow<Float> = _amplitudeFlow.asStateFlow()
 
     actual  fun startRecording() {
         val file = context.generateWavFile()
@@ -40,6 +48,12 @@ actual class AudioRecorder(
                 bufferDurationInMillis = 1500
                 preSilenceDurationInMillis = 1500
             }
+
+        // Set up amplitude listener
+        recorder?.onAmplitudeListener = { amplitude ->
+            val normalizedAmplitude = normalizeAmplitude(amplitude.toDouble())
+            _amplitudeFlow.value = normalizedAmplitude
+        }
 
         try {
             recorder?.startRecording()
@@ -59,6 +73,7 @@ actual class AudioRecorder(
             recorder = null
             isCurrentlyRecording = false
             isCurrentlyPaused = false
+            _amplitudeFlow.value = 0f
         }
     }
 
@@ -110,6 +125,7 @@ actual class AudioRecorder(
             try {
                 recorder?.pauseRecording()
                 isCurrentlyPaused = true
+                _amplitudeFlow.value = 0f
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -129,5 +145,23 @@ actual class AudioRecorder(
 
     actual fun isPaused(): Boolean {
         return isCurrentlyPaused
+    }
+    
+    /**
+     * Normalizes the raw amplitude value from WaveRecorder to a 0-1 range.
+     * Uses logarithmic scaling for more natural amplitude perception.
+     */
+    private fun normalizeAmplitude(rawAmplitude: Double): Float {
+        if (rawAmplitude <= 0.0) return 0f
+        
+        // WaveRecorder amplitude typically ranges from 0 to ~32767
+        // Apply logarithmic scaling for more perceptually accurate visualization
+        val clampedAmplitude = rawAmplitude.coerceIn(1.0, 32767.0)
+        val dbValue = 20 * log10(clampedAmplitude / 32767.0)
+        
+        // Convert dB range (-90dB to 0dB) to 0-1 range
+        val normalizedDb = (dbValue + 90.0) / 90.0
+        
+        return normalizedDb.coerceIn(0.0, 1.0).toFloat()
     }
 }

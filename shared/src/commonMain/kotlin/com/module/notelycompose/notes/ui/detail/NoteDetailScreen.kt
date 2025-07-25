@@ -17,24 +17,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.DismissDirection
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FabPosition
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.FloatingActionButtonDefaults.elevation
-import androidx.compose.material.FloatingActionButtonElevation
-import androidx.compose.material.Icon
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SwipeToDismiss
-import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +64,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
-import com.module.notelycompose.audio.ui.player.PlatformAudioPlayerUi
+import com.module.notelycompose.audio.ui.player.ModernAudioPlayer
+import com.module.notelycompose.audio.ui.player.CompactAudioPlayer
 import com.module.notelycompose.audio.ui.player.model.AudioPlayerUiState
 import com.module.notelycompose.modelDownloader.DownloaderDialog
 import com.module.notelycompose.modelDownloader.DownloaderEffect
@@ -72,6 +73,13 @@ import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.audio.presentation.AudioImportViewModel
 import com.module.notelycompose.audio.ui.importing.ImportingAudioStateHost
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
+import com.module.notelycompose.notes.ui.richtext.RichTextToolbarViewModel
+import com.module.notelycompose.notes.ui.richtext.createRichTextToolbarViewModel
+import com.module.notelycompose.notes.ui.richtext.rememberKeyboardHeight
+import com.module.notelycompose.notes.ui.richtext.rememberSystemInsets
+import com.module.notelycompose.notes.ui.detail.EditorUiState
+import com.module.notelycompose.notes.ui.detail.RecordingConfirmationUiModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformViewModel
@@ -87,8 +95,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun NoteDetailScreen(
     noteId: String,
@@ -99,26 +107,44 @@ fun NoteDetailScreen(
     downloaderViewModel: ModelDownloaderViewModel = koinViewModel(),
     platformViewModel: PlatformViewModel = koinViewModel(),
     audioImportViewModel: AudioImportViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel
+    editorViewModel: TextEditorViewModel = koinViewModel(),
+    richTextEditorHelper: RichTextEditorHelper = koinInject()
 ) {
     val currentNoteId by editorViewModel.currentNoteId.collectAsStateWithLifecycle()
     val importingState by audioImportViewModel.importingAudioState.collectAsStateWithLifecycle()
     val downloaderUiState by downloaderViewModel.uiState.collectAsStateWithLifecycle()
     val editorState = editorViewModel.editorPresentationState.collectAsStateWithLifecycle().value
         .let { editorViewModel.onGetUiState(it) }
+    
+    // Create RichTextToolbarViewModel for centralized state management
+    val richTextToolbarViewModel = remember { createRichTextToolbarViewModel(richTextEditorHelper) }
+    val formattingState by richTextToolbarViewModel.formattingState.collectAsStateWithLifecycle()
+    val isToolbarVisible by richTextToolbarViewModel.isToolbarVisible.collectAsStateWithLifecycle()
+    
+    // Keyboard and system positioning awareness
+    val keyboardHeight = rememberKeyboardHeight()
+    val systemInsets = rememberSystemInsets()
 
     val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsStateWithLifecycle().value
         .let { audioPlayerViewModel.onGetUiState(it) }
 
-    var showFormatBar by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     var showLoadingDialog by remember { mutableStateOf(false) }
     var showDownloadDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
-    var isTextFieldFocused by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
+    
+    // Update keyboard visibility state based on actual keyboard height
+    LaunchedEffect(keyboardHeight) {
+        richTextToolbarViewModel.setKeyboardVisible(keyboardHeight > 0)
+    }
+    
+    // Initialize toolbar as visible when screen loads
+    LaunchedEffect(Unit) {
+        richTextToolbarViewModel.showToolbar()
+    }
 
     LaunchedEffect(Unit) {
         if (noteId.toLong() > 0L) {
@@ -159,6 +185,7 @@ fun NoteDetailScreen(
     Scaffold(
         topBar = {
             DetailNoteTopBar(
+                title = editorState.content.text,
                 onNavigateBack = navigateBack,
                 onShare = {
                     showShareDialog = true
@@ -170,82 +197,66 @@ fun NoteDetailScreen(
                     audioPlayerViewModel.releasePlayer()
                     audioImportViewModel.importAudio()
                 },
-                isRecordingExist = editorState.recording.isRecordingExist
-            )
-        },
-        floatingActionButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (editorState.recording.isRecordingExist) {
-                    FloatingActionButton(
-                        modifier = Modifier.border(
-                            width = 1.dp,
-                            color = LocalCustomColors.current.floatActionButtonBorderColor,
-                            shape = CircleShape
-                        ),
-                        backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                        onClick = { downloaderViewModel.checkTranscriptionAvailability() },
-                        elevation = elevation(defaultElevation = 2.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_transcription),
-                            contentDescription = stringResource(Res.string.transcription_icon),
-                            tint = LocalCustomColors.current.bodyContentColor
-                        )
+                onRecordClick = {
+                    if (editorState.recording.isRecordingExist) {
+                        showExistingRecordConfirmDialog = true
+                    } else {
+                        navigateToRecorder("$currentNoteId")
                     }
-                }
-
-                FloatingActionButton(
-                    modifier = Modifier.border(
-                        width = 1.dp,
-                        color = LocalCustomColors.current.floatActionButtonBorderColor,
-                        shape = CircleShape
-                    ),
-                    backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-                    onClick = {
-                        if (!editorState.recording.isRecordingExist) {
-                            navigateToRecorder("$currentNoteId")
-                        } else {
-                            showExistingRecordConfirmDialog = true
-                        }
-                    },
-                    elevation = elevation(defaultElevation = 2.dp)
-                ) {
-                    Icon(
-                        imageVector = Images.Icons.IcRecorder,
-                        contentDescription = stringResource(Res.string.note_detail_recorder),
-                        tint = LocalCustomColors.current.bodyContentColor
-                    )
-                }
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
-        bottomBar = {
-            BottomNavigationBar(
-                isTextFieldFocused = isTextFieldFocused,
-                selectionSize = editorState.selectionSize,
-                isStarred = editorState.isStarred,
-                showFormatBar = showFormatBar,
-                textFieldFocusRequester = focusRequester,
-                onShowTextFormatBar = { showFormatBar = it },
-                editorViewModel = editorViewModel,
-                navigateBack = navigateBack
+                },
+                onTranscribeClick = {
+                    downloaderViewModel.checkTranscriptionAvailability()
+                },
+                onStarClick = {
+                    editorViewModel.onToggleStar()
+                },
+                onDeleteClick = {
+                    editorViewModel.onDeleteNote()
+                },
+                isRecordingExist = editorState.recording.isRecordingExist,
+                isStarred = editorState.isStarred
             )
         }
     ) { paddingValues ->
-
-        NoteContent(
-            paddingValues = paddingValues,
-            newNoteDateString = editorState.createdAt,
-            editorState = editorState,
-            showFormatBar = showFormatBar,
-            focusRequester = focusRequester,
-            audioPlayerUiState = audioPlayerUiState,
-            textEditorViewModel = editorViewModel,
-            audioPlayerViewModel = audioPlayerViewModel,
-            onFocusChange = {
-                isTextFieldFocused = it
-            },
-        )
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            NoteContent(
+                paddingValues = paddingValues,
+                newNoteDateString = editorState.createdAt,
+                editorState = editorState,
+                focusRequester = focusRequester,
+                audioPlayerUiState = audioPlayerUiState,
+                textEditorViewModel = editorViewModel,
+                audioPlayerViewModel = audioPlayerViewModel,
+                richTextEditorHelper = richTextEditorHelper,
+                richTextToolbarViewModel = richTextToolbarViewModel,
+                noteId = noteId,
+                onFocusChange = { focused ->
+                    richTextToolbarViewModel.setTextFieldFocused(focused)
+                    if (focused) {
+                        richTextToolbarViewModel.refreshFormattingState()
+                    }
+                },
+            )
+            
+            // Scrollable rich text toolbar - always visible, positioned above keyboard when present
+            ScrollableRichTextToolbar(
+                isVisible = isToolbarVisible,
+                formattingState = formattingState,
+                onToggleBold = richTextToolbarViewModel::toggleBold,
+                onToggleItalic = richTextToolbarViewModel::toggleItalic,
+                onToggleUnderline = richTextToolbarViewModel::toggleUnderline,
+                onSetAlignment = richTextToolbarViewModel::setAlignment,
+                onToggleOrderedList = richTextToolbarViewModel::toggleOrderedList,
+                onToggleUnorderedList = richTextToolbarViewModel::toggleUnorderedList,
+                onAddHeading = richTextToolbarViewModel::addHeading,
+                onClearFormatting = richTextToolbarViewModel::clearFormatting,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .imePadding()
+            )
+        }
     }
 
 
@@ -264,7 +275,7 @@ fun NoteDetailScreen(
             modifier = Modifier.height(100.dp),
             title = { Text(stringResource(resource = Res.string.download_dialog_error)) },
             onDismissRequest = { showErrorDialog = false },
-            buttons = {
+            confirmButton = {
                 Button(
                     onClick = {
                         showErrorDialog = false
@@ -321,26 +332,37 @@ fun NoteDetailScreen(
 }
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun NoteContent(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
     newNoteDateString: String,
     editorState: EditorUiState,
-    showFormatBar: Boolean,
     focusRequester: FocusRequester,
     onFocusChange: (Boolean) -> Unit,
     audioPlayerUiState: AudioPlayerUiState,
     textEditorViewModel: TextEditorViewModel,
-    audioPlayerViewModel: AudioPlayerViewModel
+    audioPlayerViewModel: AudioPlayerViewModel,
+    richTextEditorHelper: RichTextEditorHelper,
+    richTextToolbarViewModel: RichTextToolbarViewModel,
+    noteId: String
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showDeleteRecordingDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
-    val dismissState = rememberDismissState()
+    val dismissState = rememberSwipeToDismissBoxState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    
     LaunchedEffect(editorState.content) {
         scrollState.animateScrollTo(scrollState.maxValue)
+    }
+    
+    // Smart keyboard dismissal on scroll
+    LaunchedEffect(scrollState.isScrollInProgress) {
+        if (scrollState.isScrollInProgress) {
+            keyboardController?.hide()
+            richTextToolbarViewModel.hideToolbar()
+        }
     }
 
     Column(
@@ -358,56 +380,74 @@ private fun NoteContent(
         ) {
             DateHeader(newNoteDateString)
 
+            // Always show audio player, with swipe-to-delete only when recording exists
             if (editorState.recording.isRecordingExist) {
-
-                if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+                if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
                     LaunchedEffect(Unit) {
                         showDeleteRecordingDialog = true
                     }
                 }
 
-                SwipeToDismiss(
+                SwipeToDismissBox(
                     state = dismissState,
-                    directions = setOf(DismissDirection.EndToStart),
-                    background = {
+                    backgroundContent = {
                         // Background that appears when swiping
                         Box(
                             modifier = Modifier
-                                .width(800.dp)
-                                .height(36.dp)
-                                .padding(horizontal = 16.dp, vertical = 0.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .fillMaxWidth()
+                                .height(60.dp)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color.Red),
                             contentAlignment = Alignment.CenterEnd
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete",
-                                tint = Color.White
+                                tint = Color.White,
+                                modifier = Modifier.padding(end = 16.dp)
                             )
                         }
                     },
-                    dismissContent = {
-                        PlatformAudioPlayerUi(
+                    content = {
+                        CompactAudioPlayer(
                             filePath = editorState.recording.recordingPath,
+                            noteId = noteId.toLongOrNull() ?: 0L,
+                            noteDurationMs = editorState.recording.audioDurationMs,
                             uiState = audioPlayerUiState,
                             onLoadAudio = audioPlayerViewModel::onLoadAudio,
-                            onClear = audioPlayerViewModel::onClear,
-                            onSeekTo = audioPlayerViewModel::onSeekTo,
                             onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
-                            onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed
+                            onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                            isNoteCurrentlyPlaying = audioPlayerViewModel::isNoteCurrentlyPlaying,
+                            isNoteLoaded = audioPlayerViewModel::isNoteLoaded,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
+                )
+            } else {
+                // Show audio player without swipe-to-delete when no recording exists
+                CompactAudioPlayer(
+                    filePath = editorState.recording.recordingPath,
+                    noteId = noteId.toLongOrNull() ?: 0L,
+                    noteDurationMs = editorState.recording.audioDurationMs,
+                    uiState = audioPlayerUiState,
+                    onLoadAudio = audioPlayerViewModel::onLoadAudio,
+                    onTogglePlayPause = audioPlayerViewModel::onTogglePlayPause,
+                    onTogglePlaybackSpeed = audioPlayerViewModel::onTogglePlaybackSpeed,
+                    isNoteCurrentlyPlaying = audioPlayerViewModel::isNoteCurrentlyPlaying,
+                    isNoteLoaded = audioPlayerViewModel::isNoteLoaded,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
 
             NoteEditor(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 editorState = editorState,
-                showFormatBar = showFormatBar,
                 focusRequester = focusRequester,
                 onFocusChange = onFocusChange,
-                textEditorViewModel = textEditorViewModel
+                textEditorViewModel = textEditorViewModel,
+                richTextEditorHelper = richTextEditorHelper,
+                richTextToolbarViewModel = richTextToolbarViewModel
             )
         }
     }
@@ -440,54 +480,43 @@ private fun DateHeader(dateString: String) {
 private fun NoteEditor(
     modifier: Modifier = Modifier,
     editorState: EditorUiState,
-    showFormatBar: Boolean,
     focusRequester: FocusRequester,
     onFocusChange: (Boolean) -> Unit,
-    textEditorViewModel: TextEditorViewModel
+    textEditorViewModel: TextEditorViewModel,
+    richTextEditorHelper: RichTextEditorHelper,
+    richTextToolbarViewModel: RichTextToolbarViewModel
 ) {
 
-    val transformation = VisualTransformation { text ->
-        TransformedText(
-            buildAnnotatedString {
-                append(text)
-                editorState.formats.forEach { format ->
-                    addStyle(
-                        SpanStyle(
-                            fontWeight = if (format.isBold) FontWeight.Bold else null,
-                            fontStyle = if (format.isItalic) FontStyle.Italic else null,
-                            textDecoration = if (format.isUnderline)
-                                TextDecoration.Underline else null,
-                            fontSize = format.textSize?.sp ?: TextUnit.Unspecified
-                        ),
-                        format.range.first.coerceIn(0, text.length),
-                        format.range.last.coerceIn(0, text.length)
-                    )
-                }
-            },
-            OffsetMapping.Identity
-        )
+    val richTextState by richTextEditorHelper.richTextState.collectAsState()
+    
+    // Initialize rich text state with current content if needed
+    LaunchedEffect(editorState.content.text) {
+        if (richTextState.annotatedString.text != editorState.content.text) {
+            richTextState.setHtml(editorState.content.text)
+        }
+    }
+    
+    // Update toolbar formatting state when rich text state changes
+    LaunchedEffect(richTextState.selection) {
+        richTextToolbarViewModel.refreshFormattingState()
     }
 
-    BasicTextField(
-        value = editorState.content,
-        onValueChange = textEditorViewModel::onUpdateContent,
-        modifier =
-            modifier
-                .focusRequester(focusRequester)
-                .padding(horizontal = 16.dp)
-                .onFocusChanged {
-                    onFocusChange(it.isFocused)
-                },
+    RichTextEditor(
+        state = richTextState,
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .padding(horizontal = 16.dp)
+            .onFocusChanged {
+                onFocusChange(it.isFocused)
+            },
         textStyle = TextStyle(
             color = LocalCustomColors.current.bodyContentColor,
             textAlign = editorState.textAlign
         ),
-        cursorBrush = SolidColor(LocalCustomColors.current.bodyContentColor),
-        readOnly = showFormatBar,
+        readOnly = false,
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.Sentences
-        ),
-        visualTransformation = transformation
+        )
     )
 }
 

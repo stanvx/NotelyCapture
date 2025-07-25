@@ -3,7 +3,7 @@ package com.module.notelycompose.modelDownloader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.platform.Downloader
-import com.module.notelycompose.platform.Transcriber
+import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 class ModelDownloaderViewModel(
     private val downloader: Downloader,
-    private val transcriber: Transcriber,
+    private val transcriptionRepository: TranscriptionRepository,
 ):ViewModel(){
     private val _uiState = MutableStateFlow(DownloaderUiState("ggml-base.bin"))
     val uiState: StateFlow<DownloaderUiState> = _uiState
@@ -32,7 +32,7 @@ class ModelDownloaderViewModel(
             if (downloader.hasRunningDownload()) {
                 trackDownload()
             } else {
-                if (!transcriber.doesModelExists() || !transcriber.isValidModel() ) {
+                if (!transcriptionRepository.doesModelExists() || !transcriptionRepository.isValidModel() ) {
                     _effects.emit(DownloaderEffect.AskForUserAcceptance())
                 } else {
                     _effects.emit(DownloaderEffect.ModelsAreReady())
@@ -65,7 +65,7 @@ class ModelDownloaderViewModel(
             }
         }, onSuccess = {
             viewModelScope.launch {
-                transcriber.initialize()
+                transcriptionRepository.initialize()
                 _effects.emit(DownloaderEffect.ModelsAreReady()) }
 
         }, onFailed = {

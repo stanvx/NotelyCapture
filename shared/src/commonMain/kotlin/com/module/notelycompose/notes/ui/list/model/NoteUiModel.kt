@@ -8,5 +8,6 @@ data class NoteUiModel(
     val isVoice: Boolean,
     val createdAt: String,
     val recordingPath: String,
-    val words: Int
+    val words: Int,
+    val audioDurationMs: Int = 0 // Duration in milliseconds for voice notes
 )

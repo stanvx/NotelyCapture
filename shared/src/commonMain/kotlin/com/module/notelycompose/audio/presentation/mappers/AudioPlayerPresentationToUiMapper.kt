@@ -11,7 +11,8 @@ class AudioPlayerPresentationToUiMapper {
             currentPosition = presentationState.currentPosition,
             duration = presentationState.duration,
             errorMessage = presentationState.errorMessage.orEmpty(),
-            playbackSpeed = presentationState.playbackSpeed
+            playbackSpeed = presentationState.playbackSpeed,
+            waveformAmplitudes = presentationState.waveformAmplitudes
         )
     }
 }

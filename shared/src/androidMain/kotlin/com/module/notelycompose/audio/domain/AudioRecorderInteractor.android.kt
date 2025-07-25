@@ -24,6 +24,8 @@ class AudioRecorderInteractorImpl(
     private val _audioRecorderPresentationState = MutableStateFlow(AudioRecorderPresentationState())
     override val state = _audioRecorderPresentationState
 
+    private var amplitudeCollectionJob: Job? = null
+
     override fun initState() {
         _audioRecorderPresentationState.value = AudioRecorderPresentationState()
     }
@@ -53,6 +55,7 @@ class AudioRecorderInteractorImpl(
                 delay(100L)
                 updateUI()
                 startCounter(coroutineScope)
+                startAmplitudeCollection(coroutineScope)
             }
         }
     }
@@ -90,13 +93,17 @@ class AudioRecorderInteractorImpl(
         coroutineScope.launch {
             debugPrintln { "inside stop recording ${audioRecorder.isRecording()}" }
             if (audioRecorder.isRecording()) {
+                stopAmplitudeCollection()
                 context.startRecordingService(AudioRecordingService.ACTION_STOP)
                 delay(100L)
                 val recordingPath = audioRecorder.getRecordingFilePath()
                 debugPrintln { "%%%%%%%%%%% 2${recordingPath}" }
                 stopCounter()
                 _audioRecorderPresentationState.update { current ->
-                    current.copy(recordingPath = recordingPath)
+                    current.copy(
+                        recordingPath = recordingPath,
+                        currentAmplitude = 0f
+                    )
                 }
             }
         }
@@ -118,6 +125,7 @@ class AudioRecorderInteractorImpl(
         context.startRecordingService(AudioRecordingService.ACTION_PAUSE)
         coroutineScope.launch {
             delay(100L)
+            stopAmplitudeCollection()
             updatePausedState()
             pauseCounter()
         }
@@ -129,6 +137,7 @@ class AudioRecorderInteractorImpl(
             delay(100L)
             updatePausedState()
             resumeCounter(coroutineScope)
+            startAmplitudeCollection(coroutineScope)
         }
     }
 
@@ -139,6 +148,7 @@ class AudioRecorderInteractorImpl(
 
     override fun onCleared() {
         stopCounter()
+        stopAmplitudeCollection()
         if (audioRecorder.isRecording()) {
             context.startRecordingService(AudioRecordingService.ACTION_STOP)
         }
@@ -179,6 +189,34 @@ class AudioRecorderInteractorImpl(
                 recordingTimeSeconds++
                 updateCounterString()
             }
+        }
+    }
+    
+    /**
+     * Starts collecting amplitude data from the AudioRecorder and updating the UI state.
+     */
+    private fun startAmplitudeCollection(coroutineScope: CoroutineScope) {
+        stopAmplitudeCollection() // Ensure no duplicate jobs
+        
+        amplitudeCollectionJob = coroutineScope.launch {
+            audioRecorder.amplitudeFlow.collect { amplitude ->
+                _audioRecorderPresentationState.update { current ->
+                    current.copy(currentAmplitude = amplitude)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Stops collecting amplitude data.
+     */
+    private fun stopAmplitudeCollection() {
+        amplitudeCollectionJob?.cancel()
+        amplitudeCollectionJob = null
+        
+        // Reset amplitude to 0 when stopping
+        _audioRecorderPresentationState.update { current ->
+            current.copy(currentAmplitude = 0f)
         }
     }
 

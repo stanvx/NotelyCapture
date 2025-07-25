@@ -12,11 +12,13 @@ import com.module.notelycompose.notes.presentation.helpers.returnFirstLine
 import com.module.notelycompose.notes.presentation.helpers.truncateWithEllipsis
 import com.module.notelycompose.notes.presentation.list.mapper.NotesFilterMapper
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
+import com.module.notelycompose.notes.presentation.list.model.QuickRecordState
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -67,6 +69,13 @@ class NoteListViewModel(
             is NoteListIntent.OnNoteDeleted -> handleNoteDeletion(intent.note)
             is NoteListIntent.OnFilterNote -> setSelectedTab(intent.filter)
             is NoteListIntent.OnSearchNote -> searchQuery.value = intent.keyword
+            is NoteListIntent.OnToggleSearch -> handleToggleSearch(intent.isActive)
+            
+            // Quick Record Intents
+            is NoteListIntent.OnQuickRecordStarted -> handleQuickRecordStarted()
+            is NoteListIntent.OnQuickRecordCompleted -> handleQuickRecordCompleted()
+            is NoteListIntent.OnQuickRecordError -> handleQuickRecordError(intent.error)
+            is NoteListIntent.OnQuickRecordReset -> handleQuickRecordReset()
         }
     }
 
@@ -78,16 +87,19 @@ class NoteListViewModel(
             ) { notes, filter ->
             Pair(notes, filter)
         }.onEach { (notes, filter) ->
-            handleNotesUpdate(notes, filter, "")
+            viewModelScope.launch {
+                handleNotesUpdate(notes, filter, "")
+            }
         }.launchIn(viewModelScope)
     }
 
-    private fun domainToPresentationModel(note: NoteDomainModel): NotePresentationModel {
+    private suspend fun domainToPresentationModel(note: NoteDomainModel): NotePresentationModel {
         val retrievedNote = notePresentationMapper.mapToPresentationModel(note)
         return retrievedNote.copy(
             title = note.title.trim().takeIf { it.isNotEmpty() }
                 ?.returnFirstLine()
                 ?.truncateWithEllipsis()
+                ?: note.content.trim().returnFirstLine().truncateWithEllipsis().takeIf { it.isNotEmpty() }
                 ?: DEFAULT_TITLE,
             content = note.content.trim().takeIf { it.isNotEmpty() }
                 ?.getFirstNonEmptyLineAfterFirst()
@@ -115,13 +127,15 @@ class NoteListViewModel(
         }
     }
 
-    private fun handleNotesUpdate(
+    private suspend fun handleNotesUpdate(
         notes: List<NoteDomainModel>,
         filter: String,
         query: String
     ) {
-
-        val presentationNotes = notes.map { domainToPresentationModel(it) }
+        // Map notes to presentation models with async duration calculation
+        val presentationNotes = notes.map { note ->
+            domainToPresentationModel(note)
+        }
 
         _state.update { currentState ->
             currentState.copy(
@@ -168,5 +182,69 @@ class NoteListViewModel(
 
     private fun isStarred(note: NotePresentationModel): Boolean {
         return note.isStarred
+    }
+
+    private fun handleToggleSearch(isActive: Boolean) {
+        _state.update { currentState ->
+            currentState.copy(isSearchActive = isActive)
+        }
+        // Clear search when closing search
+        if (!isActive) {
+            searchQuery.value = ""
+        }
+    }
+
+    // Quick Record Handler Methods
+    private fun handleQuickRecordStarted() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Recording,
+                quickRecordError = null
+            )
+        }
+    }
+
+    private fun handleQuickRecordCompleted() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Complete,
+                quickRecordError = null
+            )
+        }
+        // Auto-reset state after completion
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(2000) // Show completion state for 2 seconds
+            handleQuickRecordReset()
+        }
+    }
+
+    private fun handleQuickRecordError(error: String) {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Error,
+                quickRecordError = error
+            )
+        }
+    }
+
+    private fun handleQuickRecordReset() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Idle,
+                quickRecordError = null
+            )
+        }
+    }
+
+    /**
+     * Updates quick record state to Processing during background transcription
+     */
+    fun updateQuickRecordToProcessing() {
+        _state.update { currentState ->
+            currentState.copy(
+                quickRecordState = QuickRecordState.Processing,
+                quickRecordError = null
+            )
+        }
     }
 }
