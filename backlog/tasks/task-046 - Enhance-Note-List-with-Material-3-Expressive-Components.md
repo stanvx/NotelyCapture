@@ -1,9 +1,8 @@
 ---
 id: task-046
 title: Enhance Note List with Material 3 Expressive Components
-status: In Progress
-assignee:
-  - '@claude'
+status: To Do
+assignee: []
 created_date: '2025-07-26'
 updated_date: '2025-07-26'
 labels: []
@@ -29,7 +28,6 @@ This enhancement will make note browsing more intuitive and delightful while mai
 - [ ] Note cards implement consistent Material 3 shape patterns
 - [ ] Interactive elements use proper state layers and feedback
 - [ ] Accessibility is enhanced with comprehensive semantic markup
-
 ## Implementation Plan
 
 ### Phase 1: Enhanced Note Type Visualization
