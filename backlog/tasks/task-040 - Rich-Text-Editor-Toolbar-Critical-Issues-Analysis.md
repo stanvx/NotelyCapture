@@ -1,9 +1,10 @@
 ---
 id: task-040
 title: Rich Text Editor Toolbar - Critical Issues Analysis
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-07-22'
+updated_date: '2025-07-26'
 labels: []
 dependencies: []
 ---
