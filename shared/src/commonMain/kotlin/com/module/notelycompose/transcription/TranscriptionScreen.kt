@@ -68,6 +68,15 @@ fun TranscriptionScreen(
     LaunchedEffect(transcriptionUiState.originalText) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
+    
+    // Auto-navigate when transcription completes
+    LaunchedEffect(transcriptionUiState.inTranscription, transcriptionUiState.originalText) {
+        if (!transcriptionUiState.inTranscription && transcriptionUiState.originalText.isNotEmpty()) {
+            // Automatically append transcription and navigate back
+            editorViewModel.onUpdateContent(TextFieldValue("${editorState.content.text}\n${transcriptionUiState.originalText}"))
+            navigateBack()
+        }
+    }
     LaunchedEffect(Unit) {
         viewModel.requestAudioPermission()
         viewModel.initRecognizer()
@@ -121,6 +130,13 @@ fun TranscriptionScreen(
                     )
                 }else if(transcriptionUiState.progress in 1..99){
                    SmoothLinearProgressBar((transcriptionUiState.progress / 100f))
+                }else if(!transcriptionUiState.inTranscription && transcriptionUiState.originalText.isNotEmpty()){
+                    // Show completion indicator
+                    Text(
+                        text = "✓ Transcription Complete",
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = LocalCustomColors.current.bodyContentColor
+                    )
                 }
 //                FloatingActionButton(
 //                    modifier = Modifier.padding(vertical = 8.dp),

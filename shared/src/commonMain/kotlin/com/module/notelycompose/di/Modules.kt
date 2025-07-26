@@ -39,6 +39,8 @@ import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.transcription.TranscriptionViewModel
 import com.module.notelycompose.transcription.data.repository.TranscriptionRepositoryImpl
 import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
+import com.module.notelycompose.transcription.domain.WhisperModelManager
+import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -74,7 +76,8 @@ val mapperModule = module {
 }
 val repositoryModule = module {
     singleOf(::PreferencesRepository)
-    single<TranscriptionRepository> { TranscriptionRepositoryImpl(get()) }
+    single { WhisperModelManager(get()) }
+    single<TranscriptionRepository> { TranscriptionRepositoryImpl(get(), get()) }
 }
 
 val viewModelModule = module {

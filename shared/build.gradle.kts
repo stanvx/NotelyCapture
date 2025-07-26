@@ -51,7 +51,7 @@ kotlin {
             implementation(project(":lib"))
 
             // animations
-            implementation(libs.lottie.compose)
+            implementation(libs.dotlottie.android)
 
             // splash
             implementation(libs.core.splashscreen)

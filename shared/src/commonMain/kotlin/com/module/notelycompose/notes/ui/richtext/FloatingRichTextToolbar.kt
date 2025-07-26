@@ -72,6 +72,7 @@ fun FloatingRichTextToolbar(
     onToggleOrderedList: () -> Unit,
     onToggleUnorderedList: () -> Unit,
     onAddHeading: (Int) -> Unit,
+    onSetBodyText: () -> Unit,
     onClearFormatting: () -> Unit,
     anchorPosition: IntOffset? = null,
     modifier: Modifier = Modifier
@@ -156,7 +157,9 @@ fun FloatingRichTextToolbar(
                             
                             is ToolbarGroup.Headings -> {
                                 HeadingButtonGroup(
-                                    onAddHeading = onAddHeading
+                                    currentHeadingLevel = formattingState.currentHeadingLevel,
+                                    onAddHeading = onAddHeading,
+                                    onSetBodyText = onSetBodyText
                                 )
                             }
                             
@@ -265,6 +268,7 @@ private fun FloatingRichTextToolbarPreview() {
         onToggleOrderedList = {},
         onToggleUnorderedList = {},
         onAddHeading = {},
+        onSetBodyText = {},
         onClearFormatting = {},
         anchorPosition = IntOffset(200, 300)
     )

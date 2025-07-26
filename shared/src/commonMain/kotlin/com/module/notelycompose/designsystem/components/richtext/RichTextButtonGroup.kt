@@ -217,35 +217,49 @@ fun ListButtonGroup(
 }
 
 /**
- * Heading formatting group (H1, H2, H3).
+ * Heading formatting group (Body, H1, H2, H3) with selection indicators.
  * 
+ * @param currentHeadingLevel Current heading level (null for body text)
  * @param onAddHeading Heading level callback
+ * @param onSetBodyText Body text callback
  * @param modifier Modifier for customization
  */
 @Composable
 fun HeadingButtonGroup(
+    currentHeadingLevel: Int? = null,
     onAddHeading: (Int) -> Unit,
+    onSetBodyText: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     RichTextButtonGroup(
-        title = "Headings",
+        title = "Text Level",
         modifier = modifier
     ) {
         RichTextTextButton(
+            text = "Body",
+            onClick = onSetBodyText,
+            isSelected = currentHeadingLevel == null,
+            contentDescription = "Body Text"
+        )
+        
+        RichTextTextButton(
             text = "H1",
             onClick = { onAddHeading(1) },
+            isSelected = currentHeadingLevel == 1,
             contentDescription = "Heading 1"
         )
         
         RichTextTextButton(
             text = "H2",
             onClick = { onAddHeading(2) },
+            isSelected = currentHeadingLevel == 2,
             contentDescription = "Heading 2"
         )
         
         RichTextTextButton(
             text = "H3",
             onClick = { onAddHeading(3) },
+            isSelected = currentHeadingLevel == 3,
             contentDescription = "Heading 3"
         )
     }

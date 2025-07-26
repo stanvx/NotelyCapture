@@ -10,6 +10,11 @@ import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
 import com.module.notelycompose.notes.domain.UpdateNoteUseCase
+import com.module.notelycompose.notes.domain.TextEditCommandResult
+import com.module.notelycompose.notes.domain.UndoRedoManager
+import com.module.notelycompose.notes.domain.FormatCommand
+import com.module.notelycompose.notes.domain.CompositeCommand
+import com.module.notelycompose.notes.domain.TextEditCommand
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
 import com.module.notelycompose.notes.presentation.detail.model.EditorPresentationState
 import com.module.notelycompose.notes.presentation.detail.model.RecordingPathPresentationModel
@@ -28,12 +33,16 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 private const val ID_NOT_SET = 0L
+private const val SAVE_DEBOUNCE_DELAY = 500L // 500ms debounce for save operations
+private const val SYNC_DEBOUNCE_DELAY = 150L // 150ms debounce for rich text sync
 
 class TextEditorViewModel(
     private val getNoteByIdUseCase: GetNoteById,
@@ -55,6 +64,20 @@ class TextEditorViewModel(
 
     internal val currentNoteId: StateFlow<Long?> = _currentNoteId.asStateFlow()
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
+    
+    // Undo/Redo functionality
+    private val undoRedoManager = UndoRedoManager()
+    
+    // Performance optimization fields
+    private var saveJob: Job? = null
+    private var syncJob: Job? = null
+    private var lastContentHash: Int = 0
+    
+    // Expose undo/redo state for UI
+    val canUndo: StateFlow<Boolean> = undoRedoManager.canUndo
+    val canRedo: StateFlow<Boolean> = undoRedoManager.canRedo
+    val undoDescription: StateFlow<String?> = undoRedoManager.undoDescription
+    val redoDescription: StateFlow<String?> = undoRedoManager.redoDescription
     
     // Expose rich text state for UI components
     val richTextState: StateFlow<com.mohamedrejeb.richeditor.model.RichTextState> = richTextEditorHelper.richTextState
@@ -98,35 +121,49 @@ class TextEditorViewModel(
     private fun getLastNote() = getLastNoteUseCase.execute()
 
     fun onUpdateContent(newContent: TextFieldValue) {
+        val oldContent = _editorPresentationState.value.content.text
         updateContent(newContent)
-        // Sync to rich text state
-        syncContentToRichText(newContent.text)
-        createOrUpdateEvent(
-            title = newContent.text,
-            content = newContent.text,
-            starred = _editorPresentationState.value.starred,
-            formatting = _editorPresentationState.value.formats,
-            textAlign = _editorPresentationState.value.textAlign,
-            recordingPath = _editorPresentationState.value.recording.recordingPath,
-        )
+        
+        // Optimized sync: only sync if content actually changed
+        if (oldContent != newContent.text) {
+            syncContentToRichText(newContent.text)
+            
+            // Create undo/redo command for content changes
+            createContentUpdateCommand(oldContent, newContent.text)
+            
+            // Debounced save operation
+            debouncedSave(
+                title = newContent.text,
+                content = newContent.text,
+                starred = _editorPresentationState.value.starred,
+                formatting = _editorPresentationState.value.formats,
+                textAlign = _editorPresentationState.value.textAlign,
+                recordingPath = _editorPresentationState.value.recording.recordingPath,
+            )
+        }
     }
     
     /**
-     * Handles content updates from the RichTextEditor.
+     * Handles content updates from the RichTextEditor with performance optimizations.
      * This method processes changes from the rich text editor and synchronizes
      * them with the existing text formatting system.
      */
     fun onUpdateRichContent() {
+        val oldContent = _editorPresentationState.value.content.text
         syncContentFromRichText()
         val currentState = _editorPresentationState.value
-        createOrUpdateEvent(
-            title = currentState.content.text,
-            content = currentState.content.text,
-            starred = currentState.starred,
-            formatting = currentState.formats,
-            textAlign = currentState.textAlign,
-            recordingPath = currentState.recording.recordingPath,
-        )
+        
+        // Only save if content actually changed
+        if (oldContent != currentState.content.text) {
+            debouncedSave(
+                title = currentState.content.text,
+                content = currentState.content.text,
+                starred = currentState.starred,
+                formatting = currentState.formats,
+                textAlign = currentState.textAlign,
+                recordingPath = currentState.recording.recordingPath,
+            )
+        }
     }
 
     fun onUpdateRecordingPath(recordingPath: String) {
@@ -202,11 +239,49 @@ class TextEditorViewModel(
     }
     
     /**
-     * Synchronizes content from plain text to RichTextState.
+     * Synchronizes content from plain text to RichTextState with debouncing.
      * This ensures both text systems are kept in sync when loading notes.
      */
     private fun syncContentToRichText(content: String) {
-        richTextEditorHelper.setContent(content)
+        // Cancel previous sync job if still pending
+        syncJob?.cancel()
+        
+        // Only sync if content actually changed (performance optimization)
+        val contentHash = content.hashCode()
+        if (contentHash == lastContentHash) return
+        lastContentHash = contentHash
+        
+        syncJob = viewModelScope.launch {
+            delay(SYNC_DEBOUNCE_DELAY)
+            richTextEditorHelper.setContent(content)
+        }
+    }
+    
+    /**
+     * Debounced save operation to improve performance during rapid text changes.
+     */
+    private fun debouncedSave(
+        title: String,
+        content: String,
+        starred: Boolean,
+        formatting: List<TextPresentationFormat>,
+        textAlign: TextAlign,
+        recordingPath: String
+    ) {
+        // Cancel previous save job if still pending
+        saveJob?.cancel()
+        
+        saveJob = viewModelScope.launch {
+            delay(SAVE_DEBOUNCE_DELAY)
+            createOrUpdateEvent(
+                title = title,
+                content = content,
+                starred = starred,
+                formatting = formatting,
+                textAlign = textAlign,
+                recordingPath = recordingPath
+            )
+        }
     }
     
     /**
@@ -348,53 +423,61 @@ class TextEditorViewModel(
     }
 
     fun onToggleBold() {
-        textEditorHelper.toggleFormat(
-            currentState = _editorPresentationState.value,
-            transform = { it.copy(isBold = !it.isBold) },
-            updateState = { newState ->
-                _editorPresentationState.update { newState }
-            }
-        )
-        // Apply to rich text state as well
-        richTextEditorHelper.toggleBold()
-        refreshSelection()
+        executeFormattingCommand("Toggle Bold") {
+            textEditorHelper.toggleFormat(
+                currentState = _editorPresentationState.value,
+                transform = { it.copy(isBold = !it.isBold) },
+                updateState = { newState ->
+                    _editorPresentationState.update { newState }
+                }
+            )
+            // Apply to rich text state as well
+            richTextEditorHelper.toggleBold()
+            refreshSelection()
+        }
     }
 
     fun onToggleItalic() {
-        textEditorHelper.toggleFormat(
-            currentState = _editorPresentationState.value,
-            transform = { it.copy(isItalic = !it.isItalic) },
-            updateState = { newState ->
-                _editorPresentationState.update { newState }
-            }
-        )
-        // Apply to rich text state as well
-        richTextEditorHelper.toggleItalic()
-        refreshSelection()
+        executeFormattingCommand("Toggle Italic") {
+            textEditorHelper.toggleFormat(
+                currentState = _editorPresentationState.value,
+                transform = { it.copy(isItalic = !it.isItalic) },
+                updateState = { newState ->
+                    _editorPresentationState.update { newState }
+                }
+            )
+            // Apply to rich text state as well
+            richTextEditorHelper.toggleItalic()
+            refreshSelection()
+        }
     }
 
     fun setTextSize(size: Float) {
-        textEditorHelper.toggleFormat(
-            currentState = _editorPresentationState.value,
-            transform = { it.copy(textSize = size) },
-            updateState = { newState ->
-                _editorPresentationState.update { newState }
-            }
-        )
-        refreshSelection()
+        executeFormattingCommand("Set Text Size $size") {
+            textEditorHelper.toggleFormat(
+                currentState = _editorPresentationState.value,
+                transform = { it.copy(textSize = size) },
+                updateState = { newState ->
+                    _editorPresentationState.update { newState }
+                }
+            )
+            refreshSelection()
+        }
     }
 
     fun onToggleUnderline() {
-        textEditorHelper.toggleFormat(
-            currentState = _editorPresentationState.value,
-            transform = { it.copy(isUnderline = !it.isUnderline) },
-            updateState = { newState ->
-                _editorPresentationState.update { newState }
-            }
-        )
-        // Apply to rich text state as well
-        richTextEditorHelper.toggleUnderline()
-        refreshSelection()
+        executeFormattingCommand("Toggle Underline") {
+            textEditorHelper.toggleFormat(
+                currentState = _editorPresentationState.value,
+                transform = { it.copy(isUnderline = !it.isUnderline) },
+                updateState = { newState ->
+                    _editorPresentationState.update { newState }
+                }
+            )
+            // Apply to rich text state as well
+            richTextEditorHelper.toggleUnderline()
+            refreshSelection()
+        }
     }
 
     private fun refreshSelection() {
@@ -407,44 +490,50 @@ class TextEditorViewModel(
     }
 
     fun onSetAlignment(alignment: TextAlign) {
-        _editorPresentationState.update { it.copy(textAlign = alignment) }
-        // Apply to rich text state as well
-        richTextEditorHelper.setAlignment(alignment)
-        val content = _editorPresentationState.value.content
-        val formats = _editorPresentationState.value.formats
-        val textAlign = _editorPresentationState.value.textAlign
-        val starred = _editorPresentationState.value.starred
-        val recordingPath = _editorPresentationState.value.recording.recordingPath
-        if (content.text.isNotEmpty()) {
-            createOrUpdateEvent(
-                title = content.text,
-                content = content.text,
-                starred = starred,
-                formatting = formats,
-                textAlign = textAlign,
-                recordingPath = recordingPath
-            )
+        executeFormattingCommand("Set Alignment $alignment") {
+            _editorPresentationState.update { it.copy(textAlign = alignment) }
+            // Apply to rich text state as well
+            richTextEditorHelper.setAlignment(alignment)
+            val content = _editorPresentationState.value.content
+            val formats = _editorPresentationState.value.formats
+            val textAlign = _editorPresentationState.value.textAlign
+            val starred = _editorPresentationState.value.starred
+            val recordingPath = _editorPresentationState.value.recording.recordingPath
+            if (content.text.isNotEmpty()) {
+                createOrUpdateEvent(
+                    title = content.text,
+                    content = content.text,
+                    starred = starred,
+                    formatting = formats,
+                    textAlign = textAlign,
+                    recordingPath = recordingPath
+                )
+            }
         }
     }
 
     fun onToggleBulletList() {
-        textEditorHelper.toggleBulletList(
-            currentState = _editorPresentationState.value,
-            updateState = { newState ->
-                _editorPresentationState.update { newState }
-            }
-        )
-        // Apply to rich text state as well
-        richTextEditorHelper.toggleUnorderedList()
+        executeFormattingCommand("Toggle Bullet List") {
+            textEditorHelper.toggleBulletList(
+                currentState = _editorPresentationState.value,
+                updateState = { newState ->
+                    _editorPresentationState.update { newState }
+                }
+            )
+            // Apply to rich text state as well
+            richTextEditorHelper.toggleUnorderedList()
+        }
     }
     
     /**
      * Toggles ordered list formatting using the RichTextEditor.
      */
     fun onToggleOrderedList() {
-        richTextEditorHelper.toggleOrderedList()
-        // Sync changes back to traditional state
-        onUpdateRichContent()
+        executeFormattingCommand("Toggle Ordered List") {
+            richTextEditorHelper.toggleOrderedList()
+            // Sync changes back to traditional state
+            onUpdateRichContent()
+        }
     }
     
     /**
@@ -453,7 +542,18 @@ class TextEditorViewModel(
      * @param level The heading level (1-6)
      */
     fun onAddHeading(level: Int) {
-        richTextEditorHelper.addHeading(level)
+        executeFormattingCommand("Add Heading $level") {
+            richTextEditorHelper.addHeading(level)
+            // Sync changes back to traditional state
+            onUpdateRichContent()
+        }
+    }
+    
+    /**
+     * Sets the current text to body/paragraph style.
+     */
+    fun onSetBodyText() {
+        richTextEditorHelper.setBodyText()
         // Sync changes back to traditional state
         onUpdateRichContent()
     }
@@ -462,13 +562,47 @@ class TextEditorViewModel(
      * Clears all rich text formatting.
      */
     fun onClearFormatting() {
-        richTextEditorHelper.clearFormatting()
-        // Also clear traditional formatting
-        _editorPresentationState.update {
-            it.copy(formats = emptyList())
+        executeFormattingCommand("Clear Formatting") {
+            richTextEditorHelper.clearFormatting()
+            // Also clear traditional formatting
+            _editorPresentationState.update {
+                it.copy(formats = emptyList())
+            }
+            // Sync changes back
+            onUpdateRichContent()
         }
-        // Sync changes back
-        onUpdateRichContent()
+    }
+    
+    /**
+     * Toggles strikethrough formatting on selected text.
+     */
+    fun onToggleStrikethrough() {
+        executeFormattingCommand("Toggle Strikethrough") {
+            richTextEditorHelper.toggleStrikethrough()
+            refreshSelection()
+        }
+    }
+    
+    /**
+     * Toggles code block formatting on selected text.
+     */
+    fun onToggleCodeBlock() {
+        executeFormattingCommand("Toggle Code Block") {
+            richTextEditorHelper.toggleCodeBlock()
+            // Sync changes back to traditional state
+            onUpdateRichContent()
+        }
+    }
+    
+    /**
+     * Toggles quote block formatting on selected text.
+     */
+    fun onToggleQuoteBlock() {
+        executeFormattingCommand("Toggle Quote Block") {
+            richTextEditorHelper.toggleQuoteBlock()
+            // Sync changes back to traditional state
+            onUpdateRichContent()
+        }
     }
     
     /**
@@ -482,8 +616,145 @@ class TextEditorViewModel(
             isUnderlined = richTextEditorHelper.isSelectionUnderlined(),
             isUnorderedList = richTextEditorHelper.isUnorderedList(),
             isOrderedList = richTextEditorHelper.isOrderedList(),
-            currentAlignment = richTextEditorHelper.getCurrentAlignment()
+            currentAlignment = richTextEditorHelper.getCurrentAlignment(),
+            currentHeadingLevel = richTextEditorHelper.getCurrentHeadingLevel(),
+            isStrikethrough = richTextEditorHelper.isSelectionStrikethrough(),
+            isCodeBlock = richTextEditorHelper.isCodeBlock(),
+            isQuoteBlock = richTextEditorHelper.isQuoteBlock()
         )
+    }
+    
+    /**
+     * Undoes the last text editing operation.
+     */
+    fun onUndo() {
+        viewModelScope.launch {
+            undoRedoManager.undo()?.let { commandResult ->
+                when (commandResult) {
+                    is com.module.notelycompose.notes.domain.TextEditCommandResult.Success -> {
+                        updateEditorStateFromCommandResult(commandResult)
+                    }
+                    is com.module.notelycompose.notes.domain.TextEditCommandResult.Failure -> {
+                        // Handle undo failure - could show error message
+                        println("Undo failed: ${commandResult.error}")
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Redoes the last undone text editing operation.
+     */
+    fun onRedo() {
+        viewModelScope.launch {
+            undoRedoManager.redo()?.let { commandResult ->
+                when (commandResult) {
+                    is com.module.notelycompose.notes.domain.TextEditCommandResult.Success -> {
+                        updateEditorStateFromCommandResult(commandResult)
+                    }
+                    is com.module.notelycompose.notes.domain.TextEditCommandResult.Failure -> {
+                        // Handle redo failure - could show error message
+                        println("Redo failed: ${commandResult.error}")
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Updates the editor state based on the result of an undo/redo command.
+     */
+    private fun updateEditorStateFromCommandResult(result: TextEditCommandResult.Success) {
+        // Update the content
+        _editorPresentationState.update {
+            it.copy(content = TextFieldValue(result.newContent))
+        }
+        
+        // Sync to rich text state
+        syncContentToRichText(result.newContent)
+        
+        // Save the changes
+        onUpdateContent(newContent = _editorPresentationState.value.content)
+    }
+    
+    /**
+     * Executes a formatting command with undo/redo support and performance optimizations.
+     * @param description Description of the command for undo/redo
+     * @param action The formatting action to execute
+     */
+    private fun executeFormattingCommand(description: String, action: () -> Unit) {
+        val beforeState = _editorPresentationState.value
+        val beforeContent = beforeState.content.text
+        val beforeFormats = beforeState.formats
+        val beforeAlignment = beforeState.textAlign
+        
+        // Execute the formatting action
+        action()
+        
+        val afterState = _editorPresentationState.value
+        val afterContent = afterState.content.text
+        val afterFormats = afterState.formats
+        val afterAlignment = afterState.textAlign
+        
+        // Only create command if there were actual changes (performance optimization)
+        val hasContentChange = beforeContent != afterContent
+        val hasFormatChange = beforeFormats != afterFormats
+        val hasAlignmentChange = beforeAlignment != afterAlignment
+        
+        if (hasContentChange || hasFormatChange || hasAlignmentChange) {
+            val commands = mutableListOf<TextEditCommand>()
+            
+            if (hasContentChange) {
+                commands.add(
+                    FormatCommand(
+                        oldText = beforeContent,
+                        newText = afterContent
+                    )
+                )
+            }
+            
+            if (commands.isNotEmpty()) {
+                val compositeCommand = if (commands.size == 1) {
+                    commands[0]
+                } else {
+                    CompositeCommand(commands)
+                }
+                
+                compositeCommand.description = description
+                viewModelScope.launch {
+                    undoRedoManager.executeCommand(compositeCommand)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Creates a command for content updates with undo/redo support.
+     */
+    private fun createContentUpdateCommand(oldContent: String, newContent: String) {
+        if (oldContent != newContent) {
+            val command = FormatCommand(
+                oldText = oldContent,
+                newText = newContent
+            ).apply {
+                description = "Text Update"
+            }
+            
+            viewModelScope.launch {
+                undoRedoManager.executeCommand(command)
+            }
+        }
+    }
+    
+    /**
+     * Cleanup method to cancel pending operations and prevent memory leaks.
+     * Should be called when the ViewModel is being cleared.
+     */
+    override fun onCleared() {
+        super.onCleared()
+        saveJob?.cancel()
+        syncJob?.cancel()
     }
 }
 

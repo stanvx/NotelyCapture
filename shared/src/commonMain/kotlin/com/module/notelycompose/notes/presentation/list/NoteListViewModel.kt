@@ -25,7 +25,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
 
 const val DEFAULT_TITLE = "New Note"
 const val DEFAULT_CONTENT = "No additional text"
@@ -132,10 +134,12 @@ class NoteListViewModel(
         filter: String,
         query: String
     ) {
-        // Map notes to presentation models with async duration calculation
+        // Map notes to presentation models with parallel processing for better performance
         val presentationNotes = notes.map { note ->
-            domainToPresentationModel(note)
-        }
+            viewModelScope.async(Dispatchers.Default) {
+                domainToPresentationModel(note)
+            }
+        }.awaitAll()
 
         _state.update { currentState ->
             currentState.copy(

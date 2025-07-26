@@ -97,6 +97,32 @@ class RichTextAccessibilityManager(
                     true
                 } else false
             }
+            Key.Four, Key.Five, Key.Six -> {
+                if (event.isShiftPressed) {
+                    val level = when (event.key) {
+                        Key.Four -> 4
+                        Key.Five -> 5
+                        Key.Six -> 6
+                        else -> 4
+                    }
+                    onAction(AccessibilityAction.ApplyHeading(level))
+                    true
+                } else false
+            }
+            Key.R -> {
+                onAction(AccessibilityAction.ToggleCodeBlock)
+                true
+            }
+            Key.Q -> {
+                onAction(AccessibilityAction.ToggleQuoteBlock)
+                true
+            }
+            Key.X -> {
+                if (event.isShiftPressed) {
+                    onAction(AccessibilityAction.Strikethrough)
+                    true
+                } else false
+            }
             Key.Backslash -> {
                 onAction(AccessibilityAction.ClearFormatting)
                 true
@@ -104,6 +130,37 @@ class RichTextAccessibilityManager(
             Key.Slash -> {
                 if (event.isShiftPressed) {
                     onAction(AccessibilityAction.ShowKeyboardShortcuts)
+                    true
+                } else false
+            }
+            Key.Z -> {
+                if (event.isShiftPressed) {
+                    onAction(AccessibilityAction.Redo)
+                    true
+                } else {
+                    onAction(AccessibilityAction.Undo)
+                    true
+                }
+            }
+            Key.A -> {
+                onAction(AccessibilityAction.SelectAll)
+                true
+            }
+            Key.C -> {
+                if (event.isCtrlPressed || event.isMetaPressed) {
+                    onAction(AccessibilityAction.Copy)
+                    true
+                } else false
+            }
+            Key.V -> {
+                if (event.isCtrlPressed || event.isMetaPressed) {
+                    onAction(AccessibilityAction.Paste)
+                    true
+                } else false
+            }
+            Key.X -> {
+                if (event.isCtrlPressed || event.isMetaPressed) {
+                    onAction(AccessibilityAction.Cut)
                     true
                 } else false
             }
@@ -172,6 +229,15 @@ sealed class AccessibilityAction {
     object ShowKeyboardShortcuts : AccessibilityAction()
     object FocusNextButton : AccessibilityAction()
     object FocusPreviousButton : AccessibilityAction()
+    object ToggleCodeBlock : AccessibilityAction()
+    object ToggleQuoteBlock : AccessibilityAction()
+    object Strikethrough : AccessibilityAction()
+    object Undo : AccessibilityAction()
+    object Redo : AccessibilityAction()
+    object SelectAll : AccessibilityAction()
+    object Copy : AccessibilityAction()
+    object Paste : AccessibilityAction()
+    object Cut : AccessibilityAction()
 }
 
 /**
@@ -189,7 +255,19 @@ enum class RichTextButtonType(val description: String) {
     HEADING_1("Heading level 1"),
     HEADING_2("Heading level 2"),
     HEADING_3("Heading level 3"),
-    CLEAR_FORMATTING("Clear all formatting")
+    HEADING_4("Heading level 4"),
+    HEADING_5("Heading level 5"),
+    HEADING_6("Heading level 6"),
+    CLEAR_FORMATTING("Clear all formatting"),
+    CODE_BLOCK("Code block"),
+    QUOTE_BLOCK("Quote block"),
+    STRIKETHROUGH("Strikethrough"),
+    UNDO("Undo"),
+    REDO("Redo"),
+    SELECT_ALL("Select all"),
+    COPY("Copy"),
+    PASTE("Paste"),
+    CUT("Cut")
 }
 
 /**
@@ -343,8 +421,20 @@ fun KeyboardShortcutsOverlay(
             "Ctrl+Shift+1" to "Heading 1",
             "Ctrl+Shift+2" to "Heading 2",
             "Ctrl+Shift+3" to "Heading 3",
+            "Ctrl+Shift+4" to "Heading 4",
+            "Ctrl+Shift+5" to "Heading 5",
+            "Ctrl+Shift+6" to "Heading 6",
             "Ctrl+\\" to "Clear Formatting",
-            "Ctrl+Shift+/" to "Show Shortcuts"
+            "Ctrl+Shift+/" to "Show Shortcuts",
+            "Ctrl+R" to "Code Block",
+            "Ctrl+Q" to "Quote Block",
+            "Ctrl+Shift+X" to "Strikethrough",
+            "Ctrl+Z" to "Undo",
+            "Ctrl+Shift+Z" to "Redo",
+            "Ctrl+A" to "Select All",
+            "Ctrl+C" to "Copy",
+            "Ctrl+V" to "Paste",
+            "Ctrl+X" to "Cut"
         )
     }
     

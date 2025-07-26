@@ -4,46 +4,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * Audio-reactive animation component displaying a beautiful gradient orb
- * that responds to real-time audio amplitude data.
- * 
- * Platform-specific implementation:
- * - Android: Uses Lottie animation with ai-bot-large.json
- * - iOS: Uses fallback implementation (for now)
+ * Modern AudioReactiveLottie component with high-performance audio visualization.
  * 
  * Features:
- * - Real-time audio amplitude visualization 
- * - Beautiful gradient design with pink/blue/white colors
- * - Smooth progress-based animation control for responsive audio feedback
- * - Full-size display without additional UI elements
- * - Optimized performance for real-time audio visualization
+ * - Real-time audio amplitude visualization using recording-visual.lottie
+ * - Beautiful gradient design with reactive colors and smooth animations
+ * - Optimized performance with state hoisting and efficient recomposition
+ * - Two-state behavior: idle breathing effect and reactive recording visualization
+ * - Smooth transitions with amplitude-based speed and scale animations
+ * - Software rendering for proper gradient and blur effect support
+ * 
+ * Platform-specific implementation:
+ * - Android: Uses dotLottie with modern Compose state management
+ * - iOS: Uses fallback implementation (for now)
  */
 @Composable
 expect fun AudioReactiveLottie(
     modifier: Modifier = Modifier,
-    amplitude: Float = 0f,
-    isRecording: Boolean = false,
-    amplitudeSensitivity: Float = 1.2f,
-    minProgress: Float = 0.2f,  // Resting state (20% of animation)
-    maxProgress: Float = 0.9f   // Max amplitude state (90% of animation)
+    amplitude: Float = 0f,        // Normalized amplitude value (0.0f to 1.0f)
+    isRecording: Boolean = false  // Recording state for behavior switching
 )
-
-/**
- * Simplified version for quick recording feedback.
- * Uses the same beautiful gradient animation with optimized settings.
- */
-@Composable
-fun SimpleAudioReactiveLottie(
-    modifier: Modifier = Modifier,
-    amplitude: Float = 0f,
-    isRecording: Boolean = false
-) {
-    AudioReactiveLottie(
-        modifier = modifier,
-        amplitude = amplitude,
-        isRecording = isRecording,
-        amplitudeSensitivity = 1.0f,  // Standard sensitivity
-        minProgress = 0.25f,  // Slightly larger resting state
-        maxProgress = 0.85f   // Slightly smaller max for subtlety
-    )
-}

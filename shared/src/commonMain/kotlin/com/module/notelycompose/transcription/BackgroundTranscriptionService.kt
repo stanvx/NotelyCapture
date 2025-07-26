@@ -101,10 +101,10 @@ class BackgroundTranscriptionService(
                 
                 // Monitor transcription progress and wait for completion
                 transcriptionViewModel.uiState.collect { uiState ->
-                    if (!uiState.inTranscription && !cleanupCompleted && uiState.originalText.isNotEmpty()) {
+                    if (!uiState.inTranscription && !cleanupCompleted) {
                         cleanupCompleted = true
                         
-                        // Create note with transcribed content
+                        // Create note with transcribed content (handles empty transcription)
                         val noteId = try {
                             createNoteFromTranscription(
                                 transcribedText = uiState.originalText,
@@ -173,6 +173,7 @@ class BackgroundTranscriptionService(
     
     /**
      * Create a new note with the transcribed content and empty title for smart UI-based naming
+     * Handles empty transcriptions by creating audio-only notes
      */
     private suspend fun createNoteFromTranscription(
         transcribedText: String,
@@ -181,11 +182,24 @@ class BackgroundTranscriptionService(
         // Use empty title to leverage existing UI smart title generation from content
         val title = ""
         
-        debugPrintln { "BackgroundTranscriptionService: Creating note with empty title for smart naming" }
+        // Handle empty transcriptions by providing placeholder content
+        val content = if (transcribedText.isBlank()) {
+            "[Audio recording - transcription unavailable]"
+        } else {
+            transcribedText
+        }
+        
+        debugPrintln { 
+            if (transcribedText.isBlank()) {
+                "BackgroundTranscriptionService: Creating audio-only note (empty transcription)"
+            } else {
+                "BackgroundTranscriptionService: Creating note with transcribed content"
+            }
+        }
         
         return insertNoteUseCase.execute(
             title = title,
-            content = transcribedText,
+            content = content,
             starred = false,
             formatting = emptyList(), // No special formatting for quick records
             textAlign = TextAlignDomainModel.Left,

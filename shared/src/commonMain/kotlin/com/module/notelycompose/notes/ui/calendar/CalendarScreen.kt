@@ -145,15 +145,6 @@ fun CalendarScreen(
     // Memoize calendar data calculations
     val calendarData by remember(notesState.filteredNotes, currentMonth, selectedDate) {
         derivedStateOf {
-            // Debug validation - can be disabled in production
-            if (notesState.filteredNotes.isNotEmpty()) {
-                val debugInfo = CalendarDateMatcher.debugNotesForDate(
-                    notes = notesState.filteredNotes.map { it.id to it.createdAt },
-                    targetDate = selectedDate
-                )
-                println(debugInfo)
-            }
-            
             CalendarData(
                 notesForSelectedDate = notesState.filteredNotes.filter { note ->
                     CalendarDateMatcher.matchesDate(
@@ -167,6 +158,17 @@ fun CalendarScreen(
                 selectedDate = selectedDate,
                 currentMonth = currentMonth
             )
+        }
+    }
+    
+    // Debug logging moved outside derivedStateOf to reduce duplicate processing
+    LaunchedEffect(notesState.filteredNotes, selectedDate) {
+        if (notesState.filteredNotes.isNotEmpty()) {
+            val debugInfo = CalendarDateMatcher.debugNotesForDate(
+                notes = notesState.filteredNotes.map { it.id to it.createdAt },
+                targetDate = selectedDate
+            )
+            println(debugInfo)
         }
     }
     

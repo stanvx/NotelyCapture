@@ -7,9 +7,9 @@ import android.os.Environment
 import androidx.core.content.ContextCompat
 import audio.utils.LauncherHolder
 import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import com.module.notelycompose.utils.decodeWaveFile
 import com.whispercpp.whisper.WhisperCallback
-import com.whispercpp.whisper.WhisperContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -17,17 +17,21 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.resume
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 actual class Transcriber(
     private val context: Context,
     private val launcherHolder: LauncherHolder
-) {
+) : KoinComponent {
     private var canTranscribe: Boolean = false
     private var isTranscribing = false
     private var isFinished = false // Track if resources have been released
     private val modelsPath = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-    private var whisperContext: WhisperContext? = null
     private var permissionContinuation: ((Boolean) -> Unit)? = null
+    
+    // Inject the WhisperModelLoader from Koin
+    private val whisperModelLoader: WhisperModelLoader by inject()
 
 
     actual fun hasRecordingPermission(): Boolean {
@@ -64,62 +68,25 @@ actual class Transcriber(
     actual suspend fun initialize() {
         debugPrintln{"speech: initialize model"}
         isFinished = false // Reset finished state when reinitializing
-        loadBaseModel()
-    }
-
-    private suspend fun loadBaseModel(){
-        debugPrintln{"Loading model...\n"}
-        try {
-            // Release any existing context before creating a new one
-            whisperContext?.let { existingContext ->
-                debugPrintln { "Transcriber: Releasing existing whisper context before loading new model" }
-                existingContext.release()
-            }
-            
-            val firstModel = File(modelsPath, "ggml-base.bin")
-            whisperContext = WhisperContext.createContextFromFile(firstModel.absolutePath)
-            canTranscribe = true
-            debugPrintln { "Transcriber: Model loaded successfully" }
-        } catch (e: Exception) {
-            debugPrintln { "Transcriber: Error loading model: ${e.message}" }
-            whisperContext = null
-            canTranscribe = false
-            throw e
-        }
+        // Model loading is now handled by WhisperModelManager
+        // This method is kept for compatibility but actual loading happens in the manager
+        canTranscribe = whisperModelLoader.doesModelExist()
+        debugPrintln { "Transcriber: Model availability checked, canTranscribe=$canTranscribe" }
     }
 
     actual fun doesModelExists() : Boolean{
-        val firstModel = File(modelsPath, "ggml-base.bin")
-        return firstModel.exists()
+        return whisperModelLoader.doesModelExist()
     }
 
     actual fun isValidModel() : Boolean{
-        try {
-            val firstModel = File(modelsPath, "ggml-base.bin")
-            if (!firstModel.exists()) {
-                return false
-            }
-            
-            // Try to create a temporary context just for validation
-            val tempContext = WhisperContext.createContextFromFile(firstModel.absolutePath)
-            
-            // If we got here, the model is valid. Clean up the temp context
-            // Note: We do this synchronously in a runBlocking since this is a validation method
-            runBlocking {
-                tempContext.release()
-            }
-            return true
-        } catch (e: Exception) {
-            debugPrintln { "Transcriber: Model validation failed: ${e.message}" }
-            return false
-        }
+        return whisperModelLoader.isValidModel()
     }
 
     actual suspend fun stop() {
         debugPrintln { "Transcriber: stop() called" }
         isTranscribing = false
         try {
-            whisperContext?.stopTranscription()
+            whisperModelLoader.getContext().stopTranscription()
             debugPrintln { "Transcriber: transcription stopped successfully" }
         } catch (e: Exception) {
             debugPrintln { "Transcriber: Error stopping transcription: ${e.message}" }
@@ -127,7 +94,7 @@ actual class Transcriber(
     }
 
     actual suspend fun finish() {
-        debugPrintln { "Transcriber: finish() called - releasing whisper context" }
+        debugPrintln { "Transcriber: finish() called" }
         
         // Prevent double cleanup
         if (isFinished) {
@@ -135,19 +102,11 @@ actual class Transcriber(
             return
         }
         
-        try {
-            whisperContext?.let { context ->
-                context.release()
-                debugPrintln { "Transcriber: whisper context released successfully" }
-            }
-        } catch (e: Exception) {
-            debugPrintln { "Transcriber: Error releasing whisper context: ${e.message}" }
-        } finally {
-            whisperContext = null
-            canTranscribe = false
-            isFinished = true
-            debugPrintln { "Transcriber: whisper context set to null, marked as finished" }
-        }
+        // Don't release the shared context anymore - it's managed by WhisperModelManager
+        // Just reset local state
+        canTranscribe = false
+        isFinished = true
+        debugPrintln { "Transcriber: local state reset, shared context remains managed by WhisperModelManager" }
     }
 
     actual suspend fun start(
@@ -173,7 +132,7 @@ actual class Transcriber(
             
             // Execute transcription on IO dispatcher to avoid blocking
             withContext(Dispatchers.IO) {
-                val text = whisperContext?.transcribeData(data, language, callback = object : WhisperCallback{
+                val text = whisperModelLoader.getContext().transcribeData(data, language, callback = object : WhisperCallback{
                     override fun onNewSegment(startMs: Long, endMs: Long, text: String) {
                         // Switch to main thread for callback invocation to ensure UI updates are safe
                         kotlinx.coroutines.MainScope().launch {

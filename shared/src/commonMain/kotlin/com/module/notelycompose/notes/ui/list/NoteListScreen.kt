@@ -210,8 +210,11 @@ private fun NoteListWithHeader(
             }
         }
         
-        // Note items
-        itemsIndexed(items = noteList) { index, note ->
+        // Note items with stable keys for proper virtualization
+        itemsIndexed(
+            items = noteList,
+            key = { _, note -> note.id } // Stable key prevents unnecessary recomposition
+        ) { index, note ->
             EnhancedNoteItem(
                 note = note,
                 onNoteClick = { noteId ->

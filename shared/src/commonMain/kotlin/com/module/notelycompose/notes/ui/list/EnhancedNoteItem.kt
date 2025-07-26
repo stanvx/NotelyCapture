@@ -65,9 +65,15 @@ fun EnhancedNoteItem(
     var isExpanded by remember { mutableStateOf(false) }
     val hapticFeedback = LocalHapticFeedback.current
     
-    // Staggered entrance animation
-    LaunchedEffect(index) {
-        delay(index * 50L) // 50ms delay between items
+    // Calendar-style immediate visibility - no staggered delay during scroll
+    LaunchedEffect(note.id) {
+        // Only animate first few items on initial load for small lists
+        // This prevents scroll lag while maintaining visual appeal for initial load
+        val shouldAnimate = index < 8 // Only first 8 items get animation
+        if (shouldAnimate) {
+            val staggerDelay = index * 15L // Reduced to 15ms per item
+            delay(staggerDelay)
+        }
         isVisible = true
     }
     

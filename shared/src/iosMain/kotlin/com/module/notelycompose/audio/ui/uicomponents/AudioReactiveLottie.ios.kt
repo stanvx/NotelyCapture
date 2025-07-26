@@ -29,10 +29,11 @@ actual fun AudioReactiveLottie(
     modifier: Modifier,
     amplitude: Float,
     isRecording: Boolean,
-    amplitudeSensitivity: Float,
-    minProgress: Float,
-    maxProgress: Float
 ) {
+    // Default values for iOS implementation
+    val amplitudeSensitivity = 2.5f
+    val minProgress = 0.2f
+    val maxProgress = 1.0f
     // Debug amplitude data flow
     LaunchedEffect(amplitude, isRecording) {
         if (isRecording && amplitude > 0f) {

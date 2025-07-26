@@ -201,26 +201,20 @@ fun NoteListHeader(
 }
 
 /**
- * Animated note count display with smooth transitions.
+ * Note count display with immediate updates (no counting animation).
  */
 @Composable
 private fun AnimatedNoteCount(
     count: Int,
     textColor: Color
 ) {
-    val animatedCount by animateIntAsState(
-        targetValue = count,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    )
-    
+    // Display the count immediately without animation to prevent counting up/down
+    // when switching between filters (starred ↔ all)
     Text(
-        text = when (animatedCount) {
+        text = when (count) {
             0 -> "Start capturing ideas"
             1 -> "1 note captured"
-            else -> "$animatedCount notes captured"
+            else -> "$count notes captured"
         },
         style = MaterialTheme.typography.bodyLarge,
         color = textColor,

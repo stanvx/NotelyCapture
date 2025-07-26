@@ -16,10 +16,10 @@ Fix IllegalStateException: Method setCurrentState must be called on the main thr
 
 ## Acceptance Criteria
 
-- [ ] Error no longer occurs during quick record flow
-- [ ] Navigation callbacks execute on main thread
-- [ ] Transcription callbacks execute on main thread
-- [ ] All UI state changes happen on main thread
+- [x] Error no longer occurs during quick record flow
+- [x] Navigation callbacks execute on main thread
+- [x] Transcription callbacks execute on main thread
+- [x] All UI state changes happen on main thread
 
 ## Implementation Plan
 

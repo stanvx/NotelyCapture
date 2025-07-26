@@ -70,6 +70,7 @@ fun BottomRichTextToolbar(
     onToggleOrderedList: () -> Unit,
     onToggleUnorderedList: () -> Unit,
     onAddHeading: (Int) -> Unit,
+    onSetBodyText: () -> Unit,
     onClearFormatting: () -> Unit,
     isKeyboardVisible: Boolean = true,
     modifier: Modifier = Modifier
@@ -134,7 +135,9 @@ fun BottomRichTextToolbar(
                         
                         is BottomToolbarGroup.Headings -> {
                             HeadingButtonGroup(
-                                onAddHeading = onAddHeading
+                                currentHeadingLevel = formattingState.currentHeadingLevel,
+                                onAddHeading = onAddHeading,
+                                onSetBodyText = onSetBodyText
                             )
                         }
                         
@@ -288,6 +291,7 @@ fun KeyboardAwareBottomRichTextToolbar(
     onToggleOrderedList: () -> Unit,
     onToggleUnorderedList: () -> Unit,
     onAddHeading: (Int) -> Unit,
+    onSetBodyText: () -> Unit,
     onClearFormatting: () -> Unit,
     onKeyboardDismiss: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -304,6 +308,7 @@ fun KeyboardAwareBottomRichTextToolbar(
         onToggleOrderedList = onToggleOrderedList,
         onToggleUnorderedList = onToggleUnorderedList,
         onAddHeading = onAddHeading,
+        onSetBodyText = onSetBodyText,
         onClearFormatting = {
             onClearFormatting()
             // Optionally dismiss keyboard after clearing formatting
