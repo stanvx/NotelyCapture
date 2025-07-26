@@ -1,19 +1,24 @@
 ---
 id: task-046
 title: Enhance Calendar UI with Material 3 Expressive Design
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@me'
 created_date: '2025-07-26'
+updated_date: '2025-07-26'
 labels: []
 dependencies: []
 ---
+
+## Description
+
 # task-046 - Enhance Calendar UI with Material 3 Expressive Design
 
 ## Description
 
 Transform the calendar interface to fully embrace Material 3 Expressive design patterns, making it more visually engaging and accessible while maintaining excellent usability. The current calendar has a good foundation but lacks proper Material 3 interaction patterns and expressive visual elements.
 
-**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material%203%20Expressive%20Design%20Implementation%20Guide.md) - Section "Calendar Components"
+**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material-3-Expressive-Design-Implementation-Guide.md) - Section "Calendar Components"
 
 ## Acceptance Criteria
 
