@@ -1,12 +1,16 @@
 ---
 id: task-044
 title: Fix Critical Security Vulnerabilities in Rich Text System
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@trentstanton'
 created_date: '2025-07-26'
+updated_date: '2025-07-26'
 labels: []
 dependencies: []
 ---
+
+## Description
 
 # task-044 - Fix Critical Security Vulnerabilities in Rich Text System
 
@@ -18,7 +22,7 @@ dependencies: []
 
 These vulnerabilities could allow malicious users to execute scripts or access arbitrary files on the device.
 
-**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material%203%20Expressive%20Design%20Implementation%20Guide.md) - Section "Rich Text Editor System > Security Enhancements"
+**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material-3-Expressive-Design-Implementation-Guide.md) - Section "Rich Text Editor System > Security Enhancements"
 
 ## Acceptance Criteria
 
