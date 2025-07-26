@@ -1,9 +1,10 @@
 ---
 id: task-038
 title: Improve home page scrolling and UI enhancements
-status: To Do
+status: Superseded
 assignee: []
 created_date: '2025-07-22'
+updated_date: '2025-07-26'
 labels: []
 dependencies: []
 ---
@@ -19,3 +20,7 @@ Enhance the home page user experience by fixing scrolling behavior, improving la
 - [ ] Note cards have improved sizing closer to screen edges
 - [ ] Voice note cards include play/pause controls with audio scrubbing
 - [ ] Calendar entries use proper microphone icon instead of star for voice notes
+
+## Implementation Notes
+
+Requirements integrated into task-042 which provides more comprehensive home page improvements including Material 3 design consistency and advanced audio controls integration
