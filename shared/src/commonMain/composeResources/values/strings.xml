@@ -72,6 +72,7 @@
 
     <!-- Note List -->
     <string name="note_list_add_note">Add Note</string>
+    <string name="note_list_quick_record">Quick Record</string>
 
     <!-- Search Bar -->
     <string name="search_bar_search_text">Search notes...</string>
@@ -167,6 +168,57 @@
     <string name="language_selection_supported_languages">SUPPORTED LANGUAGES</string>
     <string name="language_selection_search">Search</string>
     <string name="language_selection_select_language">Select Language</string>
+
+    <!-- Feedback System Strings -->
+    <!-- General Feedback -->
+    <string name="feedback_error_retry">Retry</string>
+    <string name="feedback_error_dismiss">Dismiss</string>
+    <string name="feedback_loading">Loading...</string>
+    <string name="feedback_success">Success</string>
+
+    <!-- Recording Feedback -->
+    <string name="feedback_recording_initializing">Preparing to record...</string>
+    <string name="feedback_recording_stopping">Finalizing recording...</string>
+    <string name="feedback_recording_success">Recording saved successfully</string>
+    <string name="feedback_recording_paused">Recording Paused</string>
+    <string name="feedback_recording_permission_required">Microphone Permission Required</string>
+    <string name="feedback_recording_grant_permission">Grant Permission</string>
+
+    <!-- Transcription Feedback -->
+    <string name="feedback_transcription_initializing">Preparing transcription...</string>
+    <string name="feedback_transcription_processing">Transcribing Audio</string>
+    <string name="feedback_transcription_complete">Transcription Complete</string>
+    <string name="feedback_transcription_append">Append to Note</string>
+    <string name="feedback_transcription_view_original">View Original</string>
+    <string name="feedback_transcription_view_summary">View Summary</string>
+
+    <!-- Note Operations Feedback -->
+    <string name="feedback_note_saving">Saving note...</string>
+    <string name="feedback_note_saved">Note saved</string>
+    <string name="feedback_note_deleting">Deleting note...</string>
+    <string name="feedback_note_deleted">Note deleted</string>
+    <string name="feedback_note_sharing">Preparing to share...</string>
+    <string name="feedback_note_shared">Note shared successfully</string>
+    <string name="feedback_note_archiving">Archiving note...</string>
+    <string name="feedback_note_archived">Note archived</string>
+    <string name="feedback_note_unarchiving">Unarchiving note...</string>
+    <string name="feedback_note_unarchived">Note restored</string>
+    <string name="feedback_note_searching">Searching notes...</string>
+    <string name="feedback_note_bulk_deleting">Deleting selected notes...</string>
+    <string name="feedback_note_bulk_deleted">Notes deleted</string>
+    <string name="feedback_note_bulk_archiving">Archiving selected notes...</string>
+    <string name="feedback_note_bulk_archived">Notes archived</string>
+
+    <!-- Permission and Error Messages -->
+    <string name="feedback_permission_microphone_required">Microphone permission is required to record audio notes</string>
+    <string name="feedback_error_storage_unavailable">Insufficient storage space available</string>
+    <string name="feedback_error_audio_device_unavailable">Microphone is not available</string>
+    <string name="feedback_error_file_save_error">Unable to save file</string>
+    <string name="feedback_error_transcription_model_not_loaded">Transcription model is not ready</string>
+    <string name="feedback_error_audio_file_corrupted">Audio file appears to be corrupted</string>
+    <string name="feedback_error_processing_timeout">Processing took too long, please try again</string>
+    <string name="feedback_error_network_error">Network connection error</string>
+    <string name="feedback_error_unknown">An unexpected error occurred</string>
 
 
 </resources>

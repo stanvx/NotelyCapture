@@ -136,6 +136,62 @@ class NoteSqlDelightDataSource(
         queries
             .deleteNoteById(id)
     }
+
+    // Optimized search methods that combine filtering and search at database level
+    override fun searchNotes(query: String): CommonFlow<List<NoteDataModel>> {
+        return queries
+            .searchAllNotes(query)
+            .asFlow()
+            .mapToList()
+            .map { notes ->
+                notes.map { note ->
+                    note.toNoteDataModel(json)
+                }
+            }.toCommonFlow()
+    }
+
+    override fun searchStarredNotes(query: String): CommonFlow<List<NoteDataModel>> {
+        return queries
+            .searchStarredNotes(query)
+            .asFlow()
+            .mapToList()
+            .map { notes ->
+                notes.map { note ->
+                    note.toNoteDataModel(json)
+                }
+            }.toCommonFlow()
+    }
+
+    override fun searchVoiceNotes(query: String): CommonFlow<List<NoteDataModel>> {
+        return queries
+            .searchVoiceNotes(query)
+            .asFlow()
+            .mapToList()
+            .map { notes ->
+                notes.map { note ->
+                    note.toNoteDataModel(json)
+                }
+            }.toCommonFlow()
+    }
+
+    // Pagination support methods
+    override fun getNotesPaged(limit: Long, offset: Long): CommonFlow<List<NoteDataModel>> {
+        return queries
+            .getNotesPaged(limit, offset)
+            .asFlow()
+            .mapToList()
+            .map { notes ->
+                notes.map { note ->
+                    note.toNoteDataModel(json)
+                }
+            }.toCommonFlow()
+    }
+
+    override suspend fun getNotesCount(): Long {
+        return queries
+            .getNotesCount()
+            .executeAsOne()
+    }
 }
 
 fun Boolean.starredToDigit(): Long {

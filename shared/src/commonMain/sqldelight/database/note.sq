@@ -9,8 +9,22 @@ CREATE TABLE notesEntity(
     created_at INTEGER NOT NULL
 );
 
+-- Performance indexes for frequently queried columns
+CREATE INDEX idx_notes_created_at ON notesEntity(created_at DESC);
+CREATE INDEX idx_notes_starred ON notesEntity(starred);
+CREATE INDEX idx_notes_recording_path ON notesEntity(recording_path);
+CREATE INDEX idx_notes_starred_created_at ON notesEntity(starred, created_at DESC);
+CREATE INDEX idx_notes_content_search ON notesEntity(content);
+
 getAllNotes:
 SELECT * FROM notesEntity ORDER BY created_at DESC;
+
+-- Pagination queries for better performance with large datasets
+getNotesPaged:
+SELECT * FROM notesEntity ORDER BY created_at DESC LIMIT :limit OFFSET :offset;
+
+getNotesCount:
+SELECT COUNT(*) FROM notesEntity;
 
 getNoteById:
 SELECT * FROM notesEntity WHERE id = :id;
@@ -46,10 +60,42 @@ LIMIT 1;
 getNotesByStarred:
 SELECT * FROM notesEntity WHERE starred = :starred ORDER BY created_at DESC;
 
+getNotesByStarredPaged:
+SELECT * FROM notesEntity WHERE starred = :starred ORDER BY created_at DESC LIMIT :limit OFFSET :offset;
+
 getNotesByRecordingPath:
 SELECT * FROM notesEntity WHERE recording_path != '' ORDER BY created_at DESC;
+
+getNotesByRecordingPathPaged:
+SELECT * FROM notesEntity WHERE recording_path != '' ORDER BY created_at DESC LIMIT :limit OFFSET :offset;
 
 getNotesByContent:
 SELECT * FROM notesEntity
 WHERE content LIKE :query || '%'
+ORDER BY created_at DESC;
+
+getNotesByContentPaged:
+SELECT * FROM notesEntity
+WHERE content LIKE :query || '%'
+ORDER BY created_at DESC LIMIT :limit OFFSET :offset;
+
+-- Optimized search queries combining filtering and search at database level
+searchAllNotes:
+SELECT * FROM notesEntity
+WHERE (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%')
+ORDER BY created_at DESC;
+
+searchAllNotesPaged:
+SELECT * FROM notesEntity
+WHERE (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%')
+ORDER BY created_at DESC LIMIT :limit OFFSET :offset;
+
+searchStarredNotes:
+SELECT * FROM notesEntity
+WHERE starred = 1 AND (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%')
+ORDER BY created_at DESC;
+
+searchVoiceNotes:
+SELECT * FROM notesEntity
+WHERE recording_path != '' AND (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%')
 ORDER BY created_at DESC;

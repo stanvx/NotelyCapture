@@ -3,14 +3,23 @@ package com.module.notelycompose.notes.presentation.mapper
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import kotlinx.datetime.LocalDateTime
 
 private const val TIME_STRING = "at"
 private const val PAD_START_LENGTH = 2
 private const val PAD_CHARACTER = '0'
 
-class NotePresentationMapper {
-    fun mapToPresentationModel(domainModel: NoteDomainModel): NotePresentationModel {
+class NotePresentationMapper(
+    private val audioPlayer: PlatformAudioPlayer
+) {
+    suspend fun mapToPresentationModel(domainModel: NoteDomainModel): NotePresentationModel {
+        val audioDuration = if (domainModel.recordingPath.isNotEmpty()) {
+            getAudioDuration(domainModel.recordingPath)
+        } else {
+            0
+        }
+        
         return NotePresentationModel(
             id = domainModel.id,
             title = domainModel.title,
@@ -19,7 +28,8 @@ class NotePresentationMapper {
             isVoice = domainModel.recordingPath.isNotEmpty(),
             createdAt = completeTime(domainModel.createdAt),
             recordingPath = domainModel.recordingPath,
-            words = countWords(domainModel.content)
+            words = countWords(domainModel.content),
+            audioDurationMs = audioDuration
         )
     }
 
@@ -44,6 +54,19 @@ class NotePresentationMapper {
         return str.trim().split("\\s+".toRegex()).size
     }
 
+    private suspend fun getAudioDuration(recordingPath: String): Int {
+        return if (recordingPath.isNotEmpty()) {
+            try {
+                audioPlayer.prepare(recordingPath)
+            } catch (e: Exception) {
+                println("Failed to get audio duration for $recordingPath: ${e.message}")
+                0
+            }
+        } else {
+            0
+        }
+    }
+
     fun mapToUiModel(presentationModel: NotePresentationModel): NoteUiModel {
         return NoteUiModel(
             id = presentationModel.id,
@@ -53,7 +76,8 @@ class NotePresentationMapper {
             isVoice = presentationModel.isVoice,
             createdAt = presentationModel.createdAt,
             recordingPath = presentationModel.recordingPath,
-            words = presentationModel.words
+            words = presentationModel.words,
+            audioDurationMs = presentationModel.audioDurationMs
         )
     }
 }

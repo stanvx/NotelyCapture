@@ -12,6 +12,7 @@ import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.platform.PlatformUtils
 import com.module.notelycompose.platform.Transcriber
 import com.module.notelycompose.platform.dataStore
+import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.drivers.native.NativeSqliteDriver
 import org.koin.core.qualifier.named
@@ -41,6 +42,8 @@ actual val platformModule = module {
     single { Downloader() }
 
     single { Transcriber() }
+    
+    single { WhisperModelLoader() }
 
     // domain
     single<AudioRecorderInteractor> { AudioRecorderInteractorImpl(get(), get()) }

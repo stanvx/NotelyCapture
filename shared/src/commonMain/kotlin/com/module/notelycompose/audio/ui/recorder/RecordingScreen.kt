@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,10 +34,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.module.notelycompose.audio.ui.uicomponents.AudioReactiveLottie
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,8 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioRecorderViewModel
+import com.module.notelycompose.core.constants.AppConstants
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+import com.module.notelycompose.transcription.BackgroundTranscriptionService
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.HandlePlatformBackNavigation
 import com.module.notelycompose.platform.getPlatform
@@ -73,7 +77,10 @@ import com.module.notelycompose.resources.vectors.IcPause
 import com.module.notelycompose.resources.vectors.IcRecorder
 import com.module.notelycompose.resources.vectors.Images
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class ScreenState {
@@ -87,13 +94,21 @@ fun RecordingScreen(
     noteId: Long?,
     navigateBack: () -> Unit,
     viewModel: AudioRecorderViewModel = koinViewModel(),
-    editorViewModel: TextEditorViewModel
+    editorViewModel: TextEditorViewModel = koinViewModel(),
+    isQuickRecordMode: Boolean = false,
+    backgroundTranscriptionService: BackgroundTranscriptionService = koinInject()
 ) {
-    val recordingState by viewModel.audioRecorderPresentationState.collectAsState()
-    var screenState by remember { mutableStateOf(ScreenState.Initial) }
+    val recordingState by viewModel.audioRecorderPresentationState.collectAsStateWithLifecycle()
+    var screenState by remember { mutableStateOf(if (isQuickRecordMode) ScreenState.Recording else ScreenState.Initial) }
 
     DisposableEffect(Unit){
         viewModel.setupRecorder()
+        // Auto-start recording in quick record mode
+        if (isQuickRecordMode) {
+            viewModel.onStartRecording(noteId) {
+                // Already in Recording state, no state change needed
+            }
+        }
         onDispose {
             viewModel.onStopRecording()
             viewModel.finishRecorder()
@@ -119,26 +134,85 @@ fun RecordingScreen(
                 onStopRecording = viewModel::onStopRecording
             )
 
-            ScreenState.Recording -> RecordingInProgressScreen(
-                counterTimeString = recordingState.recordCounterString,
-                onStopRecording = {
-                    debugPrintln { "onStop recording" }
-                    viewModel.onStopRecording()
-                    screenState = ScreenState.Success
-                },
-                onNavigateBack = navigateBack,
-                isRecordPaused = recordingState.isRecordPaused,
-                onPauseRecording = viewModel::onPauseRecording,
-                onResumeRecording = viewModel::onResumeRecording
-            )
+            ScreenState.Recording -> {
+                if (isQuickRecordMode) {
+                    QuickRecordingScreen(
+                        counterTimeString = recordingState.recordCounterString,
+                        currentAmplitude = recordingState.currentAmplitude,
+                        onStopRecording = {
+                            debugPrintln { "onStop quick recording" }
+                            viewModel.onStopRecording()
+                            screenState = ScreenState.Success
+                        },
+                        onNavigateBack = {
+                            viewModel.onStopRecording()
+                            navigateBack()
+                        }
+                    )
+                } else {
+                    RecordingInProgressScreen(
+                        counterTimeString = recordingState.recordCounterString,
+                        currentAmplitude = recordingState.currentAmplitude,
+                        onStopRecording = {
+                            debugPrintln { "onStop recording" }
+                            viewModel.onStopRecording()
+                            screenState = ScreenState.Success
+                        },
+                        onNavigateBack = navigateBack,
+                        isRecordPaused = recordingState.isRecordPaused,
+                        onPauseRecording = viewModel::onPauseRecording,
+                        onResumeRecording = viewModel::onResumeRecording
+                    )
+                }
+            }
 
             ScreenState.Success -> {
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
-                    delay(2000)
-                    debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
-                    editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
-                    navigateBack()
+                    if (isQuickRecordMode) {
+                        // Wait for recording path to be available using reactive approach with race condition protection
+                        val recordingPath = withTimeoutOrNull(AppConstants.Recording.RECORDING_PATH_TIMEOUT) {
+                            // Add small delay to ensure state updates are processed
+                            delay(AppConstants.Audio.RACE_CONDITION_DELAY)
+                            // Check current state first in case recording completed before we started waiting
+                            val currentState = viewModel.audioRecorderPresentationState.value
+                            if (currentState.recordingPath.isNotEmpty()) {
+                                currentState.recordingPath
+                            } else {
+                                // Wait for state update if path is not yet available
+                                viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }.recordingPath
+                            }
+                        }
+                        
+                        if (!recordingPath.isNullOrEmpty()) {
+                            debugPrintln { "Quick record completed: $recordingPath" }
+                            
+                            backgroundTranscriptionService.startTranscription(
+                                audioFilePath = recordingPath,
+                                onComplete = { noteId ->
+                                    debugPrintln { "Background transcription completed for note: $noteId" }
+                                    // Navigate back to note list after successful transcription and note creation
+                                    navigateBack()
+                                },
+                                onError = { error ->
+                                    debugPrintln { "Background transcription failed: ${error.message}" }
+                                    // Still update editor with recording path and navigate back
+                                    editorViewModel.onUpdateRecordingPath(recordingPath)
+                                    navigateBack()
+                                }
+                            )
+                        } else {
+                            debugPrintln { "Quick record failed: Recording path not available after ${AppConstants.Recording.RECORDING_PATH_TIMEOUT}" }
+                            // Fallback: navigate back without transcription
+                            navigateBack()
+                        }
+                    } else {
+                        // Traditional flow with configured delay
+                        delay(AppConstants.Recording.TRADITIONAL_FLOW_DELAY)
+                        debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
+                        editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
+                        navigateBack()
+                    }
                 }
             }
 
@@ -170,32 +244,33 @@ private fun RecordingInitialScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(bottom = 80.dp)
+                .padding(bottom = AppConstants.UI.BOTTOM_PADDING_DP.dp)
                 .align(Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(AppConstants.UI.LARGE_BUTTON_SIZE_DP.dp)
                     .clip(CircleShape)
-                    .background(Color.Green)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { onTapToRecord() },
                 contentAlignment = Alignment.Center
             ) {
                 androidx.compose.material3.Icon(
                     imageVector = Images.Icons.IcRecorder,
                     contentDescription = stringResource(Res.string.recording_ui_microphone),
-                    tint = LocalCustomColors.current.bodyBackgroundColor,
-                    modifier = Modifier.size(32.dp)
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(36.dp)
                 )
             }
 
             Text(
                 text = stringResource(Res.string.recording_ui_tap_start_record),
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                color = LocalCustomColors.current.bodyContentColor,
-                modifier = Modifier.padding(top = 16.dp)
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 16.dp),
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
@@ -204,6 +279,7 @@ private fun RecordingInitialScreen(
 @Composable
 private fun RecordingInProgressScreen(
     counterTimeString: String,
+    currentAmplitude: Float,
     onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit,
     onPauseRecording: () -> Unit,
@@ -224,28 +300,32 @@ private fun RecordingInProgressScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(AppConstants.UI.STANDARD_SPACING_DP.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(200.dp)
-            ) {
-                LoadingAnimation(
-                    isRecordPaused = isRecordPaused
-                )
-                Text(
-                    text = counterTimeString,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Normal,
-                    color = LocalCustomColors.current.bodyContentColor
-                )
-            }
+            // Main recording indicator - full-size gradient animation
+            AudioReactiveLottie(
+                amplitude = if (isRecordPaused) 0f else currentAmplitude,
+                isRecording = !isRecordPaused,
+                modifier = Modifier
+                    .size(AppConstants.UI.LARGE_RECORDING_ANIMATION_DP.dp)  // Large, prominent size for beautiful gradient display
+            )
+            
+            // Timer display positioned below the animation
+            Text(
+                text = counterTimeString,
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 32.sp
+            )
+            
         }
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 80.dp)
+                .padding(bottom = AppConstants.UI.BOTTOM_PADDING_DP.dp)
                 .align(Alignment.BottomCenter),
             contentAlignment = Alignment.Center
         ) {
@@ -259,54 +339,61 @@ private fun RecordingInProgressScreen(
 
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
-                            .padding(vertical = 2.dp, horizontal = 2.dp),
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = CircleShape
+                            )
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                if (isRecordPaused) {
+                                    onResumeRecording()
+                                } else {
+                                    onPauseRecording()
+                                }
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (!isRecordPaused) Images.Icons.IcPause else Icons.Filled.PlayArrow,
-                            contentDescription = stringResource(Res.string.transcription_icon),
-                            tint = LocalCustomColors.current.bodyContentColor,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clickable {
-                                    if (isRecordPaused) {
-                                        onResumeRecording()
-                                    } else {
-                                        onPauseRecording()
-                                    }
-                                }
+                            contentDescription = if (!isRecordPaused) "Pause recording" else "Resume recording",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .border(2.dp, LocalCustomColors.current.bodyContentColor, CircleShape)
-                            .padding(2.dp),
+                            .background(
+                                color = MaterialTheme.colorScheme.error,
+                                shape = CircleShape
+                            )
+                            .clickable { onStopRecording() },
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.Red)
-                                .clickable {
-                                    onStopRecording()
-                                }
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.onError)
                         )
                     }
                 }
 
                 Text(
                     text = stringResource(Res.string.recording_ui_tap_stop_record),
-                    color = LocalCustomColors.current.bodyContentColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(top = 24.dp)
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 24.dp),
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -368,7 +455,7 @@ internal fun RecordingSuccessScreen() {
             animationPlayed = true
         }
 
-        Canvas(modifier = Modifier.size(100.dp)) {
+        Canvas(modifier = Modifier.size(AppConstants.UI.SUCCESS_ANIMATION_DP.dp)) {
             val path = Path().apply {
 
                 addArc(
@@ -443,10 +530,103 @@ private fun RecordingUiComponentBackButton(
                 tint = LocalCustomColors.current.bodyContentColor
             )
             Spacer(modifier = Modifier.width(8.dp))
-            androidx.compose.material.Text(
+            Text(
                 text = stringResource(Res.string.top_bar_back),
-                style = androidx.compose.material.MaterialTheme.typography.body1,
+                style = MaterialTheme.typography.bodyMedium,
                 color = LocalCustomColors.current.bodyContentColor
+            )
+        }
+    }
+}
+
+/**
+ * Minimal recording interface for quick record mode.
+ * Shows a streamlined UI with recording visualization and stop button.
+ */
+@Composable
+private fun QuickRecordingScreen(
+    counterTimeString: String,
+    currentAmplitude: Float,
+    onStopRecording: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalCustomColors.current.bodyBackgroundColor)
+    ) {
+        // Simple back button
+        IconButton(
+            onClick = onNavigateBack,
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.TopStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(Res.string.top_bar_back),
+                tint = LocalCustomColors.current.bodyContentColor
+            )
+        }
+
+        // Central recording interface
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Recording status indicator
+            Text(
+                text = "Recording...",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Audio visualization - reuse the existing AudioReactiveLottie
+            AudioReactiveLottie(
+                amplitude = currentAmplitude,
+                isRecording = true,
+                modifier = Modifier.size(AppConstants.UI.MEDIUM_RECORDING_ANIMATION_DP.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Recording timer
+            Text(
+                text = counterTimeString,
+                style = MaterialTheme.typography.headlineMedium,
+                color = LocalCustomColors.current.bodyContentColor,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Large stop button
+            Box(
+                modifier = Modifier
+                    .size(AppConstants.UI.LARGE_BUTTON_SIZE_DP.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+                    .clickable { onStopRecording() },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(AppConstants.UI.SMALL_ICON_SIZE_DP.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.onError)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(Res.string.recording_ui_tap_stop_record),
+                style = MaterialTheme.typography.bodyLarge,
+                color = LocalCustomColors.current.bodyContentColor.copy(alpha = 0.7f)
             )
         }
     }

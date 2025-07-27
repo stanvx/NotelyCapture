@@ -15,10 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -150,8 +148,8 @@ fun LanguageSelectionScreen(
                     )
                 },
                 leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
+                    MaterialIcon(
+                        symbol = MaterialSymbols.Search,
                         contentDescription = "Search",
                         tint = LocalCustomColors.current.languageSearchBorderColor
                     )
@@ -167,11 +165,11 @@ fun LanguageSelectionScreen(
                                     CircleShape
                                 )
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear",
+                            MaterialIcon(
+                                symbol = MaterialSymbols.Clear,
+                                contentDescription = "Clear search",
                                 tint = LocalCustomColors.current.languageSearchCancelIconTintColor,
-                                modifier = Modifier.size(14.dp)
+                                size = 14.dp
                             )
                         }
                     }
@@ -246,11 +244,11 @@ fun LanguageSelectionScreen(
                                             modifier = Modifier.weight(1f)
                                         )
                                         if(languageEntry.key == previousSelectedLanguage) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
+                                            MaterialIcon(
+                                                symbol = MaterialSymbols.Check,
                                                 contentDescription = "Selected",
                                                 tint = LocalCustomColors.current.languageListTextColor,
-                                                modifier = Modifier.size(20.dp)
+                                                size = 20.dp
                                             )
                                         }
                                     }

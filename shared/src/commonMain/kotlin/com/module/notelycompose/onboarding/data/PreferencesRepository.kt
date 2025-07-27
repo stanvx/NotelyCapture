@@ -19,14 +19,27 @@ class PreferencesRepository(
 
     companion object {
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        private val KEY_MODEL_SETUP_COMPLETED = booleanPreferencesKey("model_setup_completed")
         private val KEY_LANGUAGE = stringPreferencesKey("language")
         private val KEY_THEME = stringPreferencesKey("theme")
+        private val KEY_ACCENT_COLOR = stringPreferencesKey("accent_color")
         private val KEY_MODEL_DOWNLOAD_ID= longPreferencesKey("model_download_id")
         private val KEY_PLAYBACK_SPEED = floatPreferencesKey("playback_speed")
         
         // Playback speed validation constants
         val VALID_PLAYBACK_SPEEDS = setOf(1.0f, 1.5f, 2.0f)
         const val DEFAULT_PLAYBACK_SPEED = 1.0f
+        
+        // Accent color validation constants
+        val VALID_ACCENT_COLORS = setOf(
+            "Material Red",
+            "Material Green", 
+            "Material Blue",
+            "Material Purple",
+            "Material Orange",
+            "Material Teal"
+        )
+        const val DEFAULT_ACCENT_COLOR = "Material Blue"
     }
 
     suspend fun hasCompletedOnboarding(): Boolean {
@@ -37,6 +50,16 @@ class PreferencesRepository(
     suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { prefs ->
             prefs[KEY_ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    suspend fun hasCompletedModelSetup(): Boolean {
+        return dataStore.data.first()[KEY_MODEL_SETUP_COMPLETED] ?: false
+    }
+
+    suspend fun setModelSetupCompleted(completed: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_MODEL_SETUP_COMPLETED] = completed
         }
     }
 
@@ -87,6 +110,23 @@ class PreferencesRepository(
         
         dataStore.edit { prefs ->
             prefs[KEY_PLAYBACK_SPEED] = speed
+        }
+    }
+
+    fun getAccentColor(): Flow<String> = dataStore.data.map { prefs ->
+        prefs[KEY_ACCENT_COLOR] ?: DEFAULT_ACCENT_COLOR
+    }
+
+    suspend fun setAccentColor(accentColor: String) {
+        // Validate accent color
+        if (accentColor !in VALID_ACCENT_COLORS) {
+            throw IllegalArgumentException(
+                "Invalid accent color: $accentColor. Valid colors: $VALID_ACCENT_COLORS"
+            )
+        }
+        
+        dataStore.edit { prefs ->
+            prefs[KEY_ACCENT_COLOR] = accentColor
         }
     }
 }

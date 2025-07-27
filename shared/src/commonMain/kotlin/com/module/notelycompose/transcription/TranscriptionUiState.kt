@@ -9,7 +9,11 @@ data class TranscriptionUiState(
     val originalText: String = "",
     val progress: Int = 0,
     val downloaded: String = "0 MB ",
-    val total: String = "0 MB"
+    val total: String = "0 MB",
+    val estimatedTimeRemaining: String? = null,
+    val processingDuration: String? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null
 )
 
 sealed class TranscriptionEffect() {

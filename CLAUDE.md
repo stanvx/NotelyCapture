@@ -27,13 +27,21 @@ This is a personalized fork of the original "Notely Voice" project, focused on s
 # Build all targets (Android + iOS)
 ./gradlew build
 
-# Run Android tests
-./gradlew testDebug
+# Run tests
+./gradlew testDebugUnitTest
+./gradlew testReleaseUnitTest
+
+# Lint and code quality checks
+./gradlew ktlintCheck
+./gradlew ktlintFormat
 
 # Build specific modules
 ./gradlew :shared:build
 ./gradlew :core:audio:build
 ./gradlew :lib:build
+
+# Run single test file (example)
+./gradlew :shared:testDebugUnitTest --tests "*NoteViewModelTest"
 ```
 
 ### Project Setup
@@ -187,10 +195,28 @@ For signed releases, configure these GitHub repository secrets:
 - **DataStore**: 1.1.7 (Preferences)
 - **Navigation Compose**: 2.9.0-beta03
 - **Material 3**: Design system
+- **dotLottie Android**: 0.9.2
+- **Rich Text Editor**: 1.0.0-rc13 (Compose rich text editing)
+- **OWASP HTML Sanitizer**: Security for rich text content
 
 ### Audio Processing
 - **Whisper C++ Library**: Integrated via JNI and C-interop
 - **Platform-specific audio**: AVAudioEngine (iOS), MediaRecorder (Android)
+- **AudioWaveformExtractor**: Real-time amplitude data extraction
+- **AmplitudeCollector**: Audio visualization data collection
+
+### Animation System
+- **dotLottie**: Modern Lottie library with full gradient support
+- **Audio Reactive Animations**: Real-time amplitude visualization
+- **AudioReactiveLottie**: Synchronized Lottie animations with audio amplitude
+- **Performance**: Optimized for real-time audio synchronization
+
+### Testing Framework
+- **Kotlin Test**: Built-in multiplatform testing
+- **Koin Test**: Dependency injection testing utilities
+- **Test structure**: `commonTest/`, `androidInstrumentedTest/`, `iosTest/`
+- **Security Testing**: Validation for security vulnerabilities
+- **Performance Testing**: Typography and memory optimization tests
 
 ## Development Guidelines
 
@@ -203,66 +229,51 @@ For signed releases, configure these GitHub repository secrets:
 - **Upstream Contributions**: Only contribute generic bug fixes or widely applicable features to the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) repository
 - **Branch Strategy**: Use feature branches for development, merge to `main` when ready
 
-#### Feature Development Process
-
-**MANDATORY: Each feature must be developed on a separate feature branch and merged via Pull Request.**
-
-```bash
-# 1. Create and switch to new feature branch
-git checkout -b feature/your-feature-name
-
-# 2. Develop your feature with commits
-git add .
-git commit -m "feat: implement core functionality"
-git commit -m "test: add comprehensive tests"
-git commit -m "docs: update documentation"
-
-# 3. Push feature branch to origin
-git push -u origin feature/your-feature-name
-
-# 4. Create Pull Request within this fork
-gh pr create --base main --head feature/your-feature-name --repo stanvx/NotelyCapture \
-  --title "feat: Add [feature description]" \
-  --body "## Summary
-Brief description of the feature
-
-## Changes
-- List of key changes
-- New functionality added
-- Tests included
-
-## Testing
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] Manual testing completed"
-
-# 5. After PR approval and merge, clean up
-git checkout main
-git pull origin main
-git branch -d feature/your-feature-name
-git push origin --delete feature/your-feature-name
-```
-
-#### Branch Naming Conventions
-- **Features**: `feature/description` (e.g., `feature/logseq-integration`)
-- **Bug fixes**: `fix/description` (e.g., `fix/audio-recording-crash`)
-- **Refactoring**: `refactor/description` (e.g., `refactor/viewmodel-cleanup`)
-- **Documentation**: `docs/description` (e.g., `docs/api-documentation`)
-
-**CRITICAL: When creating PRs, always specify the base repository explicitly:**
-```bash
-# ✅ CORRECT - Create PR within this fork
-gh pr create --base main --head feature-branch --repo stanvx/NotelyCapture
-
-# ❌ WRONG - This creates PR against upstream by default
-gh pr create --title "..." --body "..."
-```
-
 ### Code Style
 - Follow Kotlin coding conventions
 - Use `camelCase` for functions, `PascalCase` for types
 - Prefer immutable data structures
 - Use explicit typing where it aids clarity
+- **Automated formatting**: Run `./gradlew ktlintFormat` before committing
+- **Code quality**: Ensure `./gradlew ktlintCheck` passes before submitting PRs
+
+### Development Hooks Integration
+The project includes a Makefile for integration with development hooks:
+```bash
+# Lint specific files (called automatically by hooks)
+make lint FILE=path/to/file.kt
+
+# Run tests for specific files
+make test FILE=path/to/file.kt
+
+# Check all linting
+make lint-all
+
+# Run all tests
+make test-all
+
+# Check integration setup
+make check-integration
+```
+
+### Task Management with Backlog.md
+The project uses Backlog.md CLI tool for task management:
+```bash
+# List tasks
+backlog task list --plain
+
+# View task details
+backlog task 042 --plain
+
+# Create new task
+backlog task create "Task title" -d "Description" --ac "Acceptance criteria"
+
+# Edit task status
+backlog task edit 042 -s "In Progress" -a @yourself
+
+# Mark task complete
+backlog task edit 042 -s Done --notes "Implementation summary"
+```
 
 ### Layer Boundaries
 - Always respect architectural boundaries: UI → Presentation → Domain → Data
@@ -274,6 +285,15 @@ gh pr create --title "..." --body "..."
 - Test ViewModels through their public interfaces
 - Use factory functions for test data creation
 - Follow the project's testing patterns and conventions
+- **Test commands**: `./gradlew testDebugUnitTest` for unit tests
+- **Lint commands**: `./gradlew ktlintCheck` and `./gradlew ktlintFormat`
+- Tests are located in `shared/src/commonTest/`, `shared/src/androidInstrumentedTest/`, `shared/src/iosTest/`
+
+### Security Considerations
+- **HTML Sanitization**: Rich text content is sanitized using OWASP HTML Sanitizer
+- **Resource Management**: Proper cleanup of native resources (Whisper models, audio streams)
+- **Threading Safety**: Audio operations use appropriate threading patterns
+- **Data Validation**: Input validation for audio files and text content
 
 ### Platform-Specific Code
 - Use `expect/actual` for platform-specific functionality
@@ -285,6 +305,31 @@ gh pr create --title "..." --body "..."
 - Maintain state immutability
 - Handle loading, success, and error states consistently
 
+## Module Structure
+
+The project uses a modular architecture with the following key modules:
+
+- **`:shared`** - Main application module containing all business logic and UI
+  - `androidMain/` - Android-specific implementations
+  - `commonMain/` - Shared code across platforms
+  - `iosMain/` - iOS-specific implementations
+  - `commonTest/` - Shared tests
+- **`:core:audio`** - Audio processing and recording functionality
+- **`:lib`** - Whisper C++ integration and JNI bindings
+- **`:iosApp`** - iOS application wrapper
+
+### Source Set Layout (Kotlin Multiplatform V2)
+```
+shared/src/
+├── androidMain/kotlin/          # Android implementations
+├── androidInstrumentedTest/     # Android integration tests
+├── commonMain/kotlin/           # Shared business logic & UI
+├── commonTest/kotlin/           # Shared unit tests
+├── iosMain/kotlin/              # iOS implementations
+├── iosTest/kotlin/              # iOS-specific tests
+└── nativeInterop/cinterop/      # C interop definitions
+```
+
 ## Prerequisites
 
 - **Android Studio Ladybug** or newer
@@ -292,6 +337,39 @@ gh pr create --title "..." --body "..."
 - **JDK 17** or higher
 - **Kotlin 2.2.0** or higher
 - **NDK 27.0.12077973** (Android Native Development Kit)
+
+## Key Application Features
+
+### Core Audio Architecture
+- **AudioRecorderInteractor**: Core audio recording business logic with platform-specific implementations
+- **AudioWaveformExtractor**: Real-time amplitude extraction for visualization
+- **AmplitudeCollector**: Audio data collection and processing
+- **AudioReactiveLottie**: Synchronized animations with audio amplitude
+- **Variable Speed Playback**: 1x, 1.5x, 2x playback speeds for audio notes
+- **Background Recording Service**: Android service for continuous audio recording
+
+### Note Management System
+- **Clean Architecture**: Separated into Data, Domain, Presentation, and UI layers
+- **SQLDelight**: Type-safe database operations with reactive queries
+- **Rich Text Editor**: Advanced formatting with toolbar and accessibility features
+- **Quick Record**: Streamlined audio capture workflow with quick shortcuts
+- **Note Organization**: Filtering by starred, voice notes, recent, with search capabilities
+- **Undo/Redo System**: Text editing history management
+
+### Speech Recognition & AI
+- **Whisper Integration**: Local speech-to-text with multiple model sizes
+- **Offline Transcription**: Works without internet connectivity
+- **Multi-language Support**: 50+ languages supported
+- **Background Transcription**: Non-blocking transcription processing
+- **AI Summarization**: Text summarization using TF-IDF algorithms
+
+### UI Components Structure
+- **Design System**: Material 3 with custom theming and expressive design
+- **Unified Components**: Shared UI components across the application
+- **Material Symbols**: Font-based icon system for consistent styling
+- **Responsive Layouts**: Optimized for different screen sizes and orientations
+- **Performance Optimizations**: LazyVerticalStaggeredGrid for note lists
+- **Animation System**: Motion tokens and unified animations
 
 ## Personalization Notes
 
@@ -310,38 +388,6 @@ To ensure easy synchronization with the upstream repository:
 2. **Core Architecture**: Maintain the existing clean architecture structure
 3. **File Structure**: Avoid moving or renaming core files unnecessarily
 4. **Git Attributes**: Use `.gitattributes` for automatic conflict resolution on personalized files
-
-### Upstream Sync Process
-
-**Using the Helper Script (Recommended):**
-```bash
-# Interactive sync with safety checks and options
-./upstream-sync.sh
-
-# The script provides options to:
-# 1. Preview changes before merging
-# 2. Merge with automatic conflict resolution
-# 3. Create test branch for safe experimentation
-# 4. Handles .gitattributes merge rules automatically
-```
-
-**Manual Process:**
-```bash
-# Regular sync process
-git fetch upstream
-git merge upstream/main
-
-# Handle naming conflicts manually if needed
-# The .gitattributes file will prefer your changes for UI-related files
-# and upstream changes for core functionality
-
-# Review changes before committing
-git status
-git diff
-
-# Commit the merge
-git commit -m "Merge upstream changes while preserving Notely Capture personalization"
-```
 
 ### Files Modified for Personalization
 
@@ -396,7 +442,7 @@ They should be testable and confirm that the core purpose of the task is achieve
 ### Task file
 
 Once a task is created it will be stored in `backlog/tasks/` directory as a Markdown file with the format
-`task-<id> - <title>.md` (e.g. `task-42 - Add GraphQL resolver.md`).
+`task-<id> - <title>.md` (e.g. `task-042 - Add GraphQL resolver.md`).
 
 ### Additional task requirements
 
@@ -416,7 +462,7 @@ Once a task is created it will be stored in `backlog/tasks/` directory as a Mark
 ## 3. Recommended Task Anatomy
 
 ```markdown
-# task‑42 - Add GraphQL resolver
+# task‑042 - Add GraphQL resolver
 
 ## Description (the why)
 
@@ -465,21 +511,21 @@ implement something that is not in the AC, update the AC first and then implemen
 backlog task list -s "To Do" --plain
 
 # 2 Read details & documentation
-backlog task 42 --plain
+backlog task 042 --plain
 # Read also all documentation files in `backlog/docs/` directory.
 # Read also all decision files in `backlog/decisions/` directory.
 
 # 3 Start work: assign yourself & move column
-backlog task edit 42 -a @{yourself} -s "In Progress"
+backlog task edit 042 -a @{yourself} -s "In Progress"
 
 # 4 Add implementation plan before starting
-backlog task edit 42 --plan "1. Analyze current implementation\n2. Identify bottlenecks\n3. Refactor in phases"
+backlog task edit 042 --plan "1. Analyze current implementation\n2. Identify bottlenecks\n3. Refactor in phases"
 
 # 5 Break work down if needed by creating subtasks or additional tasks
 backlog task create "Refactor DB layer" -p 42 -a @{yourself} -d "Description" --ac "Tests pass,Performance improved"
 
 # 6 Complete and mark Done
-backlog task edit 42 -s Done --notes "Implemented GraphQL resolver with error handling and performance monitoring"
+backlog task edit 042 -s Done --notes "Implemented GraphQL resolver with error handling and performance monitoring"
 ```
 
 ### 7. Final Steps Before Marking a Task as Done
