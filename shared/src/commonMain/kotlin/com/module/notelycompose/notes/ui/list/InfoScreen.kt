@@ -108,16 +108,10 @@ fun InfoScreen(
                 .padding(vertical = 0.dp)
                 .background(LocalCustomColors.current.bodyBackgroundColor)
         ) {
-            if (getPlatform().isAndroid) {
-                AndroidNoteTopBar(
-                    title = "",
-                    onNavigateBack = navigateBack
-                )
-            } else {
-                IOSNoteTopBar(
-                    onNavigateBack = navigateBack
-                )
-            }
+            AndroidNoteTopBar(
+                title = "",
+                onNavigateBack = navigateBack
+            )
 
             // List of menu items
             SettingsMenuItem(

@@ -99,7 +99,7 @@ check-integration:
 	@echo "✓ Makefile detected by Claude Code hooks" >&2
 	@echo "  - 'make lint' target: available" >&2
 	@echo "  - 'make test' target: available" >&2
-	@echo "  - Project type: Kotlin Multiplatform (Android/iOS)" >&2
+	@echo "  - Project type: Kotlin Multiplatform (Android-only)" >&2
 	@echo "  - Build system: Gradle" >&2
 	@echo "" >&2
 	@echo "Test integration with:" >&2

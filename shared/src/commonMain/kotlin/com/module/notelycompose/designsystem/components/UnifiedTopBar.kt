@@ -67,7 +67,7 @@ fun DetailTopBar(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
-    showBackButtonText: Boolean = !getPlatform().isAndroid
+    showBackButtonText: Boolean = false
 ) {
     UnifiedTopBar(
         title = title,

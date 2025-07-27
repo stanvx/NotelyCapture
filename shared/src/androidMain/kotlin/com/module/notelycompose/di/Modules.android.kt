@@ -34,7 +34,10 @@ actual val platformModule = module {
     }
     single { FileSaverLauncherHolder() }
     single { FileSaverHandler(get()) }
-    single<Platform> { AndroidPlatform(get(named("AppVersion")), get()) }
+    single<Platform> { 
+        val context: Application = get()
+        AndroidPlatform(get(named("AppVersion")), context) 
+    }
     single { dataStore(get()) }
     single { PlatformUtils(get(), get()) }
     single { BrowserLauncher(get()) }

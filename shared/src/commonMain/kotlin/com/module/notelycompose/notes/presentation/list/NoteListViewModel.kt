@@ -29,17 +29,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Dispatchers
 
-const val DEFAULT_TITLE = "New Note"
-const val DEFAULT_CONTENT = "No additional text"
-const val CONTENT_LENGTH = 36
-private const val SEARCH_DEBOUNCE = 300L
-
 class NoteListViewModel(
     private val getAllNotesUseCase: GetAllNotesUseCase,
     private val deleteNoteById: DeleteNoteById,
     private val notePresentationMapper: NotePresentationMapper,
     private val notesFilterMapper: NotesFilterMapper,
 ) :ViewModel(){
+
+    companion object {
+        private const val DEFAULT_TITLE = "New Note"
+        private const val DEFAULT_CONTENT = "No additional text"
+        private const val CONTENT_LENGTH = 36
+        private const val SEARCH_DEBOUNCE = 300L
+    }
     private val _state = MutableStateFlow(NoteListPresentationState())
     val state: StateFlow<NoteListPresentationState> = _state
 

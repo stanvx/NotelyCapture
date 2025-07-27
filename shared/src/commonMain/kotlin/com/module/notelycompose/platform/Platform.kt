@@ -9,5 +9,6 @@ interface Platform {
 }
 
 expect fun getPlatform(): Platform
+expect fun getPlatform(context: Any?): Platform
 
 expect fun isDebugMode(): Boolean

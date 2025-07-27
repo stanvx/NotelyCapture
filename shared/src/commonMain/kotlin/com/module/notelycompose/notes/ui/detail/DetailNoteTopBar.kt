@@ -70,56 +70,30 @@ fun DetailNoteTopBar(
     var showExistingRecordForRecordConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     
-    if (getPlatform().isAndroid) {
-        DetailAndroidNoteTopBar(
-            title = title,
-            onNavigateBack = onNavigateBack,
-            onShare = onShare,
-            onExportAudio = onExportAudio,
-            onImportClick = {
-                if (!isRecordingExist) {
-                    onImportClick()
-                } else {
-                    showExistingRecordConfirmDialog = true
-                }
-            },
-            onRecordClick = {
-                if (!isRecordingExist) {
-                    onRecordClick()
-                } else {
-                    showExistingRecordForRecordConfirmDialog = true
-                }
-            },
-            onTranscribeClick = onTranscribeClick,
-            onStarClick = onStarClick,
-            onDeleteClick = { showDeleteConfirmDialog = true },
-            isStarred = isStarred
-        )
-    } else {
-        DetailIOSNoteTopBar(
-            onNavigateBack = onNavigateBack,
-            onShare = onShare,
-            onExportAudio = onExportAudio,
-            onImportClick = {
-                if (!isRecordingExist) {
-                    onImportClick()
-                } else {
-                    showExistingRecordConfirmDialog = true
-                }
-            },
-            onRecordClick = {
-                if (!isRecordingExist) {
-                    onRecordClick()
-                } else {
-                    showExistingRecordForRecordConfirmDialog = true
-                }
-            },
-            onTranscribeClick = onTranscribeClick,
-            onStarClick = onStarClick,
-            onDeleteClick = { showDeleteConfirmDialog = true },
-            isStarred = isStarred
-        )
-    }
+    DetailAndroidNoteTopBar(
+        title = title,
+        onNavigateBack = onNavigateBack,
+        onShare = onShare,
+        onExportAudio = onExportAudio,
+        onImportClick = {
+            if (!isRecordingExist) {
+                onImportClick()
+            } else {
+                showExistingRecordConfirmDialog = true
+            }
+        },
+        onRecordClick = {
+            if (!isRecordingExist) {
+                onRecordClick()
+            } else {
+                showExistingRecordForRecordConfirmDialog = true
+            }
+        },
+        onTranscribeClick = onTranscribeClick,
+        onStarClick = onStarClick,
+        onDeleteClick = { showDeleteConfirmDialog = true },
+        isStarred = isStarred
+    )
 
     ReplaceRecordingConfirmationDialog(
         showDialog = showExistingRecordConfirmDialog,
