@@ -7,19 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.twotone.FormatAlignCenter
-import androidx.compose.material.icons.twotone.FormatAlignJustify
-import androidx.compose.material.icons.twotone.FormatAlignLeft
-import androidx.compose.material.icons.twotone.FormatAlignRight
-import androidx.compose.material.icons.twotone.FormatIndentDecrease
-import androidx.compose.material.icons.twotone.FormatIndentIncrease
-import androidx.compose.material.icons.twotone.FormatListBulleted
-import androidx.compose.material.icons.twotone.FormatListNumbered
-import androidx.compose.material.icons.twotone.FormatQuote
-import androidx.compose.material.icons.twotone.HorizontalRule
-import androidx.compose.material.icons.twotone.Link
-import androidx.compose.material.icons.twotone.LinkOff
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import com.module.notelycompose.notes.ui.theme.pinnedTemplateBrown
 import com.module.notelycompose.notes.ui.theme.pinnedTemplateOrange
 import com.module.notelycompose.notes.ui.theme.pinnedTemplatePurple
@@ -167,7 +156,7 @@ fun AdvancedAlignmentSelector(
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         AlignmentOption(
-            icon = Icons.TwoTone.FormatAlignLeft,
+            iconSymbol = MaterialSymbols.FormatAlignLeft,
             alignment = TextAlign.Start,
             label = "Left",
             isSelected = currentAlignment == TextAlign.Start,
@@ -175,7 +164,7 @@ fun AdvancedAlignmentSelector(
         )
         
         AlignmentOption(
-            icon = Icons.TwoTone.FormatAlignCenter,
+            iconSymbol = MaterialSymbols.FormatAlignCenter,
             alignment = TextAlign.Center,
             label = "Center",
             isSelected = currentAlignment == TextAlign.Center,
@@ -183,7 +172,7 @@ fun AdvancedAlignmentSelector(
         )
         
         AlignmentOption(
-            icon = Icons.TwoTone.FormatAlignRight,
+            iconSymbol = MaterialSymbols.FormatAlignRight,
             alignment = TextAlign.End,
             label = "Right",
             isSelected = currentAlignment == TextAlign.End,
@@ -191,7 +180,7 @@ fun AdvancedAlignmentSelector(
         )
         
         AlignmentOption(
-            icon = Icons.TwoTone.FormatAlignJustify,
+            iconSymbol = MaterialSymbols.FormatAlignJustify,
             alignment = TextAlign.Justify,
             label = "Justify",
             isSelected = currentAlignment == TextAlign.Justify,
@@ -202,14 +191,14 @@ fun AdvancedAlignmentSelector(
 
 @Composable
 private fun AlignmentOption(
-    icon: ImageVector,
+    iconSymbol: String,
     alignment: TextAlign,
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
     RichTextIconButton(
-        icon = icon,
+        iconSymbol = iconSymbol,
         onClick = onClick,
         isSelected = isSelected,
         contentDescription = "$label alignment"
@@ -244,14 +233,14 @@ fun AdvancedListManager(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             RichTextIconButton(
-                icon = Icons.TwoTone.FormatListBulleted,
+                iconSymbol = MaterialSymbols.FormatListBulleted,
                 onClick = onToggleUnorderedList,
                 isSelected = isUnorderedList,
                 contentDescription = "Bullet list"
             )
             
             RichTextIconButton(
-                icon = Icons.TwoTone.FormatListNumbered,
+                iconSymbol = MaterialSymbols.FormatListNumbered,
                 onClick = onToggleOrderedList,
                 isSelected = isOrderedList,
                 contentDescription = "Numbered list"
@@ -268,14 +257,14 @@ fun AdvancedListManager(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 RichTextIconButton(
-                    icon = Icons.TwoTone.FormatIndentDecrease,
+                    iconSymbol = MaterialSymbols.FormatIndentDecrease,
                     onClick = onDecreaseIndent,
                     enabled = currentIndentLevel > 0,
                     contentDescription = "Decrease indent"
                 )
                 
                 RichTextIconButton(
-                    icon = Icons.TwoTone.FormatIndentIncrease,
+                    iconSymbol = MaterialSymbols.FormatIndentIncrease,
                     onClick = onIncreaseIndent,
                     enabled = currentIndentLevel < 5,
                     contentDescription = "Increase indent"
@@ -496,7 +485,7 @@ fun SpecialFormattingOptions(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             RichTextIconButton(
-                icon = Icons.TwoTone.FormatQuote,
+                iconSymbol = MaterialSymbols.FormatQuote,
                 onClick = onApplyQuote,
                 contentDescription = "Quote block"
             )
@@ -508,7 +497,7 @@ fun SpecialFormattingOptions(
             )
             
             RichTextIconButton(
-                icon = Icons.TwoTone.HorizontalRule,
+                iconSymbol = MaterialSymbols.HorizontalRule,
                 onClick = onInsertDivider,
                 contentDescription = "Insert divider"
             )
@@ -543,7 +532,7 @@ fun LinkManager(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             RichTextIconButton(
-                icon = Icons.TwoTone.Link,
+                iconSymbol = MaterialSymbols.Link,
                 onClick = { showDialog = true },
                 contentDescription = "Add link",
                 enabled = !selectedText.isNullOrEmpty()
@@ -551,7 +540,7 @@ fun LinkManager(
             
             if (hasLink) {
                 RichTextIconButton(
-                    icon = Icons.TwoTone.LinkOff,
+                    iconSymbol = MaterialSymbols.LinkOff,
                     onClick = onRemoveLink,
                     contentDescription = "Remove link"
                 )

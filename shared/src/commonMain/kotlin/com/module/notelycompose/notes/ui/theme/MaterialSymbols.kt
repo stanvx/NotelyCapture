@@ -69,9 +69,17 @@ object MaterialSymbols {
     const val FormatAlignLeft = "\ue236"
     const val FormatAlignCenter = "\ue234"
     const val FormatAlignRight = "\ue237"
+    const val FormatAlignJustify = "\ue235"
+    const val FormatIndentIncrease = "\ue23e"
+    const val FormatIndentDecrease = "\ue23d"
+    const val FormatColorText = "\ue23a"
+    const val FormatColorFill = "\ue23b"
     const val FormatClear = "\ue239"
     const val Code = "\ue86f"
     const val FormatQuote = "\ue244"
+    const val Link = "\ue157"
+    const val LinkOff = "\ue16f"
+    const val HorizontalRule = "\uf6aa"
     
     // Interface Elements
     const val Search = "\ue8b6"

@@ -19,8 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -216,8 +216,8 @@ fun BackButton(
         IconButton(
             onClick = onNavigateBack,
         ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
+            MaterialIcon(
+                symbol = MaterialSymbols.ArrowBack,
                 contentDescription = stringResource(Res.string.top_bar_back),
                 tint = LocalCustomColors.current.bodyContentColor
             )
