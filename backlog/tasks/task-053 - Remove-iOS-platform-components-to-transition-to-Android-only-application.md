@@ -4,6 +4,7 @@ title: Remove iOS platform components to transition to Android-only application
 status: To Do
 assignee: []
 created_date: '2025-07-27'
+updated_date: '2025-07-27'
 labels: []
 dependencies: []
 ---
@@ -22,3 +23,7 @@ Transform Notely Capture from a Kotlin Multiplatform project to an Android-only 
 - [ ] Android build functionality verified
 - [ ] No orphaned expect/actual declarations remain
 - [ ] Documentation updated appropriately
+
+## Implementation Plan
+
+1. Create feature branch for iOS removal work\n2. Remove entire iosApp/ directory and all contents\n3. Clean up shared/build.gradle.kts to remove iOS targets, source sets, and cinterop configurations\n4. Clean up core/audio/build.gradle.kts to remove iOS targets\n5. Remove iOS-specific source directories (iosMain/, iosTest/, nativeInterop/)\n6. Verify all expect/actual declarations still have Android implementations\n7. Test Android build functionality\n8. Commit changes following project conventions
