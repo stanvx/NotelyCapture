@@ -1,7 +1,7 @@
 ---
 id: task-053
 title: Remove iOS platform components to transition to Android-only application
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-07-27'
 updated_date: '2025-07-27'
