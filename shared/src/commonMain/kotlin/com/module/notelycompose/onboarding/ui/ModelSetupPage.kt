@@ -27,8 +27,20 @@ import com.module.notelycompose.platform.presentation.PlatformUiState
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.onboarding_android_four
 import com.module.notelycompose.resources.onboarding_android_tablet_four
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+
+private sealed class OnboardingResource(val drawable: DrawableResource) {
+    object Tablet : OnboardingResource(Res.drawable.onboarding_android_tablet_four)
+    object Phone : OnboardingResource(Res.drawable.onboarding_android_four)
+    
+    companion object {
+        fun forPlatform(isTablet: Boolean): OnboardingResource {
+            return if (isTablet) Tablet else Phone
+        }
+    }
+}
 
 @Composable
 fun ModelSetupPage(
@@ -120,11 +132,7 @@ private fun ModelSetupContent(
     downloaderUiState: DownloaderUiState,
     platformState: PlatformUiState
 ) {
-    val resource = if (platformState.isTablet) {
-        painterResource(Res.drawable.onboarding_android_tablet_four)
-    } else {
-        painterResource(Res.drawable.onboarding_android_four)
-    }
+    val resource = painterResource(OnboardingResource.forPlatform(platformState.isTablet).drawable)
 
     val descriptionFontSize = if (platformState.isTablet) 20.sp else 18.sp
     val imageIllustrationWidth = if (platformState.isTablet) 800.dp else 360.dp

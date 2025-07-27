@@ -8,7 +8,6 @@ on:
       - "shared/**/*.kt"
       - "core/**/*.kt"
       - "lib/**/*.kt"
-      - "iosApp/**/*.swift"
       - "androidApp/**/*.kt"
       - "build.gradle.kts"
       - "gradle/**"
