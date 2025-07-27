@@ -27,8 +27,6 @@ import com.module.notelycompose.platform.presentation.PlatformUiState
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.onboarding_android_four
 import com.module.notelycompose.resources.onboarding_android_tablet_four
-import com.module.notelycompose.resources.onboarding_ios_four
-import com.module.notelycompose.resources.onboarding_ios_tablet_four
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -122,18 +120,10 @@ private fun ModelSetupContent(
     downloaderUiState: DownloaderUiState,
     platformState: PlatformUiState
 ) {
-    val resource = if (platformState.isAndroid) {
-        if (platformState.isTablet) {
-            painterResource(Res.drawable.onboarding_android_tablet_four)
-        } else {
-            painterResource(Res.drawable.onboarding_android_four)
-        }
+    val resource = if (platformState.isTablet) {
+        painterResource(Res.drawable.onboarding_android_tablet_four)
     } else {
-        if (platformState.isTablet) {
-            painterResource(Res.drawable.onboarding_ios_tablet_four)
-        } else {
-            painterResource(Res.drawable.onboarding_ios_four)
-        }
+        painterResource(Res.drawable.onboarding_android_four)
     }
 
     val descriptionFontSize = if (platformState.isTablet) 20.sp else 18.sp

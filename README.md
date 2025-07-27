@@ -4,7 +4,7 @@
 [![Compose](https://img.shields.io/badge/compose-1.8.2-blue.svg?logo=jetpackcompose)](https://www.jetbrains.com/lp/compose-multiplatform)
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
-A Personalised, cross-platform note-taking application with powerful Whisper AI Voice to Text capabilities built with Compose Multiplatform.
+A personalised Android note-taking application with powerful Whisper AI Voice to Text capabilities built with Kotlin and Compose Multiplatform.
 
 This is a Personalised fork of the original [Notely Voice](https://github.com/tosinonikute/NotelyVoice) project, focused on simplifying the UI, adding additional capture methods, focusing on Android development, and integration with Logseq and Obsidian.
 
@@ -60,7 +60,7 @@ Download the latest APK files directly from [GitHub Releases](https://github.com
 
 ### General
 🌓 **Theming** - Switch between dark and light themes based on your preference  
-💻 **Cross-Platform** - Seamless experience across Android & iOS  
+🤖 **Android-Focused** - Optimized specifically for Android devices  
 📱 **Share Audio Functionality** - Share audios recorded on the App to Messages, WhatsApp, Files, Google Drive etc  
 📱 **Share Texts** - Share texts on the App to Messages, WhatsApp, Files, Google Drive etc
 
@@ -81,7 +81,7 @@ Download the latest APK files directly from [GitHub Releases](https://github.com
 ## Built With 🛠
 
 - **[Kotlin](https://kotlinlang.org/)** - Official programming language for Android development
-- **[Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)** - UI toolkit for building native applications
+- **[Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)** - UI toolkit for building Android applications
 - **[Coroutines](https://kotlinlang.org/docs/coroutines-overview.html)** - For asynchronous programming
 - **[Clean Architecture](https://developer.android.com/topic/architecture)** - Ensures scalability and testability
 - **[ViewModel](https://developer.android.com/topic/libraries/architecture/viewmodel)** - Stores and manages UI-related data
@@ -107,15 +107,12 @@ Notely is built with Clean Architecture principles, separating the app into dist
 
 `androidApp/`: Contains Android-specific code.
 
-`iosApp/`: Contains iOS-specific code.
-
 ### Source Set Layout
-The project uses Kotlin Multiplatform Android source set layout V2 for modern KMP best practices:
+The project uses a simplified Android-focused architecture:
 - `shared/src/androidMain/` - Android-specific implementation code
 - `shared/src/androidInstrumentedTest/` - Android instrumented tests
-- `shared/src/commonMain/` - Shared code across platforms
+- `shared/src/commonMain/` - Shared code and business logic
 - `shared/src/commonTest/` - Shared tests
-- `shared/src/iosMain/` - iOS-specific implementation code
 
 ## Fork Management
 
@@ -201,7 +198,6 @@ To create a new release with APK distribution:
 ### Prerequisites
 
 - Android Studio Ladybug or newer
-- XCode 16.1
 - JDK 17 or higher
 - Kotlin 2.2.0 or higher
 

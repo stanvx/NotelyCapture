@@ -27,19 +27,11 @@ import com.module.notelycompose.platform.presentation.PlatformUiState
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import kotlinx.coroutines.launch
 import com.module.notelycompose.resources.Res
-import com.module.notelycompose.resources.onboarding_ios_one
-import com.module.notelycompose.resources.onboarding_ios_three
-import com.module.notelycompose.resources.onboarding_ios_two
-import com.module.notelycompose.resources.onboarding_ios_four
 import com.module.notelycompose.resources.onboarding_android_one
 import com.module.notelycompose.resources.onboarding_android_tablet_one
 import com.module.notelycompose.resources.onboarding_android_tablet_two
 import com.module.notelycompose.resources.onboarding_android_tablet_three
 import com.module.notelycompose.resources.onboarding_android_tablet_four
-import com.module.notelycompose.resources.onboarding_ios_tablet_one
-import com.module.notelycompose.resources.onboarding_ios_tablet_two
-import com.module.notelycompose.resources.onboarding_ios_tablet_three
-import com.module.notelycompose.resources.onboarding_ios_tablet_four
 import com.module.notelycompose.resources.onboarding_android_three
 import com.module.notelycompose.resources.onboarding_android_four
 import com.module.notelycompose.resources.onboarding_android_two
@@ -62,8 +54,7 @@ data class OnboardingPage(
     val description: String,
     val backgroundColor: Color,
     val textColor: Color,
-    val androidResources: Painter,
-    val iOSResources: Painter
+    val image: Painter
 )
 
 @Composable
@@ -77,13 +68,9 @@ fun OnboardingWalkthrough(
             description = stringResource(Res.string.onboarding_screen_one_desc),
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = when {
+            image = when {
                 platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_one)
                 else -> painterResource(Res.drawable.onboarding_android_one)
-            },
-            iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_one)
-                else -> painterResource(Res.drawable.onboarding_ios_one)
             }
         ),
         OnboardingPage(
@@ -91,13 +78,9 @@ fun OnboardingWalkthrough(
             description = stringResource(Res.string.onboarding_screen_two_desc),
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = when {
+            image = when {
                 platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_two)
                 else -> painterResource(Res.drawable.onboarding_android_two)
-            },
-            iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_two)
-                else -> painterResource(Res.drawable.onboarding_ios_two)
             }
         ),
         OnboardingPage(
@@ -105,13 +88,9 @@ fun OnboardingWalkthrough(
             description = stringResource(Res.string.onboarding_screen_three_desc),
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = when {
+            image = when {
                 platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_three)
                 else -> painterResource(Res.drawable.onboarding_android_three)
-            },
-            iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_three)
-                else -> painterResource(Res.drawable.onboarding_ios_three)
             }
         ),
         OnboardingPage(
@@ -119,13 +98,9 @@ fun OnboardingWalkthrough(
             description = stringResource(Res.string.onboarding_screen_four_desc),
             backgroundColor = Color(0xFFFFFAD0),
             textColor = Color(0xFFCA7F58),
-            androidResources = when {
+            image = when {
                 platformState.isTablet -> painterResource(Res.drawable.onboarding_android_tablet_four)
                 else -> painterResource(Res.drawable.onboarding_android_four)
-            },
-            iOSResources = when {
-                platformState.isTablet -> painterResource(Res.drawable.onboarding_ios_tablet_four)
-                else -> painterResource(Res.drawable.onboarding_ios_four)
             }
         )
     )
@@ -252,11 +227,7 @@ fun VoiceNotePageContent(
     isAndroid: Boolean
 ) {
 
-    val resource = if(isAndroid) {
-        page.androidResources
-    } else {
-        page.iOSResources
-    }
+    val resource = page.image
 
     val descriptionFontSize = if(isTablet) 20.sp else 18.sp
     val imageIllustrationWidth = if(isTablet) 800.dp else 360.dp

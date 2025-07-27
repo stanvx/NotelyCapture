@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Notely Capture** is a cross-platform mobile note-taking application built with Kotlin Multiplatform and Compose Multiplatform. It features advanced speech-to-text capabilities powered by OpenAI's Whisper AI for voice notes and audio transcription.
+**Notely Capture** is an Android note-taking application built with Kotlin and Compose Multiplatform. It features advanced speech-to-text capabilities powered by OpenAI's Whisper AI for voice notes and audio transcription.
 
-This is a personalized fork of the original "Notely Voice" project, focused on simplifying the UI, adding additional capture methods, focusing on Android development, and integration with Logseq and Obsidian.
+This is a personalized fork of the original "Notely Voice" project, focused on simplifying the UI, adding additional capture methods, optimized for Android development, and integration with Logseq and Obsidian.
 
 ## Common Development Commands
 
@@ -24,7 +24,7 @@ This is a personalized fork of the original "Notely Voice" project, focused on s
 # Clean build artifacts
 ./gradlew clean
 
-# Build all targets (Android + iOS)
+# Build Android target
 ./gradlew build
 
 # Run tests
@@ -77,12 +77,6 @@ git merge upstream/main
 # The .gitattributes file will help handle merge conflicts for renamed files
 ```
 
-### iOS Development
-```bash
-cd iosApp
-pod install
-open iosApp.xcworkspace
-```
 
 ### Release Workflow
 
@@ -148,7 +142,6 @@ For signed releases, configure these GitHub repository secrets:
 - **`:shared`** - Main application module (Compose Multiplatform)
 - **`:core:audio`** - Audio recording and processing
 - **`:lib`** - Whisper C++ integration for speech recognition
-- **`:iosApp`** - iOS-specific wrapper
 
 ### Dependency Injection with Koin
 - Uses modular Koin setup with separate modules for different concerns
@@ -318,22 +311,18 @@ The project uses a modular architecture with the following key modules:
 - **`:lib`** - Whisper C++ integration and JNI bindings
 - **`:iosApp`** - iOS application wrapper
 
-### Source Set Layout (Kotlin Multiplatform V2)
+### Source Set Layout (Android-focused)
 ```
 shared/src/
 ├── androidMain/kotlin/          # Android implementations
 ├── androidInstrumentedTest/     # Android integration tests
 ├── commonMain/kotlin/           # Shared business logic & UI
-├── commonTest/kotlin/           # Shared unit tests
-├── iosMain/kotlin/              # iOS implementations
-├── iosTest/kotlin/              # iOS-specific tests
-└── nativeInterop/cinterop/      # C interop definitions
+└── commonTest/kotlin/           # Shared unit tests
 ```
 
 ## Prerequisites
 
 - **Android Studio Ladybug** or newer
-- **Xcode 16.1** (for iOS development)
 - **JDK 17** or higher
 - **Kotlin 2.2.0** or higher
 - **NDK 27.0.12077973** (Android Native Development Kit)
