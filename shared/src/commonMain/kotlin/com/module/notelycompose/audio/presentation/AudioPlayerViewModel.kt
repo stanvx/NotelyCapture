@@ -42,7 +42,7 @@ class AudioPlayerViewModel(
             try {
                 val savedSpeed = preferencesRepository.getPlaybackSpeed().first()
                 _uiState.update { it.copy(playbackSpeed = savedSpeed) }
-                audioPlayer.setPlaybackSpeed(savedSpeed)
+                // Note: Speed will be applied when media is prepared via loadAudio()
             } catch (e: Exception) {
                 // Use default speed if unable to load preferences
                 println("Failed to load playback speed: ${e.message}")

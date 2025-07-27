@@ -91,7 +91,7 @@ fun RichTextButton(
 }
 
 /**
- * Rich text button with icon content.
+ * Rich text button with icon content (Material Icons).
  */
 @Composable
 fun RichTextIconButton(
@@ -129,6 +129,49 @@ fun RichTextIconButton(
             contentDescription = contentDescription,
             tint = iconTint,
             modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+/**
+ * Rich text button with Material Symbol content.
+ */
+@Composable
+fun RichTextIconButton(
+    iconSymbol: String,
+    onClick: () -> Unit,
+    isSelected: Boolean = false,
+    modifier: Modifier = Modifier,
+    size: Dp = 36.dp,
+    contentDescription: String? = null,
+    enabled: Boolean = true,
+    hapticFeedback: Boolean = true,
+    tint: Color = MaterialTheme.colorScheme.onSurface
+) {
+    val iconTint by animateColorAsState(
+        targetValue = when {
+            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+            else -> tint
+        },
+        animationSpec = tween(200, easing = FastOutSlowInEasing),
+        label = "icon_tint"
+    )
+    
+    RichTextButton(
+        onClick = onClick,
+        isSelected = isSelected,
+        modifier = modifier,
+        size = size,
+        contentDescription = contentDescription,
+        enabled = enabled,
+        hapticFeedback = hapticFeedback
+    ) {
+        com.module.notelycompose.notes.ui.components.MaterialIcon(
+            symbol = iconSymbol,
+            contentDescription = contentDescription,
+            tint = iconTint,
+            size = 18.dp
         )
     }
 }

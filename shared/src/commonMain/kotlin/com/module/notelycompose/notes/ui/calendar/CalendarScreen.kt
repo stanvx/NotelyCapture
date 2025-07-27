@@ -567,6 +567,7 @@ fun CalendarScreen(
     navigateBack: () -> Unit,
     navigateToNoteDetails: (String) -> Unit,
     navigateToQuickRecord: (() -> Unit)? = null,
+    audioPlayerViewModel: com.module.notelycompose.audio.presentation.AudioPlayerViewModel? = null,
     viewModel: NoteListViewModel = koinViewModel()
 ) {
     val notesState by viewModel.state.collectAsState()
@@ -735,6 +736,8 @@ fun CalendarScreen(
                         onEditClick = { noteId ->
                             navigateToNoteDetails(noteId.toString())
                         },
+                        audioPlayerViewModel = audioPlayerViewModel,
+                        audioPlayerUiState = audioPlayerViewModel?.onGetUiState(audioPlayerViewModel.uiState.collectAsState().value),
                         maxContentLines = 4
                     )
                 }

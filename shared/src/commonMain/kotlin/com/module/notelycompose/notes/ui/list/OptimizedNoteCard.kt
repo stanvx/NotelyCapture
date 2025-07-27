@@ -380,7 +380,7 @@ fun OptimizedNoteCard(
     onEditClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier,
     index: Int = 0,
-    audioPlayerViewModel: AudioPlayerViewModel = koinViewModel(),
+    audioPlayerViewModel: AudioPlayerViewModel,
     audioPlayerUiState: AudioPlayerUiState,
     maxContentLines: Int = 4
 ) {

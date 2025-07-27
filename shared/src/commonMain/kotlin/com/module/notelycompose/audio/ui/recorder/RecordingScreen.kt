@@ -134,19 +134,37 @@ fun RecordingScreen(
                 onStopRecording = viewModel::onStopRecording
             )
 
-            ScreenState.Recording -> RecordingInProgressScreen(
-                counterTimeString = recordingState.recordCounterString,
-                currentAmplitude = recordingState.currentAmplitude,
-                onStopRecording = {
-                    debugPrintln { "onStop recording" }
-                    viewModel.onStopRecording()
-                    screenState = ScreenState.Success
-                },
-                onNavigateBack = navigateBack,
-                isRecordPaused = recordingState.isRecordPaused,
-                onPauseRecording = viewModel::onPauseRecording,
-                onResumeRecording = viewModel::onResumeRecording
-            )
+            ScreenState.Recording -> {
+                if (isQuickRecordMode) {
+                    QuickRecordingScreen(
+                        counterTimeString = recordingState.recordCounterString,
+                        currentAmplitude = recordingState.currentAmplitude,
+                        onStopRecording = {
+                            debugPrintln { "onStop quick recording" }
+                            viewModel.onStopRecording()
+                            screenState = ScreenState.Success
+                        },
+                        onNavigateBack = {
+                            viewModel.onStopRecording()
+                            navigateBack()
+                        }
+                    )
+                } else {
+                    RecordingInProgressScreen(
+                        counterTimeString = recordingState.recordCounterString,
+                        currentAmplitude = recordingState.currentAmplitude,
+                        onStopRecording = {
+                            debugPrintln { "onStop recording" }
+                            viewModel.onStopRecording()
+                            screenState = ScreenState.Success
+                        },
+                        onNavigateBack = navigateBack,
+                        isRecordPaused = recordingState.isRecordPaused,
+                        onPauseRecording = viewModel::onPauseRecording,
+                        onResumeRecording = viewModel::onResumeRecording
+                    )
+                }
+            }
 
             ScreenState.Success -> {
                 RecordingSuccessScreen()
@@ -507,6 +525,99 @@ private fun RecordingUiComponentBackButton(
                 text = stringResource(Res.string.top_bar_back),
                 style = MaterialTheme.typography.bodyMedium,
                 color = LocalCustomColors.current.bodyContentColor
+            )
+        }
+    }
+}
+
+/**
+ * Minimal recording interface for quick record mode.
+ * Shows a streamlined UI with recording visualization and stop button.
+ */
+@Composable
+private fun QuickRecordingScreen(
+    counterTimeString: String,
+    currentAmplitude: Float,
+    onStopRecording: () -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LocalCustomColors.current.bodyBackgroundColor)
+    ) {
+        // Simple back button
+        IconButton(
+            onClick = onNavigateBack,
+            modifier = Modifier
+                .padding(16.dp)
+                .align(Alignment.TopStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(Res.string.top_bar_back),
+                tint = LocalCustomColors.current.bodyContentColor
+            )
+        }
+
+        // Central recording interface
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Recording status indicator
+            Text(
+                text = "Recording...",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Audio visualization - reuse the existing AudioReactiveLottie
+            AudioReactiveLottie(
+                amplitude = currentAmplitude,
+                isRecording = true,
+                modifier = Modifier.size(200.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Recording timer
+            Text(
+                text = counterTimeString,
+                style = MaterialTheme.typography.headlineMedium,
+                color = LocalCustomColors.current.bodyContentColor,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Large stop button
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.error)
+                    .clickable { onStopRecording() },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.onError)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(Res.string.recording_ui_tap_stop_record),
+                style = MaterialTheme.typography.bodyLarge,
+                color = LocalCustomColors.current.bodyContentColor.copy(alpha = 0.7f)
             )
         }
     }

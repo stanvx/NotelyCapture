@@ -127,6 +127,9 @@ fun App(
 fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
     
+    // Shared audio player for entire app to prevent multiple MediaPlayer instances
+    val sharedAudioPlayerViewModel: com.module.notelycompose.audio.presentation.AudioPlayerViewModel = koinViewModel()
+    
     // State for calendar go-to-today functionality
     var calendarGoToToday by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -194,7 +197,8 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                         },
                         navigateToQuickRecord = {
                             navController.navigateSingleTop(Routes.QuickRecord)
-                        }
+                        },
+                        audioPlayerViewModel = sharedAudioPlayerViewModel
                     )
                 }
                 composableWithSharedAxis<Routes.Capture> {
@@ -240,6 +244,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     navigateToTranscription = {
                         navController.navigateSingleTop(Routes.Transcription)
                     },
+                    audioPlayerViewModel = sharedAudioPlayerViewModel,
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry)
                 )
             }
