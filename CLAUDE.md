@@ -196,6 +196,8 @@ For signed releases, configure these GitHub repository secrets:
 - **Navigation Compose**: 2.9.0-beta03
 - **Material 3**: Design system
 - **dotLottie Android**: 0.9.2
+- **Rich Text Editor**: 1.0.0-rc13 (Compose rich text editing)
+- **OWASP HTML Sanitizer**: Security for rich text content
 
 ### Audio Processing
 - **Whisper C++ Library**: Integrated via JNI and C-interop
@@ -213,6 +215,8 @@ For signed releases, configure these GitHub repository secrets:
 - **Kotlin Test**: Built-in multiplatform testing
 - **Koin Test**: Dependency injection testing utilities
 - **Test structure**: `commonTest/`, `androidInstrumentedTest/`, `iosTest/`
+- **Security Testing**: Validation for security vulnerabilities
+- **Performance Testing**: Typography and memory optimization tests
 
 ## Development Guidelines
 
@@ -247,6 +251,28 @@ make lint-all
 
 # Run all tests
 make test-all
+
+# Check integration setup
+make check-integration
+```
+
+### Task Management with Backlog.md
+The project uses Backlog.md CLI tool for task management:
+```bash
+# List tasks
+backlog task list --plain
+
+# View task details
+backlog task 042 --plain
+
+# Create new task
+backlog task create "Task title" -d "Description" --ac "Acceptance criteria"
+
+# Edit task status
+backlog task edit 042 -s "In Progress" -a @yourself
+
+# Mark task complete
+backlog task edit 042 -s Done --notes "Implementation summary"
 ```
 
 ### Layer Boundaries
@@ -263,6 +289,12 @@ make test-all
 - **Lint commands**: `./gradlew ktlintCheck` and `./gradlew ktlintFormat`
 - Tests are located in `shared/src/commonTest/`, `shared/src/androidInstrumentedTest/`, `shared/src/iosTest/`
 
+### Security Considerations
+- **HTML Sanitization**: Rich text content is sanitized using OWASP HTML Sanitizer
+- **Resource Management**: Proper cleanup of native resources (Whisper models, audio streams)
+- **Threading Safety**: Audio operations use appropriate threading patterns
+- **Data Validation**: Input validation for audio files and text content
+
 ### Platform-Specific Code
 - Use `expect/actual` for platform-specific functionality
 - Keep platform code minimal and focused
@@ -272,6 +304,31 @@ make test-all
 - Use `StateFlow` for ViewModel state
 - Maintain state immutability
 - Handle loading, success, and error states consistently
+
+## Module Structure
+
+The project uses a modular architecture with the following key modules:
+
+- **`:shared`** - Main application module containing all business logic and UI
+  - `androidMain/` - Android-specific implementations
+  - `commonMain/` - Shared code across platforms
+  - `iosMain/` - iOS-specific implementations
+  - `commonTest/` - Shared tests
+- **`:core:audio`** - Audio processing and recording functionality
+- **`:lib`** - Whisper C++ integration and JNI bindings
+- **`:iosApp`** - iOS application wrapper
+
+### Source Set Layout (Kotlin Multiplatform V2)
+```
+shared/src/
+├── androidMain/kotlin/          # Android implementations
+├── androidInstrumentedTest/     # Android integration tests
+├── commonMain/kotlin/           # Shared business logic & UI
+├── commonTest/kotlin/           # Shared unit tests
+├── iosMain/kotlin/              # iOS implementations
+├── iosTest/kotlin/              # iOS-specific tests
+└── nativeInterop/cinterop/      # C interop definitions
+```
 
 ## Prerequisites
 
@@ -284,22 +341,35 @@ make test-all
 ## Key Application Features
 
 ### Core Audio Architecture
-- **AudioRecorderInteractor**: Core audio recording business logic
+- **AudioRecorderInteractor**: Core audio recording business logic with platform-specific implementations
 - **AudioWaveformExtractor**: Real-time amplitude extraction for visualization
 - **AmplitudeCollector**: Audio data collection and processing
 - **AudioReactiveLottie**: Synchronized animations with audio amplitude
+- **Variable Speed Playback**: 1x, 1.5x, 2x playback speeds for audio notes
+- **Background Recording Service**: Android service for continuous audio recording
 
 ### Note Management System
 - **Clean Architecture**: Separated into Data, Domain, Presentation, and UI layers
 - **SQLDelight**: Type-safe database operations with reactive queries
 - **Rich Text Editor**: Advanced formatting with toolbar and accessibility features
-- **Quick Record**: Streamlined audio capture workflow
+- **Quick Record**: Streamlined audio capture workflow with quick shortcuts
+- **Note Organization**: Filtering by starred, voice notes, recent, with search capabilities
+- **Undo/Redo System**: Text editing history management
+
+### Speech Recognition & AI
+- **Whisper Integration**: Local speech-to-text with multiple model sizes
+- **Offline Transcription**: Works without internet connectivity
+- **Multi-language Support**: 50+ languages supported
+- **Background Transcription**: Non-blocking transcription processing
+- **AI Summarization**: Text summarization using TF-IDF algorithms
 
 ### UI Components Structure
 - **Design System**: Material 3 with custom theming and expressive design
 - **Unified Components**: Shared UI components across the application
 - **Material Symbols**: Font-based icon system for consistent styling
 - **Responsive Layouts**: Optimized for different screen sizes and orientations
+- **Performance Optimizations**: LazyVerticalStaggeredGrid for note lists
+- **Animation System**: Motion tokens and unified animations
 
 ## Personalization Notes
 
