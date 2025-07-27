@@ -105,16 +105,10 @@ fun LanguageSelectionScreen(
             .fillMaxSize()
             .background(LocalCustomColors.current.bodyBackgroundColor)
     ) {
-        if (getPlatform().isAndroid) {
-            AndroidNoteTopBar(
-                title = "",
-                onNavigateBack = navigateBack
-            )
-        } else {
-            IOSNoteTopBar(
-                onNavigateBack = navigateBack
-            )
-        }
+        AndroidNoteTopBar(
+            title = "",
+            onNavigateBack = navigateBack
+        )
         // content
         Column(
             modifier = Modifier

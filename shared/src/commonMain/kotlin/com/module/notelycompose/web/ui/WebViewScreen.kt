@@ -17,16 +17,10 @@ fun WebViewScreen(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        if (getPlatform().isAndroid) {
-            AndroidNoteTopBar(
-                title = title,
-                onNavigateBack = onBackPressed
-            )
-        } else {
-            IOSNoteTopBar(
-                onNavigateBack = onBackPressed
-            )
-        }
+        AndroidNoteTopBar(
+            title = title,
+            onNavigateBack = onBackPressed
+        )
 
         Box(
             modifier = Modifier

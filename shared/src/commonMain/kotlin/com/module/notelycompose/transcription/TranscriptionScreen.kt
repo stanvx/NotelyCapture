@@ -212,35 +212,14 @@ fun TranscriptionScreen(
 fun BackButton(
     onNavigateBack: () -> Unit
 ) {
-    if (getPlatform().isAndroid) {
-        IconButton(
-            onClick = onNavigateBack,
-        ) {
-            MaterialIcon(
-                symbol = MaterialSymbols.ArrowBack,
-                contentDescription = stringResource(Res.string.top_bar_back),
-                tint = LocalCustomColors.current.bodyContentColor
-            )
-        }
-    } else {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clickable { onNavigateBack() }
-        ) {
-            androidx.compose.material.Icon(
-                imageVector = Images.Icons.IcChevronLeft,
-                contentDescription = stringResource(Res.string.top_bar_back),
-                modifier = Modifier.size(28.dp),
-                tint = LocalCustomColors.current.bodyContentColor
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            androidx.compose.material.Text(
-                text = stringResource(Res.string.top_bar_back),
-                style = androidx.compose.material.MaterialTheme.typography.body1,
-                color = LocalCustomColors.current.bodyContentColor
-            )
-        }
+    IconButton(
+        onClick = onNavigateBack,
+    ) {
+        MaterialIcon(
+            symbol = MaterialSymbols.ArrowBack,
+            contentDescription = stringResource(Res.string.top_bar_back),
+            tint = LocalCustomColors.current.bodyContentColor
+        )
     }
 }
 

@@ -499,43 +499,18 @@ private fun RecordingUiComponentBackButton(
     onNavigateBack: () -> Unit,
     onStopRecording: () -> Unit
 ) {
-    if (getPlatform().isAndroid) {
-        IconButton(
-            onClick = {
-                onStopRecording()
-                onNavigateBack()
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.top_bar_back),
-                tint = LocalCustomColors.current.bodyContentColor
-            )
-        }
-    } else {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(16.dp)
-                .clickable {
-                    onStopRecording()
-                    onNavigateBack()
-                }
-        ) {
-            Icon(
-                imageVector = Images.Icons.IcChevronLeft,
-                contentDescription = stringResource(Res.string.top_bar_back),
-                modifier = Modifier.size(28.dp),
-                tint = LocalCustomColors.current.bodyContentColor
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(Res.string.top_bar_back),
-                style = MaterialTheme.typography.bodyMedium,
-                color = LocalCustomColors.current.bodyContentColor
-            )
-        }
+    IconButton(
+        onClick = {
+            onStopRecording()
+            onNavigateBack()
+        },
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(Res.string.top_bar_back),
+            tint = LocalCustomColors.current.bodyContentColor
+        )
     }
 }
 

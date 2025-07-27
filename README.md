@@ -72,11 +72,11 @@ Download the latest APK files directly from [GitHub Releases](https://github.com
   - Excellent performance across diverse audio conditions and accents
   - Can run locally without internet dependency once model is downloaded
 
-- **Cross-Platform Compatibility** - Designed for versatile deployment
-  - Consistent speech recognition quality across different operating systems
+- **Android Optimized** - Designed specifically for Android devices
+  - Consistent speech recognition quality optimized for Android
   - Flexible model sizes from tiny (39 MB) to large (1550 MB) based on accuracy needs
   - Advanced noise robustness and speaker independence
-  - Perfect for applications requiring high-quality transcription in various environments
+  - Perfect for Android applications requiring high-quality transcription
 
 ## Built With 🛠
 

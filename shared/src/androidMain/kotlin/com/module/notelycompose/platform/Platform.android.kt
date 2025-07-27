@@ -30,8 +30,13 @@ class AndroidPlatform(
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform(
-    version = "",
+    version = BuildConfig.VERSION_NAME,
     context = null
+)
+
+actual fun getPlatform(context: Any?): Platform = AndroidPlatform(
+    version = BuildConfig.VERSION_NAME,
+    context = context as? Context
 )
 
 actual fun isDebugMode(): Boolean = BuildConfig.DEBUG
