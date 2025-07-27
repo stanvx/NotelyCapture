@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -69,6 +70,14 @@ fun NoteListScreen(
     // Single shared audio player for all notes
     val sharedAudioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
     val sharedAudioPlayerUiState by sharedAudioPlayerViewModel.uiState.collectAsState()
+    
+    // Manage MediaPlayer lifecycle to prevent resource leaks
+    DisposableEffect(sharedAudioPlayerViewModel) {
+        onDispose {
+            // Release MediaPlayer resources when note list screen is disposed
+            sharedAudioPlayerViewModel.onClear()
+        }
+    }
     
     // Pass scroll state to parent  
     onScrollStateChanged(lazyStaggeredGridState)

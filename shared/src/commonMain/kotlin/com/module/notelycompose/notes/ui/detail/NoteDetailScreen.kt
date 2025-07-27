@@ -33,6 +33,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -127,6 +128,14 @@ fun NoteDetailScreen(
 
     val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsStateWithLifecycle().value
         .let { audioPlayerViewModel.onGetUiState(it) }
+
+    // Manage MediaPlayer lifecycle to prevent resource leaks
+    DisposableEffect(audioPlayerViewModel) {
+        onDispose {
+            // Release MediaPlayer resources when composable is disposed
+            audioPlayerViewModel.onClear()
+        }
+    }
 
     val focusRequester = remember { FocusRequester() }
     var showLoadingDialog by remember { mutableStateOf(false) }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -129,6 +130,14 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
     
     // Shared audio player for entire app to prevent multiple MediaPlayer instances
     val sharedAudioPlayerViewModel: com.module.notelycompose.audio.presentation.AudioPlayerViewModel = koinViewModel()
+    
+    // Manage MediaPlayer lifecycle to prevent resource leaks at app level
+    DisposableEffect(sharedAudioPlayerViewModel) {
+        onDispose {
+            // Release MediaPlayer resources when app is disposed
+            sharedAudioPlayerViewModel.onClear()
+        }
+    }
     
     // State for calendar go-to-today functionality
     var calendarGoToToday by remember { mutableStateOf<(() -> Unit)?>(null) }

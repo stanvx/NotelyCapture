@@ -132,8 +132,10 @@ actual class Transcriber(
             
             // Execute transcription on IO dispatcher to avoid blocking
             withContext(Dispatchers.IO) {
+                var segmentReceived = false
                 val text = whisperModelLoader.getContext().transcribeData(data, language, callback = object : WhisperCallback{
                     override fun onNewSegment(startMs: Long, endMs: Long, text: String) {
+                        segmentReceived = true
                         // Switch to main thread for callback invocation using structured concurrency
                         runBlocking {
                             withContext(Dispatchers.Main) {
@@ -163,6 +165,20 @@ actual class Transcriber(
                 })
                 val elapsed = System.currentTimeMillis() - start
                 debugPrintln{"Done ($elapsed ms): \n$text\n"}
+                
+                // Fallback: If no segments were received via callback but we got text from transcribeData,
+                // manually trigger onNewSegment with the complete text
+                if (!segmentReceived && text.isNotBlank()) {
+                    debugPrintln { "Transcriber: No segments received via callback, using fallback with complete text" }
+                    runBlocking {
+                        withContext(Dispatchers.Main) {
+                            // Use 0 to duration as timestamp for complete transcription
+                            val durationMs = (data.size / 16).toLong() // Approximate duration in ms for 16kHz audio
+                            onNewSegment(0, durationMs, text.trim())
+                            onComplete()
+                        }
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
