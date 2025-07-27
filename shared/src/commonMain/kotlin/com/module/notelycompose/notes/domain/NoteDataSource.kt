@@ -35,4 +35,13 @@ interface NoteDataSource {
     fun getLastNote(): NoteDataModel?
     fun getLastNoteId(): Long?
     suspend fun deleteNoteById(id: Long)
+    
+    // Optimized search methods that combine filtering and search at database level
+    fun searchNotes(query: String): CommonFlow<List<NoteDataModel>>
+    fun searchStarredNotes(query: String): CommonFlow<List<NoteDataModel>>
+    fun searchVoiceNotes(query: String): CommonFlow<List<NoteDataModel>>
+    
+    // Pagination support methods
+    fun getNotesPaged(limit: Long, offset: Long): CommonFlow<List<NoteDataModel>>
+    suspend fun getNotesCount(): Long
 }

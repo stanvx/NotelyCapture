@@ -40,5 +40,6 @@ object TextUiFormats {
 
 data class RecordingPathUiModel(
     val recordingPath: String,
-    val isRecordingExist: Boolean
+    val isRecordingExist: Boolean,
+    val audioDurationMs: Int = 0
 )

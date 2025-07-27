@@ -420,17 +420,7 @@ private fun ThemePreview(theme: Theme) {
                 )
             }
         }
-        else -> {
-            // Fallback for any other themes
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(
-                        Color(0xFFF1F1F1),
-                        RoundedCornerShape(8.dp)
-                    )
-            )
-        }
     }
 }
+
 

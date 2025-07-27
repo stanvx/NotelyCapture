@@ -4,25 +4,37 @@ import android.content.res.AssetManager
 import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.io.Closeable
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val LOG_TAG = "LibWhisper"
 
 
-class WhisperContext private constructor(private var ptr: Long) {
+class WhisperContext private constructor(private var ptr: Long) : Closeable {
+    
+    private val closed = AtomicBoolean(false)
+    
     // Meet Whisper C++ constraint: Don't access from more than one thread at a time.
-    val scope: CoroutineScope = CoroutineScope(
-        Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    )
+    private val executor = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "WhisperContext-Thread").apply { isDaemon = true }
+    }
+    private val dispatcher = executor.asCoroutineDispatcher()
+    
+    // Scope with supervisor job for better error isolation
+    val scope: CoroutineScope = CoroutineScope(SupervisorJob() + dispatcher)
+    
     fun stopTranscription(){
         WhisperLib.stopTranscription()
     }
-
 
     suspend fun transcribeData(
         data: FloatArray,
@@ -30,7 +42,7 @@ class WhisperContext private constructor(private var ptr: Long) {
         printTimestamp: Boolean = true,
         callback: WhisperCallback
     ): String = withContext(scope.coroutineContext) {
-        require(ptr != 0L)
+        require(ptr != 0L) { "WhisperContext has been released" }
         val numThreads = WhisperCpuConfig.preferredThreadCount
         Log.d(LOG_TAG, "Selecting $numThreads threads")
 
@@ -52,23 +64,64 @@ class WhisperContext private constructor(private var ptr: Long) {
     }
 
     suspend fun benchMemory(nthreads: Int): String = withContext(scope.coroutineContext) {
+        require(ptr != 0L) { "WhisperContext has been released" }
         return@withContext WhisperLib.benchMemcpy(nthreads)
     }
 
     suspend fun benchGgmlMulMat(nthreads: Int): String = withContext(scope.coroutineContext) {
+        require(ptr != 0L) { "WhisperContext has been released" }
         return@withContext WhisperLib.benchGgmlMulMat(nthreads)
     }
 
-    suspend fun release() = withContext(scope.coroutineContext) {
-        if (ptr != 0L) {
-            WhisperLib.freeContext(ptr)
-            ptr = 0
+    /**
+     * Public API mirroring the old release() suspending function.
+     * Safe to call multiple times.
+     */
+    suspend fun release() = withContext(dispatcher) {
+        close()
+    }
+
+    /**
+     * Implements java.io.Closeable so callers can use `use { }`
+     * or call explicitly from lifecycle callbacks.
+     */
+    override fun close() {
+        if (!closed.compareAndSet(false, true)) return // already closed
+        
+        Log.d(LOG_TAG, "Releasing WhisperContext resources")
+        
+        // Cancel coroutines first
+        scope.cancel()
+        
+        // Perform native free on our dedicated thread to avoid races
+        runBlocking(dispatcher) {
+            if (ptr != 0L) {
+                WhisperLib.freeContext(ptr)
+                ptr = 0
+            }
+        }
+        
+        // Close dispatcher → orderly executor shutdown
+        try {
+            dispatcher.close() // delegates to executor.shutdown()
+            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                Log.w(LOG_TAG, "Executor did not terminate gracefully, forcing shutdown")
+                executor.shutdownNow()
+            }
+        } catch (t: Throwable) {
+            // Re-assert interrupt state if needed
+            if (t is InterruptedException) Thread.currentThread().interrupt()
+            Log.w(LOG_TAG, "Forced shutdown due to: ${t.message}", t)
+            executor.shutdownNow()
         }
     }
 
     protected fun finalize() {
-        runBlocking {
-            release()
+        if (!closed.get()) {
+            Log.w(LOG_TAG, "WhisperContext finalized without explicit close() - potential resource leak")
+            runBlocking {
+                close()
+            }
         }
     }
 
@@ -181,7 +234,7 @@ private fun toTimestamp(t: Long, comma: Boolean = false): String {
     msec -= sec * 1000
 
     val delimiter = if (comma) "," else "."
-    return String.format("%02d:%02d:%02d%s%03d", hr, min, sec, delimiter, msec)
+    return String.format(java.util.Locale.ROOT, "%02d:%02d:%02d%s%03d", hr, min, sec, delimiter, msec)
 }
 
 private fun isArmEabiV7a(): Boolean {

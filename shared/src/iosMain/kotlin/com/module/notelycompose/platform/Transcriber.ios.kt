@@ -1,12 +1,14 @@
 package com.module.notelycompose.platform
 
 import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import com.module.notelycompose.whisper.WhisperCallback
-import com.module.notelycompose.whisper.WhisperContext
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.reinterpret
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -16,13 +18,13 @@ import platform.Foundation.dataWithContentsOfURL
 import kotlin.math.max
 import kotlin.math.min
 
-
-
-actual class Transcriber{
+actual class Transcriber : KoinComponent {
     private var canTranscribe: Boolean = false
     private var isTranscribing = false
     private var isModelLoaded = false
-    private var whisperContext: WhisperContext? = null
+    
+    // Inject the WhisperModelLoader from Koin
+    private val whisperModelLoader: WhisperModelLoader by inject()
 
 
     actual fun hasRecordingPermission(): Boolean {
@@ -37,47 +39,32 @@ actual class Transcriber{
 
     actual suspend fun initialize() {
         debugPrintln{"speech: initialize model"}
-        if(!isModelLoaded)
-        loadBaseModel()
-    }
-
-    private fun loadBaseModel(){
-        try {
-            whisperContext = null
-            debugPrintln{"Loading model..."}
-            val modelPath = getModelPath()
-            whisperContext = WhisperContext.createContext(modelPath)
-            debugPrintln{"Loaded model ${modelPath.substringAfterLast("/")}"}
-            isModelLoaded = true
-            canTranscribe = true
-
-        } catch (e: Throwable) {
-            debugPrintln{"========================== ${e.message}"}
-            e.printStackTrace()
-        }
+        // Model loading is now handled by WhisperModelManager
+        // This method is kept for compatibility but actual loading happens in the manager
+        canTranscribe = whisperModelLoader.doesModelExist()
+        isModelLoaded = canTranscribe
+        debugPrintln { "Transcriber (iOS): Model availability checked, canTranscribe=$canTranscribe" }
     }
 
     actual fun doesModelExists() : Boolean{
-        return NSFileManager.defaultManager.fileExistsAtPath(getModelPath())
+        return whisperModelLoader.doesModelExist()
     }
 
     actual fun isValidModel() : Boolean{
-        try {
-            if(!isModelLoaded)
-                loadBaseModel()
-        }catch (e:Exception){
-            return false
-        }
-        return true
+        return whisperModelLoader.isValidModel()
     }
 
     actual suspend fun stop() {
         isTranscribing = false
-        whisperContext?.stopTranscribing()
+        whisperModelLoader.getContext().stopTranscribing()
     }
 
     actual suspend fun finish() {
-        whisperContext?.release()
+        // Don't release the shared context anymore - it's managed by WhisperModelManager
+        // Just reset local state
+        canTranscribe = false
+        isModelLoaded = false
+        debugPrintln { "Transcriber (iOS): local state reset, shared context remains managed by WhisperModelManager" }
     }
 
     actual suspend fun start(
@@ -98,7 +85,7 @@ actual class Transcriber{
             val data = decodeWaveFile(filePath)
             debugPrintln{"${data.size / (16000 / 1000)} ms\n"}
             debugPrintln{"Transcribing data...\n"}
-           whisperContext?.fullTranscribe(data, language, object : WhisperCallback{
+           whisperModelLoader.getContext().fullTranscribe(data, language, object : WhisperCallback{
                 override fun onProgress(progress: Int) {
                     onProgress(progress)
                 }
@@ -147,13 +134,5 @@ actual class Transcriber{
         return floatArray
     }
 
-    private fun getModelPath():String{
-        val documentsDirectory = NSFileManager.defaultManager.URLsForDirectory(
-            NSDocumentDirectory,
-            NSUserDomainMask
-        ).first() as NSURL
-
-        return documentsDirectory.URLByAppendingPathComponent("ggml-base.bin")?.path?:""
-    }
 
 }

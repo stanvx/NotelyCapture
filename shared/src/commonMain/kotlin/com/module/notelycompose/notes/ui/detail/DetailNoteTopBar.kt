@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.module.notelycompose.notes.ui.detail
 
 import androidx.compose.foundation.clickable
@@ -7,18 +9,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.AppBarDefaults
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.components.MaterialIconStyle
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,9 +59,17 @@ fun DetailNoteTopBar(
     onShare: () -> Unit = {},
     onExportAudio: () -> Unit,
     onImportClick: () -> Unit = {},
-    isRecordingExist: Boolean
+    onRecordClick: () -> Unit,
+    onTranscribeClick: () -> Unit,
+    onStarClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    isRecordingExist: Boolean,
+    isStarred: Boolean = false
 ) {
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
+    var showExistingRecordForRecordConfirmDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    
     if (getPlatform().isAndroid) {
         DetailAndroidNoteTopBar(
             title = title,
@@ -61,7 +82,18 @@ fun DetailNoteTopBar(
                 } else {
                     showExistingRecordConfirmDialog = true
                 }
-            }
+            },
+            onRecordClick = {
+                if (!isRecordingExist) {
+                    onRecordClick()
+                } else {
+                    showExistingRecordForRecordConfirmDialog = true
+                }
+            },
+            onTranscribeClick = onTranscribeClick,
+            onStarClick = onStarClick,
+            onDeleteClick = { showDeleteConfirmDialog = true },
+            isStarred = isStarred
         )
     } else {
         DetailIOSNoteTopBar(
@@ -74,7 +106,18 @@ fun DetailNoteTopBar(
                 } else {
                     showExistingRecordConfirmDialog = true
                 }
-            }
+            },
+            onRecordClick = {
+                if (!isRecordingExist) {
+                    onRecordClick()
+                } else {
+                    showExistingRecordForRecordConfirmDialog = true
+                }
+            },
+            onTranscribeClick = onTranscribeClick,
+            onStarClick = onStarClick,
+            onDeleteClick = { showDeleteConfirmDialog = true },
+            isStarred = isStarred
         )
     }
 
@@ -88,6 +131,54 @@ fun DetailNoteTopBar(
         },
         option = RecordingConfirmationUiModel.Import
     )
+
+    ReplaceRecordingConfirmationDialog(
+        showDialog = showExistingRecordForRecordConfirmDialog,
+        onDismiss = {
+            showExistingRecordForRecordConfirmDialog = false
+        },
+        onConfirm = {
+            onRecordClick()
+        },
+        option = RecordingConfirmationUiModel.Record
+    )
+
+    DeleteNoteConfirmationDialog(
+        showDialog = showDeleteConfirmDialog,
+        onDismiss = { showDeleteConfirmDialog = false },
+        onConfirm = onDeleteClick
+    )
+}
+
+/**
+ * Confirmation dialog for deleting a note
+ */
+@Composable
+fun DeleteNoteConfirmationDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Delete Note") },
+            text = { Text("This note will be permanently deleted. This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -97,7 +188,11 @@ fun DetailAndroidNoteTopBar(
     onShare: () -> Unit,
     onExportAudio: () -> Unit,
     onImportClick: () -> Unit,
-    elevation: Dp = AppBarDefaults.TopAppBarElevation
+    onRecordClick: () -> Unit,
+    onTranscribeClick: () -> Unit,
+    onStarClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    isStarred: Boolean
 ) {
     TopAppBar(
         title = { Text(title) },
@@ -110,22 +205,34 @@ fun DetailAndroidNoteTopBar(
             }
         },
         actions = {
+            IconButton(onClick = { onStarClick() }) {
+                Icon(
+                    imageVector = if (isStarred) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = if (isStarred) "Unstar note" else "Star note",
+                    tint = if (isStarred) MaterialTheme.colorScheme.primary else LocalCustomColors.current.bodyContentColor
+                )
+            }
             IconButton(onClick = { onShare() }) {
                 Icon(
                     imageVector = Icons.Filled.Share,
                     contentDescription = "Share note"
                 )
             }
-            // Hide dropdown menu
-            // TODO: Implement Export Audio to Folder / Import Audio
+            // Enhanced dropdown menu with all functionality
             DetailDropDownMenu(
                 onExportAudio = onExportAudio,
-                onImportClick = onImportClick
+                onImportClick = onImportClick,
+                onRecordClick = onRecordClick,
+                onTranscribeClick = onTranscribeClick,
+                onDeleteClick = onDeleteClick
             )
         },
-        backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-        contentColor = LocalCustomColors.current.bodyContentColor,
-        elevation = elevation
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = LocalCustomColors.current.bodyBackgroundColor,
+            titleContentColor = LocalCustomColors.current.bodyContentColor,
+            navigationIconContentColor = LocalCustomColors.current.bodyContentColor,
+            actionIconContentColor = LocalCustomColors.current.bodyContentColor
+        )
     )
 }
 
@@ -134,7 +241,12 @@ fun DetailIOSNoteTopBar(
     onNavigateBack: () -> Unit,
     onExportAudio: () -> Unit,
     onImportClick: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onRecordClick: () -> Unit,
+    onTranscribeClick: () -> Unit,
+    onStarClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    isStarred: Boolean
 ) {
     TopAppBar(
         title = {
@@ -152,11 +264,19 @@ fun DetailIOSNoteTopBar(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(Res.string.top_bar_back),
-                    style = MaterialTheme.typography.body1,
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
         },
         actions = {
+            IconButton(onClick = { onStarClick() }) {
+                Icon(
+                    imageVector = if (isStarred) Icons.Filled.Star else Icons.Outlined.Star,
+                    contentDescription = if (isStarred) "Unstar note" else "Star note",
+                    modifier = Modifier.size(24.dp),
+                    tint = if (isStarred) MaterialTheme.colorScheme.primary else LocalCustomColors.current.iOSBackButtonColor
+                )
+            }
             IconButton(onClick = { onShare() }) {
                 Icon(
                     imageVector = Icons.Filled.Share,
@@ -166,20 +286,29 @@ fun DetailIOSNoteTopBar(
             }
             DetailDropDownMenu(
                 onExportAudio = onExportAudio,
-                onImportClick = onImportClick
+                onImportClick = onImportClick,
+                onRecordClick = onRecordClick,
+                onTranscribeClick = onTranscribeClick,
+                onDeleteClick = onDeleteClick
             )
         },
-        contentColor = LocalCustomColors.current.iOSBackButtonColor,
-        backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-        modifier = Modifier.padding(start = 0.dp),
-        elevation = 0.dp
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = LocalCustomColors.current.bodyBackgroundColor,
+            titleContentColor = LocalCustomColors.current.iOSBackButtonColor,
+            navigationIconContentColor = LocalCustomColors.current.iOSBackButtonColor,
+            actionIconContentColor = LocalCustomColors.current.iOSBackButtonColor
+        ),
+        modifier = Modifier.padding(start = 0.dp)
     )
 }
 
 @Composable
 fun DetailDropDownMenu(
     onExportAudio: () -> Unit,
-    onImportClick: () -> Unit = {}
+    onImportClick: () -> Unit = {},
+    onRecordClick: () -> Unit,
+    onTranscribeClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     var dropdownExpanded by remember { mutableStateOf(false) }
     Box {
@@ -196,22 +325,90 @@ fun DetailDropDownMenu(
             modifier = Modifier.padding(vertical = 0.dp)
         ) {
             DropdownMenuItem(
+                text = { Text("Record Audio") },
                 onClick = {
                     dropdownExpanded = false
-                    onExportAudio()
+                    onRecordClick()
+                },
+                leadingIcon = {
+                    MaterialIcon(
+                        symbol = MaterialSymbols.Filled.Mic,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        size = 16.dp,
+                        style = MaterialIconStyle.Filled
+                    )
                 }
-            ) {
-                Text(stringResource(Res.string.top_bar_export_audio_folder))
-            }
+            )
 
             DropdownMenuItem(
+                text = { Text("Transcribe") },
+                onClick = {
+                    dropdownExpanded = false
+                    onTranscribeClick()
+                },
+                leadingIcon = {
+                    MaterialIcon(
+                        symbol = MaterialSymbols.Filled.Translate,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        size = 16.dp,
+                        style = MaterialIconStyle.Filled
+                    )
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.top_bar_import_audio)) },
                 onClick = {
                     dropdownExpanded = false
                     onImportClick()
+                },
+                leadingIcon = {
+                    MaterialIcon(
+                        symbol = MaterialSymbols.Filled.CloudUpload,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        size = 16.dp,
+                        style = MaterialIconStyle.Filled
+                    )
                 }
-            ) {
-                Text(stringResource(Res.string.top_bar_import_audio))
-            }
+            )
+
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.top_bar_export_audio_folder)) },
+                onClick = {
+                    dropdownExpanded = false
+                    onExportAudio()
+                },
+                leadingIcon = {
+                    MaterialIcon(
+                        symbol = MaterialSymbols.Filled.CloudDownload,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        size = 16.dp,
+                        style = MaterialIconStyle.Filled
+                    )
+                }
+            )
+
+            Divider()
+
+            DropdownMenuItem(
+                text = { Text("Delete Note", color = MaterialTheme.colorScheme.error) },
+                onClick = {
+                    dropdownExpanded = false
+                    onDeleteClick()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            )
         }
     }
 }

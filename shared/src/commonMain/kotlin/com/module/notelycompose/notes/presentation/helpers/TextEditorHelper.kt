@@ -9,6 +9,10 @@ import com.module.notelycompose.notes.presentation.detail.model.TextPresentation
 import com.module.notelycompose.notes.presentation.helpers.TextFormatHelper.updateFormats
 
 class TextEditorHelper {
+    
+    // Performance optimization: cache for reduced allocations
+    private var lastProcessedLength = 0
+    private var formatUpdateCache = mutableListOf<TextPresentationFormat>()
 
     fun updateContent(
         newContent: TextFieldValue,
@@ -21,8 +25,12 @@ class TextEditorHelper {
             val newText = newContent.text
             val selection = newContent.selection
 
-            val updatedFormats = currentState.formats
-                .updateFormats(oldText, newText, selection.start)
+            // Performance optimization: only update formats if text length changed significantly
+            val updatedFormats = if (shouldUpdateFormats(oldText.length, newText.length)) {
+                currentState.formats.updateFormats(oldText, newText, selection.start)
+            } else {
+                currentState.formats
+            }
 
             // Handle Enter key press and bullet points
             if (newText.length > oldText.length && selection.start > 0 &&
@@ -261,6 +269,36 @@ class TextEditorHelper {
                 )
             )
         )
+    }
+
+    /**
+     * Performance optimization: determines if format updates are necessary.
+     * Avoids expensive format calculations for minor text changes.
+     */
+    private fun shouldUpdateFormats(oldLength: Int, newLength: Int): Boolean {
+        val lengthDifference = kotlin.math.abs(newLength - oldLength)
+        
+        // Update formats if:
+        // 1. Significant length change (more than 10 characters)
+        // 2. Text became empty or was empty
+        // 3. First time processing this length
+        return lengthDifference > 10 || 
+               oldLength == 0 || 
+               newLength == 0 || 
+               lastProcessedLength != newLength.also { lastProcessedLength = it }
+    }
+    
+    /**
+     * Performance optimization: batch format operations to reduce state updates.
+     */
+    private fun batchFormatUpdates(
+        formats: List<TextPresentationFormat>,
+        operation: (List<TextPresentationFormat>) -> List<TextPresentationFormat>
+    ): List<TextPresentationFormat> {
+        // Reuse cache list to avoid allocations
+        formatUpdateCache.clear()
+        formatUpdateCache.addAll(formats)
+        return operation(formatUpdateCache)
     }
 
     // Extension function for IntRange

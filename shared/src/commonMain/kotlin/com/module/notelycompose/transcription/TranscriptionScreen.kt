@@ -16,10 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
-import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,18 +69,32 @@ fun TranscriptionScreen(
     LaunchedEffect(transcriptionUiState.originalText) {
         scrollState.animateScrollTo(scrollState.maxValue)
     }
-    DisposableEffect(Unit) {
+    
+    // Auto-navigate when transcription completes
+    LaunchedEffect(transcriptionUiState.inTranscription, transcriptionUiState.originalText) {
+        if (!transcriptionUiState.inTranscription && transcriptionUiState.originalText.isNotEmpty()) {
+            // Automatically append transcription and navigate back
+            editorViewModel.onUpdateContent(TextFieldValue("${editorState.content.text}\n${transcriptionUiState.originalText}"))
+            navigateBack()
+        }
+    }
+    LaunchedEffect(Unit) {
         viewModel.requestAudioPermission()
         viewModel.initRecognizer()
         viewModel.startRecognizer(editorState.recording.recordingPath)
+    }
+    
+    DisposableEffect(Unit) {
         onDispose {
             viewModel.stopRecognizer()
             viewModel.finishRecognizer()
         }
     }
         Card(
-            backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-            elevation = 0.dp
+            colors = CardDefaults.cardColors(
+                containerColor = LocalCustomColors.current.bodyBackgroundColor
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -118,6 +133,13 @@ fun TranscriptionScreen(
                     )
                 }else if(transcriptionUiState.progress in 1..99){
                    SmoothLinearProgressBar((transcriptionUiState.progress / 100f))
+                }else if(!transcriptionUiState.inTranscription && transcriptionUiState.originalText.isNotEmpty()){
+                    // Show completion indicator
+                    Text(
+                        text = "✓ Transcription Complete",
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = LocalCustomColors.current.bodyContentColor
+                    )
                 }
 //                FloatingActionButton(
 //                    modifier = Modifier.padding(vertical = 8.dp),
@@ -194,8 +216,8 @@ fun BackButton(
         IconButton(
             onClick = onNavigateBack,
         ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
+            MaterialIcon(
+                symbol = MaterialSymbols.ArrowBack,
                 contentDescription = stringResource(Res.string.top_bar_back),
                 tint = LocalCustomColors.current.bodyContentColor
             )
