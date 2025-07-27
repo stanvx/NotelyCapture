@@ -149,19 +149,29 @@ class TranscriptionViewModel(
     override fun onCleared() {
         super.onCleared()
         debugPrintln { "TranscriptionViewModel: onCleared called." }
-        viewModelScope.launch {
-            try {
-                // Only perform cleanup if we're not already in a cleaned state
-                if (_uiState.value.inTranscription || _uiState.value.originalText.isNotEmpty()) {
-                    debugPrintln { "TranscriptionViewModel: Performing cleanup in onCleared" }
+        
+        // Perform immediate cleanup without using viewModelScope which may be cancelled
+        try {
+            // Only perform cleanup if we're not already in a cleaned state
+            if (_uiState.value.inTranscription || _uiState.value.originalText.isNotEmpty()) {
+                debugPrintln { "TranscriptionViewModel: Performing immediate cleanup in onCleared" }
+                // Use runBlocking to ensure cleanup completes before ViewModel destruction
+                kotlinx.coroutines.runBlocking {
                     transcriptionRepository.stop()
                     transcriptionRepository.finish()
-                } else {
-                    debugPrintln { "TranscriptionViewModel: State already clean, skipping onCleared cleanup" }
                 }
-            } catch (e: Exception) {
-                debugPrintln { "Error during TranscriptionViewModel cleanup: ${e.message}" }
+                
+                // Reset ready state
+                kotlinx.coroutines.runBlocking {
+                    initMutex.withLock {
+                        recognizerReady = false
+                    }
+                }
+            } else {
+                debugPrintln { "TranscriptionViewModel: State already clean, skipping onCleared cleanup" }
             }
+        } catch (e: Exception) {
+            debugPrintln { "Error during TranscriptionViewModel cleanup: ${e.message}" }
         }
     }
 }

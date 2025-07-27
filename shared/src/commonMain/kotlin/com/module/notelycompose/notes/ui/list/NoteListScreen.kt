@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -39,6 +40,8 @@ import com.module.notelycompose.notes.presentation.list.NoteListIntent
 import com.module.notelycompose.notes.presentation.list.NoteListPresentationState
 import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.ui.components.SpeedDialFAB
+import com.module.notelycompose.notes.ui.components.UnifiedNoteCard
+import com.module.notelycompose.notes.ui.components.NoteCardLayoutMode
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformUiState
@@ -215,17 +218,25 @@ private fun NoteListWithHeader(
             items = noteList,
             key = { _, note -> note.id } // Stable key prevents unnecessary recomposition
         ) { index, note ->
-            EnhancedNoteItem(
+            // Use UnifiedNoteCard for enhanced experience with audio playback
+            UnifiedNoteCard(
                 note = note,
-                onNoteClick = { noteId ->
+                layoutMode = NoteCardLayoutMode.LIST,
+                onClick = {
+                    navigateToNoteDetails("${note.id}")
+                },
+                onShareClick = { noteId ->
+                    // TODO: Implement share functionality
+                },
+                onEditClick = { noteId ->
                     navigateToNoteDetails("$noteId")
                 },
                 onDeleteClick = { noteId ->
                     viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(note))
                 },
-                index = index, // Pass index for staggered animation
                 audioPlayerViewModel = sharedAudioPlayerViewModel,
-                audioPlayerUiState = sharedAudioPlayerViewModel.onGetUiState(sharedAudioPlayerUiState)
+                audioPlayerUiState = sharedAudioPlayerViewModel.onGetUiState(sharedAudioPlayerUiState),
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

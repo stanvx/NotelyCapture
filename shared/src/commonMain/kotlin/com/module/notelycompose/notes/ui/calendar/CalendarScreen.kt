@@ -1,19 +1,30 @@
 package com.module.notelycompose.notes.ui.calendar
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,8 +65,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -81,6 +94,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -89,6 +108,7 @@ import com.module.notelycompose.notes.presentation.list.NoteListViewModel
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
 import com.module.notelycompose.notes.ui.components.ExtendedVoiceFAB
 import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.components.MaterialIconStyle
 import com.module.notelycompose.notes.ui.theme.voiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.onVoiceNoteIndicatorContainer
 import com.module.notelycompose.notes.ui.theme.textNoteIndicatorContainer
@@ -104,8 +124,430 @@ import com.module.notelycompose.notes.ui.calendar.CalendarDateMatcher
 import com.module.notelycompose.notes.ui.calendar.YearMonthKt
 import com.module.notelycompose.notes.ui.calendar.parseToLocalDate
 import com.module.notelycompose.notes.ui.calendar.parseToTimeString
+import com.module.notelycompose.notes.ui.theme.CardElevationPresets
 import com.module.notelycompose.notes.ui.calendar.formatToDisplayString
 import com.module.notelycompose.notes.ui.calendar.MonthlyStatsSummary
+import com.module.notelycompose.notes.ui.components.UnifiedNoteCard
+import com.module.notelycompose.notes.ui.components.NoteCardLayoutMode
+
+// Material 3 Motion Specifications
+private object CalendarMotionTokens {
+    val EMPHASIZED_EASING = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
+    val STANDARD_EASING = CubicBezierEasing(0.2f, 0.0f, 0.8f, 1.0f)
+    const val EMPHASIZED_DURATION = 500
+    const val STANDARD_DURATION = 300
+    const val SHORT_DURATION = 150
+}
+
+/**
+ * Helper function to build accessible content descriptions for calendar dates
+ */
+private fun buildDateDescription(
+    date: LocalDate,
+    notesCount: Int,
+    hasVoiceNotes: Boolean
+): String {
+    val monthName = date.month.name.lowercase().replaceFirstChar { it.uppercase() }
+    return buildString {
+        append("${monthName} ${date.dayOfMonth}")
+        if (notesCount > 0) {
+            append(", $notesCount ${if (notesCount == 1) "note" else "notes"}")
+            if (hasVoiceNotes) {
+                append(" including voice notes")
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Enhanced Date Cell with proper state layers and accessibility
+ */
+@Composable
+private fun Material3DateCell(
+    date: LocalDate,
+    isSelected: Boolean,
+    isToday: Boolean,
+    notesCount: Int,
+    hasVoiceNotes: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val focused by interactionSource.collectIsFocusedAsState()
+    val hovered by interactionSource.collectIsHoveredAsState()
+    
+    // Material 3 compliant surface with proper interaction feedback
+    Surface(
+        onClick = onClick,
+        modifier = modifier
+            .aspectRatio(1f)
+            .semantics { 
+                role = Role.Button
+                contentDescription = buildDateDescription(date, notesCount, hasVoiceNotes)
+                if (isSelected) stateDescription = "Selected"
+                if (isToday) stateDescription = "Today"
+            },
+        interactionSource = interactionSource,
+        shape = MaterialTheme.shapes.medium, // 12dp corner radius
+        color = when {
+            isSelected -> MaterialTheme.colorScheme.primaryContainer
+            isToday -> MaterialTheme.colorScheme.secondaryContainer
+            else -> Color.Transparent
+        },
+        border = if (isToday && !isSelected) {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        } else null
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                // Date number with proper typography
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = when {
+                        isSelected -> FontWeight.Bold
+                        isToday -> FontWeight.SemiBold
+                        else -> FontWeight.Medium
+                    },
+                    color = when {
+                        isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                        isToday -> MaterialTheme.colorScheme.onSecondaryContainer
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+                
+                // Enhanced note indicators
+                if (notesCount > 0) {
+                    Material3NoteIndicator(
+                        count = notesCount,
+                        hasVoiceNotes = hasVoiceNotes,
+                        isSelected = isSelected,
+                        isToday = isToday
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Expressive Note Indicator with badges and voice note differentiation
+ */
+@Composable
+private fun Material3NoteIndicator(
+    count: Int,
+    hasVoiceNotes: Boolean,
+    isSelected: Boolean,
+    isToday: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val containerColor = when {
+        hasVoiceNotes -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.secondary
+    }
+    
+    val contentColor = when {
+        hasVoiceNotes -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onSecondary
+    }
+    
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = containerColor.copy(
+            alpha = if (isSelected || isToday) 1f else 0.8f
+        )
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
+            // Voice note microphone icon
+            if (hasVoiceNotes) {
+                MaterialIcon(
+                    symbol = MaterialSymbols.Mic,
+                    size = 8.dp,
+                    tint = contentColor,
+                    style = MaterialIconStyle.Filled
+                )
+            }
+            
+            // Note count for multiple notes
+            if (count > 1) {
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 8.sp
+                    ),
+                    color = contentColor
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Enhanced Calendar Header with proper navigation patterns
+ */
+@Composable
+private fun Material3CalendarHeader(
+    currentMonth: YearMonthKt,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        tonalElevation = 2.dp, // Material 3 elevation token
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Previous month button
+            FilledIconButton(
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onPreviousMonth()
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier.semantics {
+                    contentDescription = "Previous month"
+                }
+            ) {
+                MaterialIcon(
+                    symbol = MaterialSymbols.KeyboardArrowLeft,
+                    size = 24.dp
+                )
+            }
+            
+            // Month and year display with animation
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AnimatedContent(
+                    targetState = currentMonth.month.name,
+                    transitionSpec = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) togetherWith slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        )
+                    },
+                    label = "month_transition"
+                ) { monthName ->
+                    Text(
+                        text = monthName.lowercase()
+                            .replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                
+                Text(
+                    text = currentMonth.year.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            
+            // Next month button
+            FilledIconButton(
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onNextMonth()
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier.semantics {
+                    contentDescription = "Next month"
+                }
+            ) {
+                MaterialIcon(
+                    symbol = MaterialSymbols.KeyboardArrowRight,
+                    size = 24.dp
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Enhanced Calendar Grid with accessibility and smooth transitions
+ */
+@Composable
+private fun Material3CalendarGrid(
+    currentMonth: YearMonthKt,
+    selectedDate: LocalDate?,
+    today: LocalDate,
+    notesData: List<NotePresentationModel>,
+    onDateSelected: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    
+    Column(
+        modifier = modifier.semantics {
+            contentDescription = "Calendar for ${currentMonth.month.name} ${currentMonth.year}"
+        }
+    ) {
+        // Day headers with proper semantics
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+            val fullDayNames = listOf(
+                "Monday", "Tuesday", "Wednesday", "Thursday", 
+                "Friday", "Saturday", "Sunday"
+            )
+            
+            dayNames.forEachIndexed { index, dayName ->
+                Text(
+                    text = dayName,
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics {
+                            contentDescription = fullDayNames[index]
+                            heading()
+                        },
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Calendar dates grid
+        val firstDayOfMonth = currentMonth.atDay(1)
+        val lastDayOfMonth = currentMonth.atEndOfMonth()
+        val firstDayOfWeek = firstDayOfMonth.dayOfWeek.ordinal % 7
+        val daysInMonth = lastDayOfMonth.dayOfMonth
+        
+        // Calculate weeks needed
+        val weeksNeeded = ((firstDayOfWeek + daysInMonth - 1) / 7) + 1
+        
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            repeat(weeksNeeded) { week ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    repeat(7) { dayOfWeek ->
+                        val dayOfMonth = week * 7 + dayOfWeek - firstDayOfWeek + 1
+                        
+                        if (dayOfMonth in 1..daysInMonth) {
+                            val date = currentMonth.atDay(dayOfMonth)
+                            val dayNotes = notesData.filter { note ->
+                                CalendarDateMatcher.matchesDate(
+                                    noteCreatedAt = note.createdAt,
+                                    targetDate = date,
+                                    noteId = note.id,
+                                    enableDebugLogging = false
+                                )
+                            }
+                            
+                            Material3DateCell(
+                                date = date,
+                                isSelected = date == selectedDate,
+                                isToday = date == today,
+                                notesCount = dayNotes.size,
+                                hasVoiceNotes = dayNotes.any { it.isVoice },
+                                onClick = {
+                                    hapticFeedback.performHapticFeedback(
+                                        HapticFeedbackType.TextHandleMove
+                                    )
+                                    onDateSelected(date)
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            // Empty space for days not in current month
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Material 3 Calendar Transitions with proper motion specifications
+ */
+@Composable
+private fun Material3CalendarTransitions(
+    currentMonth: YearMonthKt,
+    content: @Composable () -> Unit
+) {
+    AnimatedContent(
+        targetState = currentMonth,
+        transitionSpec = {
+            val isForward = targetState.isAfter(initialState)
+            
+            slideIntoContainer(
+                towards = if (isForward) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(
+                    durationMillis = CalendarMotionTokens.EMPHASIZED_DURATION,
+                    easing = CalendarMotionTokens.EMPHASIZED_EASING
+                )
+            ) togetherWith slideOutOfContainer(
+                towards = if (isForward) {
+                    AnimatedContentTransitionScope.SlideDirection.Left
+                } else {
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                },
+                animationSpec = tween(
+                    durationMillis = CalendarMotionTokens.STANDARD_DURATION,
+                    easing = CalendarMotionTokens.STANDARD_EASING
+                )
+            )
+        },
+        label = "calendar_month_transition"
+    ) {
+        content()
+    }
+}
 
 /**
  * Material 3 Expressive Calendar Screen for Notely Capture.
@@ -278,9 +720,10 @@ fun CalendarScreen(
                     items = calendarData.notesForSelectedDate,
                     key = { it.id }
                 ) { note ->
-                    OptimizedCalendarNoteCard(
+                    UnifiedNoteCard(
                         note = note,
-                        onNoteClick = { noteId ->
+                        layoutMode = NoteCardLayoutMode.CALENDAR,
+                        onClick = {
                             // Expand instead of navigate - Edit option in menu navigates
                         },
                         onDeleteClick = { noteId ->
@@ -318,7 +761,7 @@ private fun CalendarHeaderWithStats(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardElevationPresets.headerCard() // Use gold standard header elevation
     ) {
         Box(
             modifier = Modifier
@@ -507,7 +950,7 @@ private fun CalendarHeader(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardElevationPresets.headerCard() // Use gold standard header elevation
     ) {
         Box(
             modifier = Modifier
@@ -649,7 +1092,7 @@ private fun CalendarGrid(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardElevationPresets.compact(), // Use compact elevation for grid
         border = BorderStroke(
             width = 1.dp,
             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
@@ -879,7 +1322,7 @@ private fun CompactCalendarGrid(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardElevationPresets.noteCard(), // Use note card elevation for content
         border = BorderStroke(
             width = 1.5.dp,
             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
@@ -1071,7 +1514,7 @@ private fun EmptyDateView() {
             .fillMaxWidth()
             .animateContentSize(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardElevationPresets.compact(), // Use compact elevation for empty state
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
         ),
