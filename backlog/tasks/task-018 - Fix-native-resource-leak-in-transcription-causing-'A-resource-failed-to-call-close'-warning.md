@@ -4,10 +4,9 @@ title: >-
   Fix native resource leak in transcription causing 'A resource failed to call
   close' warning
 status: In Progress
-assignee:
-  - '@copilot'
+assignee: []
 created_date: '2025-07-20'
-updated_date: '2025-07-20'
+updated_date: '2025-07-27'
 labels: []
 dependencies: []
 ---
