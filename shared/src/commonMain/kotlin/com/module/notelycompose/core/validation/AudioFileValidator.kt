@@ -64,8 +64,8 @@ object AudioFileValidator {
                 }
             }
             
-            // Platform-specific file validation (run on IO dispatcher)
-            val platformValidation = withContext(Dispatchers.IO) {
+            // Platform-specific file validation (run on default dispatcher)
+            val platformValidation = withContext(Dispatchers.Default) {
                 validateFileAccess(filePath)
             }
             if (platformValidation.isFailure) {

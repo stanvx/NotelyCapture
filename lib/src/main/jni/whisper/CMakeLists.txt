@@ -96,6 +96,9 @@ function(build_library target_name)
         target_link_libraries(${target_name} ${LOG_LIB} android)
     endif()
 
+    # Configure link options for 16KB page size support (Google Play requirement)
+    target_link_options(${target_name} PRIVATE "-Wl,-z,max-page-size=16384")
+
     # Strip .comment section for reproducible builds
     add_custom_command(TARGET ${target_name} POST_BUILD
             COMMAND ${CMAKE_OBJCOPY} --remove-section .comment $<TARGET_FILE:${target_name}>
@@ -118,3 +121,4 @@ include_directories(${WHISPER_LIB_DIR}/include)
 include_directories(${WHISPER_LIB_DIR}/ggml/include)
 include_directories(${WHISPER_LIB_DIR}/ggml/src)
 include_directories(${WHISPER_LIB_DIR}/ggml/src/ggml-cpu)
+
