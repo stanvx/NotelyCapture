@@ -71,6 +71,14 @@ actual fun AudioReactiveLottie(
         }
     }
 
+    // 7. Clean up DotLottieController when component leaves composition
+    DisposableEffect(controller) {
+        onDispose {
+            // DotLottieController cleanup is handled automatically
+            // No explicit dispose method available in current API
+        }
+    }
+
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center

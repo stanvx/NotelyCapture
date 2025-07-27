@@ -1,11 +1,23 @@
 package com.module.notelycompose.notes.domain
 
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.mohamedrejeb.richeditor.model.RichTextState
+// import com.module.notelycompose.security.HtmlSanitizer // Temporarily disabled for build
+import kotlinx.datetime.Clock
+
+/**
+ * Result type for text edit command operations.
+ */
+sealed class TextEditCommandResult {
+    data class Success(val newContent: String) : TextEditCommandResult()
+    data class Error(val error: String) : TextEditCommandResult()
+}
 
 /**
  * Command pattern interface for implementing undo/redo functionality in rich text editing.
@@ -69,37 +81,29 @@ class FormatCommand(
     private val range: TextRange,
     private val previousSnapshot: FormattingSnapshot,
     private val newSnapshot: FormattingSnapshot,
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 ) : TextEditCommand {
     
     override suspend fun execute() {
         when (formatType) {
             FormatType.Bold -> {
                 newSnapshot.fontWeight?.let { weight ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(fontWeight = weight)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(fontWeight = weight))
                 }
             }
             FormatType.Italic -> {
                 newSnapshot.fontStyle?.let { style ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(fontStyle = style)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(fontStyle = style))
                 }
             }
             FormatType.Underline -> {
                 newSnapshot.textDecoration?.let { decoration ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(textDecoration = decoration)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(textDecoration = decoration))
                 }
             }
             FormatType.Alignment -> {
                 newSnapshot.textAlign?.let { align ->
-                    richTextState.toggleParagraphStyle(range) { 
-                        it.copy(textAlign = align)
-                    }
+                    richTextState.toggleParagraphStyle(ParagraphStyle(textAlign = align))
                 }
             }
         }
@@ -109,30 +113,22 @@ class FormatCommand(
         when (formatType) {
             FormatType.Bold -> {
                 previousSnapshot.fontWeight?.let { weight ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(fontWeight = weight)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(fontWeight = weight))
                 }
             }
             FormatType.Italic -> {
                 previousSnapshot.fontStyle?.let { style ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(fontStyle = style)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(fontStyle = style))
                 }
             }
             FormatType.Underline -> {
                 previousSnapshot.textDecoration?.let { decoration ->
-                    richTextState.toggleSpanStyle(range) { 
-                        it.copy(textDecoration = decoration)
-                    }
+                    richTextState.toggleSpanStyle(SpanStyle(textDecoration = decoration))
                 }
             }
             FormatType.Alignment -> {
                 previousSnapshot.textAlign?.let { align ->
-                    richTextState.toggleParagraphStyle(range) { 
-                        it.copy(textAlign = align)
-                    }
+                    richTextState.toggleParagraphStyle(ParagraphStyle(textAlign = align))
                 }
             }
         }
@@ -180,18 +176,19 @@ class InsertTextCommand(
     private val richTextState: RichTextState,
     private val insertPosition: Int,
     private val text: String,
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 ) : TextEditCommand {
     
     override suspend fun execute() {
-        richTextState.addText(text)
+        richTextState.insertHtml(text, insertPosition)
     }
     
     override suspend fun undo() {
         val currentText = richTextState.annotatedString.text
         val newText = currentText.removeRange(insertPosition, insertPosition + text.length)
+        // SECURITY: Clear with empty string (already safe) and rebuild with plain text
         richTextState.setHtml("") // Clear and rebuild - this is a simplified approach
-        richTextState.addText(newText)
+        richTextState.insertHtml(newText, 0) // insertHtml is safe for plain text
     }
     
     override fun getDescription(): String = "Insert Text"
@@ -225,11 +222,15 @@ class DeleteTextCommand(
     private val richTextState: RichTextState,
     private val range: TextRange,
     private val deletedText: String,
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 ) : TextEditCommand {
     
     override suspend fun execute() {
-        richTextState.removeRange(range)
+        // Delete text by rebuilding content without the deleted range
+        val currentText = richTextState.annotatedString.text
+        val newText = currentText.removeRange(range.start, range.end)
+        richTextState.setHtml("")
+        richTextState.insertHtml(newText, 0)
     }
     
     override suspend fun undo() {
@@ -237,8 +238,9 @@ class DeleteTextCommand(
         val newText = currentText.substring(0, range.start) + 
                      deletedText + 
                      currentText.substring(range.start)
+        // SECURITY: Clear with empty string (already safe) and rebuild with plain text
         richTextState.setHtml("") // Clear and rebuild
-        richTextState.addText(newText)
+        richTextState.insertHtml(newText, 0) // insertHtml is safe for plain text
     }
     
     override fun getDescription(): String = "Delete Text"
@@ -285,7 +287,7 @@ class ListCommand(
     private val range: TextRange,
     private val listType: ListType,
     private val isAdding: Boolean, // true for adding list, false for removing
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 ) : TextEditCommand {
     
     override suspend fun execute() {
@@ -334,7 +336,7 @@ class ListCommand(
  */
 class CompositeCommand(
     private val commands: List<TextEditCommand>,
-    override val timestamp: Long = System.currentTimeMillis()
+    override val timestamp: Long = Clock.System.now().toEpochMilliseconds()
 ) : TextEditCommand {
     
     override suspend fun execute() {

@@ -97,6 +97,7 @@ import com.module.notelycompose.notes.ui.theme.pinnedTemplateTeal
 import com.module.notelycompose.notes.ui.theme.pinnedTemplatePurple
 import com.module.notelycompose.notes.ui.theme.pinnedTemplateBrown
 import com.module.notelycompose.notes.ui.theme.pinnedTemplatePink
+import com.module.notelycompose.notes.ui.theme.CardElevationPresets
 
 /**
  * Material 3 Expressive Capture Hub Screen for Notely Capture.
@@ -243,7 +244,7 @@ private fun HeroSection() {
             .fillMaxWidth()
             .height(160.dp),
         shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        elevation = CardElevationPresets.enhanced()
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -464,9 +465,11 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                 )
             },
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isPressed) 4.dp else 8.dp
-        )
+        elevation = if (isPressed) {
+            CardElevationPresets.compact()
+        } else {
+            CardElevationPresets.noteCard()
+        }
     ) {
         Box(
             modifier = Modifier
@@ -474,9 +477,9 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            template.color,
-                            template.color.copy(alpha = 0.7f),
-                            template.color.copy(alpha = 0.5f)
+                            template.color.copy(alpha = 0.3f), // Much more subtle
+                            template.color.copy(alpha = 0.2f),
+                            template.color.copy(alpha = 0.1f)
                         ),
                         start = Offset(0f, 0f),
                         end = Offset(200f, 200f)
@@ -505,7 +508,7 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                     Text(
                         text = "#",
                         style = MaterialTheme.typography.displaySmall,
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                         fontWeight = FontWeight.Light
                     )
                     
@@ -532,7 +535,7 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                 Text(
                     text = template.name,
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
@@ -572,12 +575,9 @@ private fun CompactCaptureMethodCard(
                 )
             },
         shape = RoundedCornerShape(20.dp), // Slightly more rounded
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp
-        ),
+        elevation = CardElevationPresets.noteCard(),
         colors = CardDefaults.cardColors(
-            containerColor = captureMethod.backgroundColor
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow // Unified subtle container
         )
     ) {
         Box(
@@ -589,21 +589,21 @@ private fun CompactCaptureMethodCard(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(16.dp)
             ) {
-                // More subtle icon with softer background
+                // Properly centered icon with subtle, consistent styling
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(
-                            // Much more subtle background - using primary color with very low alpha
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            // Consistent subtle background using surface variant
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     MaterialIcon(
                         symbol = captureMethod.icon,
                         contentDescription = captureMethod.name,
-                        tint = captureMethod.iconBackgroundColor.copy(alpha = 0.8f), // Slightly transparent for subtlety
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant, // More consistent theming
                         size = 24.dp,
                         style = MaterialIconStyle.Filled
                     )
@@ -611,12 +611,12 @@ private fun CompactCaptureMethodCard(
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                // Better text scaling and color
+                // Better text scaling and consistent color
                 Text(
                     text = captureMethod.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = captureMethod.iconBackgroundColor,
+                    color = MaterialTheme.colorScheme.onSurface, // Consistent with overall theme
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     modifier = Modifier.fillMaxWidth()

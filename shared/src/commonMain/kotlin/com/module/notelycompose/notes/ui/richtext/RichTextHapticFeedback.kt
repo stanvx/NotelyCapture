@@ -300,7 +300,7 @@ fun rememberRichTextHapticFeedback(): RichTextHapticFeedbackManager {
  * Extension function for providing haptic feedback in rich text components.
  */
 @Composable
-fun androidx.compose.ui.platform.LocalHapticFeedback.rememberRichTextHapticManager(): RichTextHapticFeedbackManager {
+fun rememberRichTextHapticManager(): RichTextHapticFeedbackManager {
     val hapticFeedback = LocalHapticFeedback.current
     return remember { RichTextHapticFeedbackManager(hapticFeedback) }
 }
@@ -308,7 +308,7 @@ fun androidx.compose.ui.platform.LocalHapticFeedback.rememberRichTextHapticManag
 /**
  * Haptic feedback wrapper for platform-specific implementations.
  */
-expect class PlatformHapticFeedbackManager {
+expect class PlatformHapticFeedbackManager() {
     fun performHapticFeedback(type: HapticFeedbackType)
     fun performCustomHaptic(duration: Long, intensity: Float)
     fun isHapticFeedbackEnabled(): Boolean

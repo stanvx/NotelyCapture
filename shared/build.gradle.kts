@@ -92,6 +92,9 @@ kotlin {
             
             // Rich text editor
             implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
+            
+            // HTML Sanitizer for security
+            implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20220608.1")
 
             implementation(project(":core:audio"))
         }

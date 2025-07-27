@@ -14,18 +14,18 @@ import androidx.compose.ui.unit.dp
  * - Large (16dp): For sheets, large surfaces
  * - Extra Large (28dp): For prominent surfaces, hero cards
  * 
+ * PERFORMANCE: Uses singleton pattern to prevent recreation on every composition.
+ * 
  * Based on Material 3 Shape Guidelines:
  * https://m3.material.io/styles/shape/overview
  */
-fun createMaterial3ExpressiveShapes(): Shapes {
-    return Shapes(
-        extraSmall = RoundedCornerShape(4.dp),   // Chips, badges, small buttons
-        small = RoundedCornerShape(8.dp),        // Buttons, text fields, small cards
-        medium = RoundedCornerShape(12.dp),      // Cards, dialogs, containers
-        large = RoundedCornerShape(16.dp),       // Sheets, navigation components  
-        extraLarge = RoundedCornerShape(28.dp)   // Hero cards, prominent surfaces
-    )
-}
+val Material3ExpressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),   // Chips, badges, small buttons
+    small = RoundedCornerShape(8.dp),        // Buttons, text fields, small cards
+    medium = RoundedCornerShape(12.dp),      // Cards, dialogs, containers
+    large = RoundedCornerShape(16.dp),       // Sheets, navigation components  
+    extraLarge = RoundedCornerShape(28.dp)   // Hero cards, prominent surfaces
+)
 
 /**
  * Material 3 Expressive Shape Tokens

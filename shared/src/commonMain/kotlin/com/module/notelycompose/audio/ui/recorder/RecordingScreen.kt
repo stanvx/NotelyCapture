@@ -503,9 +503,9 @@ private fun RecordingUiComponentBackButton(
                 tint = LocalCustomColors.current.bodyContentColor
             )
             Spacer(modifier = Modifier.width(8.dp))
-            androidx.compose.material.Text(
+            Text(
                 text = stringResource(Res.string.top_bar_back),
-                style = androidx.compose.material.MaterialTheme.typography.body1,
+                style = MaterialTheme.typography.bodyMedium,
                 color = LocalCustomColors.current.bodyContentColor
             )
         }

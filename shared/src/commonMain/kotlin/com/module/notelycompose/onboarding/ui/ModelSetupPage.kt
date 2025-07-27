@@ -22,7 +22,7 @@ import com.module.notelycompose.modelDownloader.DownloaderEffect
 import com.module.notelycompose.modelDownloader.DownloaderUiState
 import com.module.notelycompose.modelDownloader.ModelDownloaderViewModel
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.notes.ui.theme.PoppingsFontFamily
+import com.module.notelycompose.notes.ui.theme.PoppinsFontFamily
 import com.module.notelycompose.platform.presentation.PlatformUiState
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.onboarding_android_four
@@ -143,7 +143,7 @@ private fun ModelSetupContent(
         text = "Setting up Notely Capture",
         fontSize = 32.sp,
         fontWeight = FontWeight.Bold,
-        fontFamily = PoppingsFontFamily(),
+        fontFamily = PoppinsFontFamily(),
         color = Color(0xFFCA7F58),
         textAlign = TextAlign.Start,
         modifier = Modifier

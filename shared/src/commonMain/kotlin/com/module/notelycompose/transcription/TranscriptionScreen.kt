@@ -16,8 +16,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Card
-import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ButtonDefaults
@@ -90,8 +91,10 @@ fun TranscriptionScreen(
         }
     }
         Card(
-            backgroundColor = LocalCustomColors.current.bodyBackgroundColor,
-            elevation = 0.dp
+            colors = CardDefaults.cardColors(
+                containerColor = LocalCustomColors.current.bodyBackgroundColor
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

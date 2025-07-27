@@ -59,6 +59,20 @@ object MaterialSymbols {
     const val Schedule = "\ue8b5"
     const val DateRange = "\ue916"
     
+    // Rich Text Formatting
+    const val FormatBold = "\ue238"
+    const val FormatItalic = "\ue23f"
+    const val FormatUnderlined = "\ue249"
+    const val FormatStrikethrough = "\ue246"
+    const val FormatListBulleted = "\ue241"
+    const val FormatListNumbered = "\ue242"
+    const val FormatAlignLeft = "\ue236"
+    const val FormatAlignCenter = "\ue234"
+    const val FormatAlignRight = "\ue237"
+    const val FormatClear = "\ue239"
+    const val Code = "\ue86f"
+    const val FormatQuote = "\ue244"
+    
     // Interface Elements
     const val Search = "\ue8b6"
     const val Clear = "\ue14c"
@@ -68,6 +82,8 @@ object MaterialSymbols {
     const val Info = "\ue88e"
     const val TrendingUp = "\ue8e3"
     const val Dashboard = "\ue871"
+    const val Star = "\ue838"
+    const val StarFilled = "\ue838"
     
     // Additional Icons from Usage Analysis
     const val Videocam = "\ue04b"

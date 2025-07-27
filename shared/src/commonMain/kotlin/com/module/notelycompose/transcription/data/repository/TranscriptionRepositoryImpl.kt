@@ -18,13 +18,16 @@ class TranscriptionRepositoryImpl(
     }
 
     override suspend fun initialize() {
-        // Use singleton model manager instead of direct transcriber initialization
+        // Use singleton model manager for shared model loading
         val result = whisperModelManager.ensureModelLoaded()
         
         // Handle initialization failures
         when (result) {
             is WhisperLoadResult.Success -> {
-                // Model loaded successfully
+                // Model loaded successfully, now initialize transcriber state
+                withContext(Dispatchers.IO) {
+                    transcriber.initialize()
+                }
             }
             is WhisperLoadResult.Failure.InsufficientMemory -> {
                 throw RuntimeException("Insufficient memory to load Whisper model", result.exception)

@@ -10,5 +10,8 @@ data class NoteListPresentationState(
     val showEmptyContent: Boolean = false,
     val quickRecordState: QuickRecordState = QuickRecordState.Idle,
     val quickRecordError: String? = null,
-    val isSearchActive: Boolean = false
+    val isSearchActive: Boolean = false,
+    val isLoading: Boolean = false,
+    val selectedNoteIds: Set<Long> = emptySet(), // For bulk operations
+    val isBulkSelectionMode: Boolean = false
 )

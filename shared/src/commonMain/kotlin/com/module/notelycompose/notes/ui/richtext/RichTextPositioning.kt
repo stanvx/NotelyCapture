@@ -12,7 +12,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -424,7 +423,6 @@ class FallbackStrategy : BasePositioningStrategy() {
 @Composable
 fun rememberSystemInsets(): SystemInsets {
     val density = LocalDensity.current
-    val view = LocalView.current
     val ime = WindowInsets.ime
     
     return remember {
@@ -433,7 +431,7 @@ fun rememberSystemInsets(): SystemInsets {
                 left = 0,
                 top = 0, // Status bar would be handled by platform
                 right = 0,
-                bottom = 0 // Navigation bar would be handled by platform
+                bottom = ime.getBottom(this).toDp().value.roundToInt() // Use IME for keyboard height
             )
         }
     }

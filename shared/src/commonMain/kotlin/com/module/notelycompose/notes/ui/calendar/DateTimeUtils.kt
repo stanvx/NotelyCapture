@@ -261,3 +261,17 @@ data class YearMonthKt(val year: Int, val month: Month) {
 
 // Standalone helper function for leap year calculation (used by parseHumanReadableDate)
 private fun isLeapYear(year: Int): Boolean = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
+
+// Extension function for YearMonthKt to get the last day of the month
+fun YearMonthKt.atEndOfMonth(): LocalDate {
+    return LocalDate(year, month, lengthOfMonth())
+}
+
+// Extension function for YearMonthKt to check if one month is after another
+fun YearMonthKt.isAfter(other: YearMonthKt): Boolean {
+    return when {
+        year > other.year -> true
+        year < other.year -> false
+        else -> month.ordinal > other.month.ordinal
+    }
+}

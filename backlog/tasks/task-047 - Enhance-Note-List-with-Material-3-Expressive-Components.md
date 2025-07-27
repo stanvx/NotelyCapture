@@ -1,3 +1,13 @@
+---
+id: task-046
+title: Enhance Note List with Material 3 Expressive Components
+status: To Do
+assignee: []
+created_date: '2025-07-26'
+labels: []
+dependencies: []
+---
+
 # task-047 - Enhance Note List with Material 3 Expressive Components
 
 ## Description
@@ -6,7 +16,7 @@ Transform the note list interface to implement Material 3 Expressive design patt
 
 This enhancement will make note browsing more intuitive and delightful while maintaining excellent performance and accessibility.
 
-**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material%203%20Expressive%20Design%20Implementation%20Guide.md) - Section "Note List Components"
+**Reference Document**: See [Material 3 Expressive Design Implementation Guide](../docs/doc-001%20-%20Material-3-Expressive-Design-Implementation-Guide.md) - Section "Note List Components"
 
 ## Acceptance Criteria
 

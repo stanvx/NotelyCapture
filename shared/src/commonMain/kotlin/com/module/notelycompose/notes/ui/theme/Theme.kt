@@ -100,10 +100,10 @@ fun AppTheme(
     val customColors = if (darkTheme) DarkCustomColors else LightCustomColors
     
     // Material 3 Expressive Typography with Poppins font family
-    val typography = createMaterial3ExpressiveTypography()
+    val typography = Material3ExpressiveTypography()
     
     // Material 3 Expressive Shapes with 5-tier system
-    val shapes = createMaterial3ExpressiveShapes()
+    val shapes = Material3ExpressiveShapes
 
     CompositionLocalProvider(LocalCustomColors provides customColors) {
         MaterialTheme(

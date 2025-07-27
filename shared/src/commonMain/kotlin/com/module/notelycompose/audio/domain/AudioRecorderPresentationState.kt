@@ -6,5 +6,8 @@ data class AudioRecorderPresentationState(
     val isRecordPaused: Boolean = false,
     val currentAmplitude: Float = 0f,
     val amplitudeHistory: List<Float> = emptyList(),
-    val maxAmplitudeHistorySize: Int = 100
+    val maxAmplitudeHistorySize: Int = 100,
+    val hasPermission: Boolean = false,
+    val permissionRequested: Boolean = false,
+    val isRecording: Boolean = false
 )

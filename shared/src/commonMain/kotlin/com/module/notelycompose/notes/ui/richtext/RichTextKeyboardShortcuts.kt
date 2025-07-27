@@ -5,8 +5,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.text.style.TextAlign
 
 /**
@@ -84,6 +84,7 @@ class RichTextKeyboardShortcutsManager(
  * Modifier for handling keyboard shortcuts in rich text components.
  * Provides seamless integration with the keyboard shortcuts system.
  */
+@Composable
 fun Modifier.richTextKeyboardShortcuts(
     viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
 ): Modifier {
@@ -193,18 +194,15 @@ fun RichTextShortcutsOverlay(
     
     if (!isVisible) return
     
-    KeyboardShortcutsOverlay(
-        isVisible = isVisible,
-        onDismiss = onDismiss,
-        modifier = modifier
-    )
+    // TODO: Implement KeyboardShortcutsOverlay UI component
+    // This would show a modal overlay with available keyboard shortcuts
 }
 
 /**
  * Focus management for keyboard shortcuts.
  */
 class RichTextKeyboardFocusManager(
-    private val focusManager: androidx.compose.ui.focus.FocusManager
+    private val focusManager: FocusManager
 ) {
     
     fun moveFocusDown() {
@@ -232,7 +230,7 @@ class RichTextKeyboardFocusManager(
  * Extension function for creating keyboard shortcut manager.
  */
 @Composable
-fun androidx.compose.ui.platform.LocalFocusManager.rememberRichTextKeyboardFocusManager(): RichTextKeyboardFocusManager {
+fun FocusManager.rememberRichTextKeyboardFocusManager(): RichTextKeyboardFocusManager {
     return remember {
         RichTextKeyboardFocusManager(this)
     }

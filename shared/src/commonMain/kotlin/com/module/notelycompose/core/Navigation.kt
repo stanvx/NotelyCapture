@@ -4,6 +4,8 @@ import androidx.annotation.MainThread
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
@@ -38,30 +40,30 @@ inline fun <reified T : @Serializable Any> NavGraphBuilder.composableWithSharedA
     deepLinks = deepLinks,
     enterTransition = {
         val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
-        slideIntoContainer(
-            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideInHorizontally(
+            animationSpec = tween(300),
+            initialOffsetX = { if (isForward) -it else it }
         )
     },
     exitTransition = {
         val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
-        slideOutOfContainer(
-            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideOutHorizontally(
+            animationSpec = tween(300),
+            targetOffsetX = { if (isForward) -it else it }
         )
     },
     popEnterTransition = {
         val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
-        slideIntoContainer(
-            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideInHorizontally(
+            animationSpec = tween(300),
+            initialOffsetX = { if (isForward) -it else it }
         )
     },
     popExitTransition = {
         val isForward = isForwardTransition(initialState.destination.route, targetState.destination.route)
-        slideOutOfContainer(
-            towards = if (isForward) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideOutHorizontally(
+            animationSpec = tween(300),
+            targetOffsetX = { if (isForward) -it else it }
         )
     },
     content = content
@@ -73,27 +75,27 @@ inline fun <reified T : @Serializable Any> NavGraphBuilder.composableWithHorizon
 ) = composable<T>(
     deepLinks = deepLinks,
     enterTransition = {
-        slideIntoContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Start,
-            animationSpec = tween(300)
+        slideInHorizontally(
+            animationSpec = tween(300),
+            initialOffsetX = { -it }
         )
     },
     exitTransition = {
-        slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Start,
-            animationSpec = tween(300)
+        slideOutHorizontally(
+            animationSpec = tween(300),
+            targetOffsetX = { -it }
         )
     },
     popEnterTransition = {
-        slideIntoContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideInHorizontally(
+            animationSpec = tween(300),
+            initialOffsetX = { it }
         )
     },
     popExitTransition = {
-        slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.End,
-            animationSpec = tween(300)
+        slideOutHorizontally(
+            animationSpec = tween(300),
+            targetOffsetX = { it }
         )
     },
     content = content

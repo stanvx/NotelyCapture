@@ -99,14 +99,17 @@ fun CompactAudioPlayer(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play/Pause button
+                // Play/Pause button with immediate feedback
                 CompactPlayButton(
                     isPlaying = isCurrentlyPlaying,
                     isLoaded = isCurrentlyLoaded || (noteDurationMs > 0 && filePath.isNotEmpty()), // Show as loaded if we have valid audio
                     onClick = {
                         hapticFeedback?.light()
+                        // Immediate action for better UX - no two-click requirement
                         if (!isCurrentlyLoaded && filePath.isNotEmpty()) {
+                            // Load and immediately start playing
                             onLoadAudio(filePath, noteId)
+                            // Note: The ViewModel should handle auto-play after loading for immediate feedback
                         } else if (isCurrentlyLoaded) {
                             onTogglePlayPause(noteId)
                         }

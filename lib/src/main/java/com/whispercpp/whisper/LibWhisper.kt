@@ -234,7 +234,7 @@ private fun toTimestamp(t: Long, comma: Boolean = false): String {
     msec -= sec * 1000
 
     val delimiter = if (comma) "," else "."
-    return String.format("%02d:%02d:%02d%s%03d", hr, min, sec, delimiter, msec)
+    return String.format(java.util.Locale.ROOT, "%02d:%02d:%02d%s%03d", hr, min, sec, delimiter, msec)
 }
 
 private fun isArmEabiV7a(): Boolean {

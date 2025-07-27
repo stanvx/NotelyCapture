@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.theme.Material3ShapeTokens
+import com.module.notelycompose.notes.ui.theme.CardElevationPresets
 import kotlin.math.*
 
 /**
@@ -80,7 +81,7 @@ fun NoteListHeader(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = Material3ShapeTokens.surfaceContainer,
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardElevationPresets.headerCard()
     ) {
         Box(
             modifier = Modifier

@@ -16,12 +16,12 @@ package com.module.notelycompose.designsystem
 // Design system components are accessible via their full package names:
 // - com.module.notelycompose.designsystem.components.*
 // - com.module.notelycompose.resources.style.LayoutGuide
-// - com.module.notelycompose.notes.ui.theme.Material3TypographyTokens
+// - com.module.notelycompose.notes.ui.theme.Material3ExpressiveTypography
 
 // Import all components for internal access
 import com.module.notelycompose.designsystem.components.*
 import com.module.notelycompose.resources.style.LayoutGuide
-import com.module.notelycompose.notes.ui.theme.Material3TypographyTokens
+import com.module.notelycompose.notes.ui.theme.Material3ExpressiveTypography
 
 /**
  * Design System Documentation
