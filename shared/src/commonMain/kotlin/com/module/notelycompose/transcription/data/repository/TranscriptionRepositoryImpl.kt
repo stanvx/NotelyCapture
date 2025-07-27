@@ -4,6 +4,7 @@ import com.module.notelycompose.platform.Transcriber
 import com.module.notelycompose.transcription.domain.WhisperLoadResult
 import com.module.notelycompose.transcription.domain.WhisperModelManager
 import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
+import com.module.notelycompose.transcription.error.TranscriptionError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -30,13 +31,13 @@ class TranscriptionRepositoryImpl(
                 }
             }
             is WhisperLoadResult.Failure.InsufficientMemory -> {
-                throw RuntimeException("Insufficient memory to load Whisper model", result.exception)
+                throw TranscriptionError.InitializationError("Insufficient memory to load Whisper model", result.exception)
             }
             is WhisperLoadResult.Failure.ModelNotFound -> {
-                throw RuntimeException("Whisper model file not found", result.exception)
+                throw TranscriptionError.InitializationError("Whisper model file not found", result.exception)
             }
             is WhisperLoadResult.Failure.LoadError -> {
-                throw RuntimeException("Failed to load Whisper model", result.exception)
+                throw TranscriptionError.InitializationError("Failed to load Whisper model", result.exception)
             }
         }
     }

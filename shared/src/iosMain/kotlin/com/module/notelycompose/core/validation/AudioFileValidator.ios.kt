@@ -1,5 +1,6 @@
 package com.module.notelycompose.core.validation
 
+import com.module.notelycompose.transcription.error.TranscriptionError
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSString
@@ -52,5 +53,36 @@ actual fun canReadFile(filePath: String): Boolean {
         fileManager.isReadableFileAtPath(standardizedPath)
     } catch (exception: Exception) {
         false
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun validateCanonicalPath(filePath: String, appDirectory: String): Result<Unit> {
+    return try {
+        val fileManager = NSFileManager.defaultManager
+        
+        // Standardize paths to resolve symbolic links and normalize paths (iOS equivalent of canonical paths)
+        val standardizedFilePath = (filePath as NSString).stringByStandardizingPath
+        val standardizedAppDir = (appDirectory as NSString).stringByStandardizingPath
+        
+        // Ensure the file is within the app directory using standardized paths
+        if (!standardizedFilePath.startsWith(standardizedAppDir)) {
+            Result.failure(
+                TranscriptionError.AudioFileValidationError(
+                    message = "Invalid file path: standardized path is outside app directory",
+                    filePath = filePath
+                )
+            )
+        } else {
+            Result.success(Unit)
+        }
+    } catch (e: Exception) {
+        // If path standardization fails, return error for security
+        Result.failure(
+            TranscriptionError.AudioFileValidationError(
+                message = "Path validation failed: unable to standardize path - ${e.message}",
+                filePath = filePath
+            )
+        )
     }
 }

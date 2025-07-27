@@ -38,7 +38,7 @@ import com.module.notelycompose.audio.ui.uicomponents.AudioReactiveLottie
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -98,7 +98,7 @@ fun RecordingScreen(
     isQuickRecordMode: Boolean = false,
     backgroundTranscriptionService: BackgroundTranscriptionService = koinInject()
 ) {
-    val recordingState by viewModel.audioRecorderPresentationState.collectAsState()
+    val recordingState by viewModel.audioRecorderPresentationState.collectAsStateWithLifecycle()
     var screenState by remember { mutableStateOf(if (isQuickRecordMode) ScreenState.Recording else ScreenState.Initial) }
 
     DisposableEffect(Unit){
@@ -170,10 +170,19 @@ fun RecordingScreen(
                 RecordingSuccessScreen()
                 LaunchedEffect(Unit) {
                     if (isQuickRecordMode) {
-                        // Wait for recording path to be available using reactive approach
+                        // Wait for recording path to be available using reactive approach with race condition protection
                         val recordingPath = withTimeoutOrNull(AppConstants.Recording.RECORDING_PATH_TIMEOUT) {
-                            viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }
-                        }?.recordingPath
+                            // Add small delay to ensure state updates are processed
+                            delay(AppConstants.Audio.RACE_CONDITION_DELAY)
+                            // Check current state first in case recording completed before we started waiting
+                            val currentState = viewModel.audioRecorderPresentationState.value
+                            if (currentState.recordingPath.isNotEmpty()) {
+                                currentState.recordingPath
+                            } else {
+                                // Wait for state update if path is not yet available
+                                viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }.recordingPath
+                            }
+                        }
                         
                         if (!recordingPath.isNullOrEmpty()) {
                             debugPrintln { "Quick record completed: $recordingPath" }
@@ -235,13 +244,13 @@ private fun RecordingInitialScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(bottom = 80.dp)
+                .padding(bottom = AppConstants.UI.BOTTOM_PADDING_DP.dp)
                 .align(Alignment.BottomCenter),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(AppConstants.UI.LARGE_BUTTON_SIZE_DP.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .clickable { onTapToRecord() },
@@ -292,14 +301,14 @@ private fun RecordingInProgressScreen(
                 .fillMaxWidth()
                 .align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(AppConstants.UI.STANDARD_SPACING_DP.dp)
         ) {
             // Main recording indicator - full-size gradient animation
             AudioReactiveLottie(
                 amplitude = if (isRecordPaused) 0f else currentAmplitude,
                 isRecording = !isRecordPaused,
                 modifier = Modifier
-                    .size(320.dp)  // Large, prominent size for beautiful gradient display
+                    .size(AppConstants.UI.LARGE_RECORDING_ANIMATION_DP.dp)  // Large, prominent size for beautiful gradient display
             )
             
             // Timer display positioned below the animation
@@ -316,7 +325,7 @@ private fun RecordingInProgressScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 80.dp)
+                .padding(bottom = AppConstants.UI.BOTTOM_PADDING_DP.dp)
                 .align(Alignment.BottomCenter),
             contentAlignment = Alignment.Center
         ) {
@@ -446,7 +455,7 @@ internal fun RecordingSuccessScreen() {
             animationPlayed = true
         }
 
-        Canvas(modifier = Modifier.size(100.dp)) {
+        Canvas(modifier = Modifier.size(AppConstants.UI.SUCCESS_ANIMATION_DP.dp)) {
             val path = Path().apply {
 
                 addArc(
@@ -580,7 +589,7 @@ private fun QuickRecordingScreen(
             AudioReactiveLottie(
                 amplitude = currentAmplitude,
                 isRecording = true,
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(AppConstants.UI.MEDIUM_RECORDING_ANIMATION_DP.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -598,7 +607,7 @@ private fun QuickRecordingScreen(
             // Large stop button
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(AppConstants.UI.LARGE_BUTTON_SIZE_DP.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.error)
                     .clickable { onStopRecording() },
@@ -606,7 +615,7 @@ private fun QuickRecordingScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(AppConstants.UI.SMALL_ICON_SIZE_DP.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .background(MaterialTheme.colorScheme.onError)
                 )

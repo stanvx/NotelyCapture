@@ -59,21 +59,20 @@ class BackgroundTranscriptionService(
         
         debugPrintln { "BackgroundTranscriptionService: Starting transcription for ${AudioFileValidator.getSecureFileName(audioFilePath)}" }
         
-        // Validate audio file before processing
-        AudioFileValidator.validateAudioFile(audioFilePath).onFailure { error ->
-            val transcriptionError = error as? TranscriptionError ?: TranscriptionError.AudioFileValidationError(
-                message = "Audio file validation failed: ${error.message}",
-                filePath = audioFilePath
-            )
-            debugPrintln { "BackgroundTranscriptionService: File validation failed: ${transcriptionError.message}" }
-            _state.value = BackgroundTranscriptionState.Error(transcriptionError)
-            onError(transcriptionError)
-            return
-        }
-        
         _state.value = BackgroundTranscriptionState.Processing
         
         serviceScope.launch {
+            // Validate audio file before processing (now runs on appropriate dispatcher)
+            AudioFileValidator.validateAudioFile(audioFilePath).onFailure { error ->
+                val transcriptionError = error as? TranscriptionError ?: TranscriptionError.AudioFileValidationError(
+                    message = "Audio file validation failed: ${error.message}",
+                    filePath = audioFilePath
+                )
+                debugPrintln { "BackgroundTranscriptionService: File validation failed: ${transcriptionError.message}" }
+                _state.value = BackgroundTranscriptionState.Error(transcriptionError)
+                onError(transcriptionError)
+                return@launch
+            }
             var recognizerInitialized = false
             var cleanupCompleted = false
             

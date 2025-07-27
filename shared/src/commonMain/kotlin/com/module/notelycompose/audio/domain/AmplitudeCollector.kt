@@ -1,8 +1,10 @@
 package com.module.notelycompose.audio.domain
 
+import com.module.notelycompose.core.constants.AppConstants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.collections.ArrayDeque
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -20,7 +22,8 @@ class AmplitudeCollector {
     private val _amplitudeHistory = MutableStateFlow<List<Float>>(emptyList())
     val amplitudeHistory: StateFlow<List<Float>> = _amplitudeHistory.asStateFlow()
     
-    private val maxHistorySize = 100
+    private val maxHistorySize = AppConstants.Audio.AMPLITUDE_HISTORY_MAX_SIZE
+    private val amplitudeBuffer = ArrayDeque<Float>(maxHistorySize)
     private var maxAmplitudeRecorded = 1f // For normalization
     
     /**
@@ -32,15 +35,16 @@ class AmplitudeCollector {
         val normalizedAmplitude = normalizeAmplitude(rawAmplitude)
         _currentAmplitude.value = normalizedAmplitude
         
-        // Update history with size limit
-        val currentHistory = _amplitudeHistory.value.toMutableList()
-        currentHistory.add(normalizedAmplitude)
+        // Update history using efficient circular buffer
+        amplitudeBuffer.addLast(normalizedAmplitude)
         
-        if (currentHistory.size > maxHistorySize) {
-            currentHistory.removeFirst()
+        // Remove oldest entry if buffer exceeds max size
+        if (amplitudeBuffer.size > maxHistorySize) {
+            amplitudeBuffer.removeFirst()
         }
         
-        _amplitudeHistory.value = currentHistory
+        // Update StateFlow with current buffer contents
+        _amplitudeHistory.value = amplitudeBuffer.toList()
     }
     
     /**
@@ -110,6 +114,7 @@ class AmplitudeCollector {
      */
     fun reset() {
         _currentAmplitude.value = 0f
+        amplitudeBuffer.clear()
         _amplitudeHistory.value = emptyList()
         maxAmplitudeRecorded = 1f
     }
@@ -138,7 +143,7 @@ class AmplitudeCollector {
      * @param length Number of amplitude values to generate
      * @return List of demo amplitude values
      */
-    fun generateDemoAmplitudes(length: Int = 50): List<Float> {
+    fun generateDemoAmplitudes(length: Int = AppConstants.Audio.DEMO_AMPLITUDE_LENGTH): List<Float> {
         return (0 until length).map { i ->
             val normalizedPosition = i.toFloat() / length
             val sine = sin(normalizedPosition * PI * 8).toFloat()

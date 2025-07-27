@@ -47,4 +47,50 @@ object AppConstants {
         /** Base delay for exponential backoff */
         val BASE_RETRY_DELAY: Duration = 100.milliseconds
     }
+    
+    /**
+     * Audio processing constants
+     */
+    object Audio {
+        /** Maximum history size for amplitude collection */
+        const val AMPLITUDE_HISTORY_MAX_SIZE = 100
+        
+        /** Default length for demo amplitude generation */
+        const val DEMO_AMPLITUDE_LENGTH = 50
+        
+        /** Maximum file size in bytes (100MB) */
+        const val MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
+        
+        /** Bytes per megabyte for file size calculations */
+        const val BYTES_PER_MB = 1024 * 1024
+        
+        /** Race condition protection delay in milliseconds */
+        val RACE_CONDITION_DELAY: Duration = 100.milliseconds
+    }
+    
+    /**
+     * UI dimension constants (in DP)
+     */
+    object UI {
+        /** Standard padding for bottom UI elements */
+        const val BOTTOM_PADDING_DP = 80
+        
+        /** Standard large button size */
+        const val LARGE_BUTTON_SIZE_DP = 80
+        
+        /** Standard spacing between elements */
+        const val STANDARD_SPACING_DP = 24
+        
+        /** Large recording animation size */
+        const val LARGE_RECORDING_ANIMATION_DP = 320
+        
+        /** Medium recording animation size */
+        const val MEDIUM_RECORDING_ANIMATION_DP = 200
+        
+        /** Success animation size */
+        const val SUCCESS_ANIMATION_DP = 100
+        
+        /** Small icon size */
+        const val SMALL_ICON_SIZE_DP = 24
+    }
 }

@@ -134,23 +134,29 @@ actual class Transcriber(
             withContext(Dispatchers.IO) {
                 val text = whisperModelLoader.getContext().transcribeData(data, language, callback = object : WhisperCallback{
                     override fun onNewSegment(startMs: Long, endMs: Long, text: String) {
-                        // Switch to main thread for callback invocation to ensure UI updates are safe
-                        kotlinx.coroutines.MainScope().launch {
-                            onNewSegment(startMs, endMs, text)
+                        // Switch to main thread for callback invocation using structured concurrency
+                        runBlocking {
+                            withContext(Dispatchers.Main) {
+                                onNewSegment(startMs, endMs, text)
+                            }
                         }
                     }
 
                     override fun onProgress(progress: Int) {
-                        // Switch to main thread for callback invocation to ensure UI updates are safe
-                        kotlinx.coroutines.MainScope().launch {
-                            onProgress(progress)
+                        // Switch to main thread for callback invocation using structured concurrency
+                        runBlocking {
+                            withContext(Dispatchers.Main) {
+                                onProgress(progress)
+                            }
                         }
                     }
 
                     override fun onComplete() {
-                        // Switch to main thread for callback invocation to ensure UI updates are safe
-                        kotlinx.coroutines.MainScope().launch {
-                            onComplete()
+                        // Switch to main thread for callback invocation using structured concurrency
+                        runBlocking {
+                            withContext(Dispatchers.Main) {
+                                onComplete()
+                            }
                         }
                     }
 
