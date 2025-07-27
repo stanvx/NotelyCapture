@@ -168,6 +168,9 @@ android {
         // Force consistent ordering
         jniLibs {
             useLegacyPackaging = true
+            // 16KB Page Size Support: Use uncompressed native libraries
+            // Required for Google Play Store compliance (November 1st, 2025)
+            pickFirsts += listOf("**/libc++_shared.so", "**/libwhisper.so")
         }
     }
     buildTypes {

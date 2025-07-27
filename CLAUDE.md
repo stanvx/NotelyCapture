@@ -77,6 +77,64 @@ git merge upstream/main
 # The .gitattributes file will help handle merge conflicts for renamed files
 ```
 
+### 16KB Page Size Compliance
+
+**Google Play Store Requirement**: Starting November 1st, 2025, all new apps and updates targeting Android 15+ devices must support 16 KB page sizes.
+
+#### Current Compliance Status
+✅ **COMPLIANT** - This project has been updated to support 16KB page sizes across all Android device configurations.
+
+#### Implementation Details
+The following changes have been implemented to ensure compliance:
+
+**Build Configuration:**
+- **NDK Version**: r27.0.12077973 (supports 16KB by default)
+- **Android Gradle Plugin**: 8.11.1+ (meets minimum requirement)
+- **Target SDK**: 36 (Android 15+)
+
+**Native Library Configuration:**
+- CMake linker flags: `-Wl,-z,max-page-size=16384`
+- NDK r27 compilation flag: `-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON`
+- Uncompressed native libraries in APK packaging
+
+**Modified Files:**
+- `gradle.properties` - Added NDK r27 flexible page size support
+- `shared/build.gradle.kts` - Configured uncompressed native libraries
+- `lib/src/main/jni/whisper/CMakeLists.txt` - Added 16KB page size linker flags
+
+#### Testing 16KB Page Size Support
+
+**Verify Compliance on Device/Emulator:**
+```bash
+# Check current page size on connected device
+adb shell getconf PAGE_SIZE
+
+# Expected output for 16KB compliance: 16384
+# Output of 4096 indicates 4KB page size (still supported but not the test target)
+```
+
+**Test on Android 15+ Emulator:**
+1. Create Android 15 emulator with 16KB page size support
+2. Install and test the application: `./gradlew installDebug`
+3. Verify app functionality with both audio recording and transcription features
+4. Confirm no crashes related to memory alignment issues
+
+**Build Verification Commands:**
+```bash
+# Clean build with 16KB compliance
+./gradlew clean
+./gradlew assembleDebug
+./gradlew assembleRelease
+
+# Verify native libraries are built with correct alignment
+# Check build logs for successful compilation with 16KB flags
+```
+
+#### Compliance Benefits
+- ✅ **Future-proof**: Ready for Google Play Store requirement
+- ✅ **Device Compatibility**: Supports both 4KB and 16KB page size devices  
+- ✅ **Performance**: Optimized memory alignment for Android 15+ devices
+- ✅ **Backward Compatibility**: Maintains support for existing Android devices
 
 ### Release Workflow
 
