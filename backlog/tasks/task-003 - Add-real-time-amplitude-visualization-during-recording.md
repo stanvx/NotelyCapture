@@ -1,9 +1,10 @@
 ---
 id: task-003
 title: Add real-time amplitude visualization during recording
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-07-19'
+updated_date: '2025-07-28'
 labels: []
 dependencies: []
 ---
@@ -20,3 +21,7 @@ Provide visual feedback during recording with dynamic waveform or pulsing animat
 - [ ] Recording screen displays real-time visual feedback
 - [ ] Animation is smooth and responsive to audio input
 - [ ] Visual feedback works on both Android and iOS
+
+## Implementation Notes
+
+Real-time amplitude visualization implemented with AudioWaveformExtractor and AmplitudeCollector integration
