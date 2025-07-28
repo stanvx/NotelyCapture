@@ -272,6 +272,146 @@ class SecurityHelper(
     }
     
     /**
+     * Validates an OpenAI API key format and structure.
+     * 
+     * @param apiKey The API key to validate
+     * @param userContext Optional user context for security monitoring
+     * @return ApiKeyValidationResult with validation status and error message
+     */
+    suspend fun validateOpenAiApiKey(
+        apiKey: String?,
+        userContext: SecurityMonitoringService.UserContext? = null
+    ): ApiKeyValidationResult {
+        if (apiKey.isNullOrBlank()) {
+            return ApiKeyValidationResult(
+                isValid = false,
+                errorMessage = "API key cannot be empty"
+            )
+        }
+        
+        // Basic format validation
+        val validationErrors = mutableListOf<String>()
+        
+        when {
+            apiKey.length < 10 -> validationErrors.add("API key too short")
+            apiKey.length > 200 -> validationErrors.add("API key too long")
+            !apiKey.startsWith("sk-") -> validationErrors.add("OpenAI API keys must start with 'sk-'")
+            !apiKey.matches(Regex("^sk-[a-zA-Z0-9\\-_]+$")) -> {
+                validationErrors.add("API key contains invalid characters")
+            }
+        }
+        
+        if (validationErrors.isNotEmpty()) {
+            securityMonitoringService.reportValidationFailure(
+                validationType = "openai_api_key",
+                input = "sk-***${apiKey.takeLast(4)}", // Sanitized for logging
+                validationError = validationErrors.joinToString(", "),
+                userContext = userContext
+            )
+            
+            return ApiKeyValidationResult(
+                isValid = false,
+                errorMessage = validationErrors.first()
+            )
+        }
+        
+        securityMonitoringService.reportSecurityEvent(
+            type = SecurityMonitoringService.SecurityEventType.VALIDATION_SUCCESS,
+            severity = SecurityMonitoringService.SecuritySeverity.LOW,
+            message = "OpenAI API key validation successful",
+            details = mapOf(
+                "validation_type" to "openai_api_key",
+                "key_preview" to "sk-***${apiKey.takeLast(4)}"
+            ),
+            userContext = userContext
+        )
+        
+        return ApiKeyValidationResult(isValid = true)
+    }
+    
+    /**
+     * Sanitizes an API key for safe logging (shows only prefix and last 4 characters).
+     * 
+     * @param apiKey The API key to sanitize
+     * @return Sanitized version safe for logging
+     */
+    fun sanitizeApiKeyForLogging(apiKey: String?): String {
+        if (apiKey.isNullOrBlank()) return "empty"
+        if (apiKey.length <= 8) return "***"
+        
+        val prefix = apiKey.take(3)
+        val suffix = apiKey.takeLast(4)
+        return "$prefix***$suffix"
+    }
+    
+    /**
+     * Validates general AI configuration settings.
+     * 
+     * @param settings Map of setting keys to values
+     * @param userContext Optional user context for security monitoring
+     * @return True if all settings are valid, false otherwise
+     */
+    suspend fun validateAiSettings(
+        settings: Map<String, Any?>,
+        userContext: SecurityMonitoringService.UserContext? = null
+    ): Boolean {
+        try {
+            for ((key, value) in settings) {
+                when (key) {
+                    "ai_features_enabled" -> {
+                        if (value !is Boolean) {
+                            securityMonitoringService.reportValidationFailure(
+                                validationType = "ai_settings",
+                                input = "$key: $value",
+                                validationError = "AI features enabled must be boolean",
+                                userContext = userContext
+                            )
+                            return false
+                        }
+                    }
+                    "openai_api_key" -> {
+                        if (value is String && value.isNotEmpty()) {
+                            val validation = validateOpenAiApiKey(value, userContext)
+                            if (!validation.isValid) {
+                                return false
+                            }
+                        }
+                    }
+                    else -> {
+                        // Log unknown setting but don't fail validation
+                        securityMonitoringService.reportSecurityEvent(
+                            type = SecurityMonitoringService.SecurityEventType.VALIDATION_WARNING,
+                            severity = SecurityMonitoringService.SecuritySeverity.LOW,
+                            message = "Unknown AI setting",
+                            details = mapOf(
+                                "setting_key" to key,
+                                "value_type" to (value?.javaClass?.simpleName ?: "null")
+                            ),
+                            userContext = userContext
+                        )
+                    }
+                }
+            }
+            
+            return true
+            
+        } catch (e: Exception) {
+            securityMonitoringService.reportSecurityEvent(
+                type = SecurityMonitoringService.SecurityEventType.VALIDATION_FAILURE,
+                severity = SecurityMonitoringService.SecuritySeverity.MEDIUM,
+                message = "AI settings validation failed",
+                details = mapOf(
+                    "error" to (e.message ?: "Unknown error"),
+                    "settings_count" to settings.size.toString()
+                ),
+                userContext = userContext,
+                throwable = e
+            )
+            return false
+        }
+    }
+    
+    /**
      * Creates a user context from available session information.
      * Helper method to create consistent user context objects.
      * 

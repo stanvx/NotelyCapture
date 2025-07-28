@@ -45,6 +45,12 @@ kotlin {
             // splash
             implementation(libs.core.splashscreen)
             implementation(libs.androidx.compose.documentfile)
+            
+            // security
+            implementation(libs.androidx.security.crypto)
+            
+            // Platform-specific Ktor client
+            implementation(libs.ktor.client.android)
         }
 
         commonMain.dependencies {
@@ -84,6 +90,15 @@ kotlin {
             
             // HTML Sanitizer for security
             implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20220608.1")
+
+            // OpenAI & Network
+            implementation(libs.openai.kotlin)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.json)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.serialization)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
 
             implementation(project(":core:audio"))
         }

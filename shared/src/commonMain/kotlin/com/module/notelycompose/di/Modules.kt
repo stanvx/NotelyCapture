@@ -50,6 +50,14 @@ import com.module.notelycompose.transcription.domain.WhisperModelManager
 import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import com.module.notelycompose.core.security.SecurityHelper
 import com.module.notelycompose.core.security.SecurityMonitoringService
+import com.module.notelycompose.openai.data.repository.OpenAIRepositoryImpl
+import com.module.notelycompose.openai.domain.repository.OpenAIRepository
+import com.module.notelycompose.openai.domain.usecase.SummarizeTextUseCase
+import com.module.notelycompose.openai.domain.usecase.TranscribeAudioUseCase
+import com.module.notelycompose.summary.TFIDFSummarizer
+import com.module.notelycompose.core.security.AiSettingsRepository
+import com.module.notelycompose.core.security.SecurePreferencesRepository
+import com.module.notelycompose.notes.presentation.settings.AISettingsViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -95,6 +103,16 @@ val repositoryModule = module {
     single { SearchSuggestionProvider(get(), get()) }
     single { TextContentPredictor(get()) }
     single { LanguageAwareAutoComplete(get()) }
+    single { AiSettingsRepository(get(), get()) }
+    
+    // OpenAI Integration
+    single<OpenAIRepository> { 
+        OpenAIRepositoryImpl(
+            networkConnectivityManager = get(),
+            securityHelper = get()
+        )
+    }
+    single { TFIDFSummarizer() }
 }
 
 val viewModelModule = module {
@@ -109,6 +127,7 @@ val viewModelModule = module {
     viewModelOf(::AudioPlayerViewModel)
     viewModelOf(::AudioImportViewModel)
     viewModelOf(::LanguageSelectionViewModel)
+    viewModelOf(::AISettingsViewModel)
 }
 
 val useCaseModule = module {
@@ -121,6 +140,10 @@ val useCaseModule = module {
     factory { UpdateNoteUseCase(get(), get(), get()) }
     factory { ModelAvailabilityService(get(), get()) }
     factory { BackgroundTranscriptionService(get(), get()) }
+    
+    // OpenAI Use Cases
+    factory { TranscribeAudioUseCase(get(), get(), get()) }
+    factory { SummarizeTextUseCase(get(), get(), get()) }
 }
 
 val securityModule = module {

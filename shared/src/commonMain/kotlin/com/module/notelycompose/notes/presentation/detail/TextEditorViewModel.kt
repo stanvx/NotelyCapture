@@ -182,10 +182,21 @@ class TextEditorViewModel(
         val currentState = _editorPresentationState.value
         
         // Only save if content actually changed
-        if (oldContent != currentState.content.text) {
+        if (oldContent != currentState.content.text || _lastRichTextHtmlContent.isNotEmpty()) {
+            // Use HTML content for persistence when available, fallback to plain text
+            val contentToSave = if (_lastRichTextHtmlContent.isNotEmpty()) {
+                _lastRichTextHtmlContent
+            } else {
+                currentState.content.text
+            }
+            
+            // Use first line or first 50 chars as title
+            val titleToSave = currentState.content.text.lines().firstOrNull()?.take(50) 
+                ?: currentState.content.text.take(50)
+            
             debouncedSave(
-                title = currentState.content.text,
-                content = currentState.content.text,
+                title = titleToSave,
+                content = contentToSave, // Save HTML content for rich formatting
                 starred = currentState.starred,
                 formatting = currentState.formats,
                 textAlign = currentState.textAlign,
@@ -271,9 +282,21 @@ class TextEditorViewModel(
         createdAt: String
     ) {
         val recordingModel = recordingPath(recordingPath)
+        
+        // Determine if content is HTML (simple heuristic check)
+        val isHtmlContent = content.contains("<") && content.contains(">")
+        
+        // For display in the UI, extract plain text if HTML content
+        val displayContent = if (isHtmlContent) {
+            // Extract plain text from HTML for backward compatibility
+            content.replace(Regex("<[^>]+>"), "").trim()
+        } else {
+            content
+        }
+        
         _editorPresentationState.update {
             it.copy(
-                content = TextFieldValue(content),
+                content = TextFieldValue(displayContent),
                 formats = formats,
                 textAlign = textAlign,
                 recording = recordingModel,
@@ -282,8 +305,13 @@ class TextEditorViewModel(
             )
         }
         
-        // Synchronize content to rich text state
+        // Synchronize content to rich text state - use original content which may be HTML
         syncContentToRichText(content)
+        
+        // Store the original content for HTML persistence
+        if (isHtmlContent) {
+            _lastRichTextHtmlContent = content
+        }
     }
     
     /**
@@ -357,17 +385,27 @@ class TextEditorViewModel(
     /**
      * Synchronizes content from RichTextState back to TextFieldValue.
      * This is used when the rich text editor content changes.
+     * Enhanced to save both HTML and plain text content properly.
      */
     private fun syncContentFromRichText() {
-        val richTextContent = richTextEditorHelper.getPlainText()
+        val richTextHtmlContent = richTextEditorHelper.getContent() // Get HTML for persistence
+        val richTextPlainContent = richTextEditorHelper.getPlainText() // Get plain text for display
         val currentState = _editorPresentationState.value
         
-        if (currentState.content.text != richTextContent) {
+        // Update the presentation state with plain text for backward compatibility
+        if (currentState.content.text != richTextPlainContent) {
             _editorPresentationState.update {
-                it.copy(content = TextFieldValue(richTextContent))
+                it.copy(content = TextFieldValue(richTextPlainContent))
             }
         }
+        
+        // Store the HTML content separately for rich text persistence
+        // This ensures formatting is preserved when the note is saved and loaded
+        _lastRichTextHtmlContent = richTextHtmlContent
     }
+    
+    // Track the last HTML content for proper persistence
+    private var _lastRichTextHtmlContent: String = ""
 
     fun onGetUiState(presentationState: EditorPresentationState): EditorUiState {
         return editorPresentationToUiStateMapper.mapToUiState(presentationState)

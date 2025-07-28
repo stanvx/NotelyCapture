@@ -15,6 +15,7 @@ androidx-lifecycle = "2.9.1"
 datastore = "1.1.7"
 core-ktx = "1.16.0"
 material = "1.12.0"
+androidx-security-crypto = "1.1.0-alpha06"
 
 # Compose & UI
 accompanistSystemuicontrollerVersion = "0.36.0"
@@ -40,6 +41,11 @@ napier = "2.7.1"
 sqldelight = "1.5.5"
 kotlinx-coroutines = "1.10.2"
 
+# OpenAI & Network
+openai-kotlin = "4.0.1"
+ktor = "3.0.3"
+kotlin-connect = "0.8.0"
+
 
 [libraries]
 
@@ -51,6 +57,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 androidx-core = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "androidx-security-crypto" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Compose & UI
@@ -90,6 +97,18 @@ sqldelight-coroutines = { group = "com.squareup.sqldelight", name = "coroutines-
 sqldelight-android-driver = { group = "com.squareup.sqldelight", name = "android-driver", version.ref = "sqldelight" }
 sqldelight-native-driver = { group = "com.squareup.sqldelight", name = "native-driver", version.ref = "sqldelight" }
 sqldelight-gradle-plugin = { group = "com.squareup.sqldelight", name = "gradle-plugin", version.ref = "sqldelight" }
+
+# OpenAI & Network
+openai-kotlin = { group = "com.aallam.openai", name = "openai-client", version.ref = "openai-kotlin" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-json = { group = "io.ktor", name = "ktor-client-json", version.ref = "ktor" }
+ktor-client-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+ktor-client-serialization = { group = "io.ktor", name = "ktor-client-serialization", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
+kotlin-connect = { group = "com.autodesk", name = "coroutines-interop", version.ref = "kotlin-connect" }
 
 # Splash Screen
 core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
