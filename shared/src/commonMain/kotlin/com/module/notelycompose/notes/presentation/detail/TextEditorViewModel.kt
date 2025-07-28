@@ -809,7 +809,7 @@ class TextEditorViewModel(
     private fun isPathSafe(filePath: String): Boolean {
         if (filePath.isBlank()) return true // Empty path is safe
         
-        val validationResult = InputValidator.validateFilename(filePath)
+        val validationResult = InputValidator.validateFilePath(filePath)
         
         if (!validationResult.isValid) {
             reportSecurityError("Invalid file path detected: ${validationResult.errorMessage}")

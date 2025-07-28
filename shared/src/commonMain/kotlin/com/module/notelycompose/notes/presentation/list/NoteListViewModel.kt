@@ -3,6 +3,7 @@ package com.module.notelycompose.notes.presentation.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import audio.utils.deleteFile
+import com.module.notelycompose.core.validation.InputValidator
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
@@ -166,7 +167,22 @@ class NoteListViewModel(
 
     private fun handleNoteDeletion(note: NoteUiModel) {
         viewModelScope.launch {
-            deleteFile(note.recordingPath)
+            // Clean up audio file if it exists with security validation
+            if (note.recordingPath.isNotEmpty()) {
+                try {
+                    // Security validation to prevent path traversal attacks
+                    if (isPathSafe(note.recordingPath)) {
+                        deleteFile(note.recordingPath)
+                    } else {
+                        // Log security issue but continue with note deletion
+                        reportSecurityError("Invalid recording path detected during deletion: ${note.recordingPath}")
+                    }
+                } catch (e: Exception) {
+                    // Log error but continue with note deletion to avoid orphaned DB records
+                    println("Failed to delete audio file ${note.recordingPath}: ${e.message}")
+                }
+            }
+            
             deleteNoteById.execute(note.id)
             // No need to manually refresh - flow will handle it
         }
@@ -250,5 +266,24 @@ class NoteListViewModel(
                 quickRecordError = null
             )
         }
+    }
+    
+    // Security validation method (consistent with other ViewModels)
+    private fun isPathSafe(filePath: String): Boolean {
+        if (filePath.isBlank()) return true // Empty path is safe
+        
+        val validationResult = InputValidator.validateFilePath(filePath)
+        
+        if (!validationResult.isValid) {
+            reportSecurityError("Invalid file path detected: ${validationResult.errorMessage}")
+            return false
+        }
+        
+        return true
+    }
+    
+    private fun reportSecurityError(message: String) {
+        // Log security incident for monitoring
+        println("SECURITY_ALERT: $message")
     }
 }

@@ -223,6 +223,63 @@ object InputValidator {
     }
     
     /**
+     * Validates file path input with security checks for path traversal attacks.
+     * Unlike validateFilename(), this allows legitimate path separators but blocks
+     * dangerous patterns like path traversal attempts.
+     */
+    fun validateFilePath(filePath: String?): ValidationResult {
+        if (filePath == null || filePath.isEmpty()) {
+            return ValidationResult.failure("File path cannot be empty")
+        }
+        
+        if (filePath.length > Limits.MAX_FILENAME_LENGTH * 5) { // Allow longer paths
+            return ValidationResult.failure(
+                "File path too long (${filePath.length}/${Limits.MAX_FILENAME_LENGTH * 5} characters)"
+            )
+        }
+        
+        // Check for path traversal attacks
+        val dangerousPatterns = listOf(
+            "../", "..\\",  // Path traversal
+            "~",            // Home directory shortcuts  
+            "\u0000"        // Null bytes
+        )
+        
+        for (pattern in dangerousPatterns) {
+            if (filePath.contains(pattern)) {
+                return ValidationResult.failure("File path contains dangerous pattern: $pattern")
+            }
+        }
+        
+        // Check for absolute paths to sensitive system directories
+        val dangerousAbsolutePaths = listOf(
+            "/etc/", "/root/", "/proc/", "/sys/", "/dev/",
+            "C:\\Windows\\", "C:\\System32\\", "C:\\Program Files\\",
+            "/Applications/", "/System/", "/Library/"
+        )
+        
+        val normalizedPath = filePath.replace("\\", "/").lowercase()
+        for (dangerousPath in dangerousAbsolutePaths) {
+            if (normalizedPath.startsWith(dangerousPath.lowercase())) {
+                return ValidationResult.failure("File path accesses restricted system directory")
+            }
+        }
+        
+        // Check for dangerous characters that could cause issues
+        val dangerousChars = listOf(
+            ":", "*", "?", "\"", "<", ">", "|" // Keep file system reserved chars
+        )
+        
+        for (char in dangerousChars) {
+            if (filePath.contains(char)) {
+                return ValidationResult.failure("File path contains invalid character: $char")
+            }
+        }
+        
+        return ValidationResult.success()
+    }
+    
+    /**
      * Checks if text contains potentially dangerous characters.
      */
     private fun containsDangerousCharacters(text: String): Boolean {
