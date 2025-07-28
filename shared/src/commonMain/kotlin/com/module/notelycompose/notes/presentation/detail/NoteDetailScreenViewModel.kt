@@ -31,7 +31,8 @@ class NoteDetailScreenViewModel(
     private val updateNoteUseCase: UpdateNoteUseCase,
     private val getLastNoteUseCase: GetLastNote,
     private val textFormatPresentationMapper: TextFormatPresentationMapper,
-    private val textAlignPresentationMapper: TextAlignPresentationMapper
+    private val textAlignPresentationMapper: TextAlignPresentationMapper,
+    private val securityHelper: SecurityHelper
 ):ViewModel() {
 
     // User feedback state for delete operations
@@ -181,7 +182,7 @@ class NoteDetailScreenViewModel(
                 
                 // Clean up audio file if it exists using SecurityHelper
                 if (!recordingPath.isNullOrEmpty()) {
-                    val fileDeleteResult = SecurityHelper.secureDeleteFile(recordingPath)
+                    val fileDeleteResult = securityHelper.secureDeleteFile(recordingPath)
                     
                     if (!fileDeleteResult.success) {
                         // Log the issue but continue with note deletion to avoid orphaned DB records

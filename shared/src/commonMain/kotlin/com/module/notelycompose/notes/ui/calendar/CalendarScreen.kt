@@ -71,6 +71,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -132,6 +134,8 @@ import com.module.notelycompose.notes.ui.components.NoteCardLayoutMode
 import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.utils.ShareUtils
 import com.module.notelycompose.platform.presentation.PlatformViewModel
+import com.module.notelycompose.notes.ui.detail.DeleteConfirmationDialog
+import com.module.notelycompose.notes.presentation.list.NoteListIntent
 
 // Material 3 Motion Specifications
 private object CalendarMotionTokens {
@@ -576,6 +580,7 @@ fun CalendarScreen(
     val notesState by viewModel.state.collectAsState()
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     // Platform utilities for sharing functionality
     val platformViewModel: PlatformViewModel = koinViewModel()
@@ -583,6 +588,13 @@ fun CalendarScreen(
     // Share dialog state management
     var showShareDialog by remember { mutableStateOf(false) }
     var selectedNoteForSharing by remember { mutableStateOf<com.module.notelycompose.notes.presentation.list.model.NotePresentationModel?>(null) }
+    
+    // Delete confirmation dialog state management
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedNoteForDeletion by remember { mutableStateOf<com.module.notelycompose.notes.presentation.list.model.NotePresentationModel?>(null) }
+    
+    // Collect delete operation state for user feedback
+    val deleteOperationState by viewModel.deleteOperationState.collectAsState()
     
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     var currentMonth by remember { mutableStateOf(YearMonthKt(today.year, today.month)) }
@@ -622,6 +634,25 @@ fun CalendarScreen(
                 targetDate = selectedDate
             )
             println(debugInfo)
+        }
+    }
+    
+    // Handle delete operation feedback
+    LaunchedEffect(deleteOperationState) {
+        when (val state = deleteOperationState) {
+            is NoteListViewModel.DeleteOperationState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = "Note '${state.noteTitle}' deleted successfully",
+                    withDismissAction = true
+                )
+            }
+            is NoteListViewModel.DeleteOperationState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    withDismissAction = true
+                )
+            }
+            else -> {} // Idle and InProgress states don't need snackbar
         }
     }
     
@@ -668,6 +699,9 @@ fun CalendarScreen(
                 },
                 lazyListState = lazyListState
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         }
     ) { paddingValues ->
         LazyColumn(
@@ -738,7 +772,8 @@ fun CalendarScreen(
                             // Expand instead of navigate - Edit option in menu navigates
                         },
                         onDeleteClick = { noteId ->
-                            // TODO: Implement delete functionality
+                            selectedNoteForDeletion = note
+                            showDeleteDialog = true
                         },
                         onShareClick = { noteId ->
                             selectedNoteForSharing = note
@@ -782,6 +817,29 @@ fun CalendarScreen(
             }
         )
     }
+    
+    // Delete confirmation dialog
+    DeleteConfirmationDialog(
+        showDialog = showDeleteDialog,
+        onDismiss = {
+            showDeleteDialog = false
+            selectedNoteForDeletion = null
+        },
+        onConfirm = {
+            selectedNoteForDeletion?.let { note ->
+                // Convert NotePresentationModel to NoteUiModel using the mapper
+                val noteUiModel = viewModel.onGetUiState(
+                    viewModel.state.value.copy(filteredNotes = listOf(note))
+                ).firstOrNull()
+                
+                noteUiModel?.let { uiModel ->
+                    viewModel.onProcessIntent(NoteListIntent.OnNoteDeleted(uiModel))
+                }
+            }
+            showDeleteDialog = false
+            selectedNoteForDeletion = null
+        }
+    )
 }
 
 // Data class for memoized calendar calculations

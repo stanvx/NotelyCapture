@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.module.notelycompose.audio.presentation.AudioPlayerViewModel
+import com.module.notelycompose.audio.presentation.AudioPlayerPresentationState
+import com.module.notelycompose.audio.ui.formatTimeToMMSS
 import com.module.notelycompose.notes.presentation.list.model.NotePresentationModel
 import com.module.notelycompose.notes.ui.components.MaterialIcon
 import com.module.notelycompose.notes.ui.theme.*
@@ -45,6 +47,10 @@ fun OptimizedCalendarNoteItem(
     
     // Platform utilities for sharing functionality
     val platformViewModel: PlatformViewModel = koinViewModel()
+    
+    // Audio player for voice notes
+    val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
+    val audioPlayerState by audioPlayerViewModel.uiState.collectAsState()
     
     val scale by animateFloatAsState(
         targetValue = if (isExpanded) 1.02f else 1f,
@@ -226,30 +232,15 @@ fun OptimizedCalendarNoteItem(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Surface(
-                            onClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                // TODO: Implement audio playback
-                            },
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                MaterialIcon(
-                                    symbol = MaterialSymbols.PlayArrow,
-                                    contentDescription = "Play",
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    size = 16.dp
-                                )
-                            }
-                        }
+                        CalendarAudioPlayButton(
+                            note = note,
+                            audioPlayerViewModel = audioPlayerViewModel,
+                            audioPlayerState = audioPlayerState,
+                            hapticFeedback = hapticFeedback
+                        )
                         
                         Text(
-                            text = "00:00", // TODO: Get actual duration
+                            text = note.audioDurationMs.formatTimeToMMSS(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontWeight = FontWeight.Medium
@@ -260,3 +251,134 @@ fun OptimizedCalendarNoteItem(
         }
     }
 }
+
+/**
+ * Compact audio play button for calendar items with state management
+ */
+@Composable
+private fun CalendarAudioPlayButton(
+    note: NotePresentationModel,
+    audioPlayerViewModel: AudioPlayerViewModel,
+    audioPlayerState: AudioPlayerPresentationState,
+    hapticFeedback: androidx.compose.ui.hapticfeedback.HapticFeedback
+) {
+    val isCurrentlyLoaded = audioPlayerViewModel.isNoteLoaded(note.id)
+    val isCurrentlyPlaying = audioPlayerViewModel.isNoteCurrentlyPlaying(note.id)
+    val hasValidAudio = note.isVoice && note.recordingPath.isNotEmpty()
+    
+    // Determine button state and appearance
+    val (containerColor, contentColor, icon, isEnabled) = when {
+        !hasValidAudio -> {
+            // No audio file - disabled state
+            Quadruple(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                MaterialSymbols.PlayArrow,
+                false
+            )
+        }
+        isCurrentlyPlaying -> {
+            // Currently playing - show pause button
+            Quadruple(
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.onPrimary,
+                MaterialSymbols.Pause,
+                true
+            )
+        }
+        isCurrentlyLoaded -> {
+            // Loaded but paused - show play button with accent
+            Quadruple(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.onPrimaryContainer,
+                MaterialSymbols.PlayArrow,
+                true
+            )
+        }
+        else -> {
+            // Not loaded - show play button
+            Quadruple(
+                MaterialTheme.colorScheme.primary,
+                MaterialTheme.colorScheme.onPrimary,
+                MaterialSymbols.PlayArrow,
+                true
+            )
+        }
+    }
+    
+    Surface(
+        onClick = {
+            if (hasValidAudio && isEnabled) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                
+                when {
+                    !isCurrentlyLoaded -> {
+                        // Load and start playing
+                        audioPlayerViewModel.onLoadAudio(note.recordingPath, note.id)
+                        // Auto-play after loading - we'll handle this via a LaunchedEffect
+                    }
+                    isCurrentlyLoaded -> {
+                        // Toggle play/pause
+                        audioPlayerViewModel.onTogglePlayPause(note.id)
+                    }
+                }
+            }
+        },
+        shape = CircleShape,
+        color = containerColor,
+        modifier = Modifier.size(32.dp),
+        enabled = isEnabled
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Show loading indicator for brief moment when transitioning states
+            if (audioPlayerState.currentPlayingNoteId == note.id && 
+                audioPlayerState.isLoaded && 
+                !audioPlayerState.isPlaying && 
+                audioPlayerState.currentPosition == 0 &&
+                isCurrentlyLoaded) {
+                // Brief loading state
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = contentColor
+                )
+            } else {
+                MaterialIcon(
+                    symbol = icon,
+                    contentDescription = when {
+                        !hasValidAudio -> "No audio"
+                        isCurrentlyPlaying -> "Pause"
+                        else -> "Play"
+                    },
+                    tint = contentColor,
+                    size = 16.dp
+                )
+            }
+        }
+    }
+    
+    // Auto-play after loading
+    LaunchedEffect(audioPlayerState.isLoaded, audioPlayerState.currentPlayingNoteId) {
+        if (audioPlayerState.isLoaded && 
+            audioPlayerState.currentPlayingNoteId == note.id && 
+            !audioPlayerState.isPlaying &&
+            audioPlayerState.currentPosition == 0) {
+            // Briefly delay to allow UI to update, then auto-play
+            kotlinx.coroutines.delay(100)
+            audioPlayerViewModel.onTogglePlayPause(note.id)
+        }
+    }
+}
+
+/**
+ * Data class to hold four values for button state
+ */
+private data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)

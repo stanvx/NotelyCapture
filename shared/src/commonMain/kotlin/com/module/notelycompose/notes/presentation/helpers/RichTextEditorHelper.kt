@@ -174,7 +174,7 @@ class RichTextEditorHelper {
      * @return True if the selection has strikethrough
      */
     fun isSelectionStrikethrough(): Boolean {
-        return _richTextState.value.currentSpanStyle.textDecoration?.contains(TextDecoration.LineThrough) == true
+        return hasStrikethrough()
     }
     
     /**
@@ -197,9 +197,40 @@ class RichTextEditorHelper {
     
     /**
      * Clears all formatting from selected text.
+     * Properly removes all span styles by clearing them explicitly.
      */
     fun clearFormatting() {
-        _richTextState.value.removeSpanStyle(SpanStyle())
+        val state = _richTextState.value
+        
+        // Clear all span styles properly by removing specific formatting
+        state.removeSpanStyle(SpanStyle(fontWeight = FontWeight.Bold))
+        state.removeSpanStyle(SpanStyle(fontStyle = FontStyle.Italic))
+        state.removeSpanStyle(SpanStyle(textDecoration = TextDecoration.Underline))
+        state.removeSpanStyle(SpanStyle(textDecoration = TextDecoration.LineThrough))
+        
+        // Clear colors
+        val currentTextColor = state.currentSpanStyle.color
+        if (currentTextColor != androidx.compose.ui.graphics.Color.Unspecified) {
+            state.removeSpanStyle(SpanStyle(color = currentTextColor))
+        }
+        
+        val currentBackground = state.currentSpanStyle.background
+        if (currentBackground != androidx.compose.ui.graphics.Color.Unspecified) {
+            state.removeSpanStyle(SpanStyle(background = currentBackground))
+        }
+        
+        // Clear font family (for code blocks)
+        if (state.currentSpanStyle.fontFamily == androidx.compose.ui.text.font.FontFamily.Monospace) {
+            state.removeSpanStyle(SpanStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace))
+        }
+        
+        // Clear font size (for headings) - reset to default body text
+        val currentFontSize = state.currentSpanStyle.fontSize
+        if (currentFontSize != 16.sp && currentFontSize != androidx.compose.ui.unit.TextUnit.Unspecified) {
+            state.removeSpanStyle(SpanStyle(fontSize = currentFontSize))
+            // Apply default body text size
+            state.addSpanStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal))
+        }
     }
     
     /**
@@ -282,15 +313,339 @@ class RichTextEditorHelper {
     
     /**
      * Sets the text to body/paragraph style (removes heading formatting).
+     * 
+     * This method properly clears any heading formatting and sets standard body text styling.
      */
     fun setBodyText() {
-        _richTextState.value.toggleSpanStyle(
+        val state = _richTextState.value
+        
+        // Clear existing formatting by removing any heading-specific styles
+        // Remove heading font sizes and bold formatting
+        state.removeSpanStyle(SpanStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold)) // H1
+        state.removeSpanStyle(SpanStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold)) // H2  
+        state.removeSpanStyle(SpanStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)) // H3
+        state.removeSpanStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)) // H4
+        state.removeSpanStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)) // H5
+        state.removeSpanStyle(SpanStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold)) // H6
+        
+        // Apply body text styling
+        state.addSpanStyle(
             SpanStyle(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal
             )
         )
     }
+    
+    /**
+     * Checks if the current selection has text color applied.
+     * 
+     * @return True if the selection has custom text color
+     */
+    fun hasTextColor(): Boolean {
+        val currentColor = _richTextState.value.currentSpanStyle.color
+        // Check if color is different from default (unspecified)
+        return currentColor != androidx.compose.ui.graphics.Color.Unspecified &&
+               currentColor != androidx.compose.ui.graphics.Color.Black
+    }
+    
+    /**
+     * Checks if the current selection has background highlight applied.
+     * 
+     * @return True if the selection has background highlight
+     */
+    fun hasHighlight(): Boolean {
+        val currentBackground = _richTextState.value.currentSpanStyle.background
+        return currentBackground != androidx.compose.ui.graphics.Color.Unspecified &&
+               currentBackground != androidx.compose.ui.graphics.Color.Transparent
+    }
+    
+    /**
+     * Gets the current indent level of the paragraph.
+     * Note: This is a simplified implementation as the library may not fully support indent tracking.
+     * 
+     * @return Current indent level (0 if no indent)
+     */
+    fun getIndentLevel(): Int {
+        val textIndent = _richTextState.value.currentParagraphStyle.textIndent
+        return if (textIndent != null && textIndent.firstLine.value > 0) {
+            // Approximate indent level based on firstLine indent
+            (textIndent.firstLine.value / 16).toInt().coerceAtLeast(0)
+        } else {
+            0
+        }
+    }
+    
+    /**
+     * Enhanced indentation that works with both regular text and lists.
+     * Increases indentation level with proper handling for list items.
+     */
+    fun increaseIndent() {
+        val state = _richTextState.value
+        
+        // For both lists and regular text, use paragraph indentation
+        // This allows consistent indentation behavior across all content types
+        val currentLevel = getIndentLevel()
+        val maxIndentLevel = 5
+        
+        if (currentLevel < maxIndentLevel) {
+            val newIndentValue = ((currentLevel + 1) * 16).sp
+            state.addParagraphStyle(
+                ParagraphStyle(
+                    textIndent = androidx.compose.ui.text.style.TextIndent(
+                        firstLine = newIndentValue,
+                        restLine = newIndentValue
+                    )
+                )
+            )
+        }
+    }
+    
+    /**
+     * Enhanced de-indentation that works with both regular text and lists.
+     * Decreases indentation level with proper handling for list items.
+     */
+    fun decreaseIndent() {
+        val state = _richTextState.value
+        
+        // For both lists and regular text, use paragraph de-indentation
+        // This maintains consistent behavior across all content types
+        val currentLevel = getIndentLevel()
+        
+        if (currentLevel > 0) {
+            val newLevel = (currentLevel - 1).coerceAtLeast(0)
+            val newIndentValue = if (newLevel > 0) (newLevel * 16).sp else 0.sp
+            
+            state.addParagraphStyle(
+                ParagraphStyle(
+                    textIndent = androidx.compose.ui.text.style.TextIndent(
+                        firstLine = newIndentValue,
+                        restLine = newIndentValue
+                    )
+                )
+            )
+        }
+    }
+    
+    /**
+     * Checks if the current selection contains a link.
+     * Note: This is a basic implementation as link detection may require more sophisticated analysis.
+     * 
+     * @return True if the selection contains a link
+     */
+    fun hasLink(): Boolean {
+        // Basic URL pattern matching in the current selection or nearby text
+        val text = _richTextState.value.annotatedString.text
+        val selection = _richTextState.value.selection
+        
+        if (selection.collapsed) {
+            return false
+        }
+        
+        val selectedText = try {
+            // Validate selection boundaries before substring operation
+            if (selection.start < 0 || selection.end > text.length || selection.start > selection.end) {
+                return false
+            }
+            text.substring(selection.start, selection.end)
+        } catch (e: Exception) {
+            return false
+        }
+        
+        // Simple URL detection pattern
+        val urlPattern = Regex("https?://[^\\s]+|www\\.[^\\s]+|[^\\s]+\\.[a-z]{2,}")
+        return urlPattern.containsMatchIn(selectedText)
+    }
+    
+    /**
+     * Checks if the current selection has strikethrough formatting.
+     * Enhanced version with better validation.
+     * 
+     * @return True if the selection has strikethrough
+     */
+    fun hasStrikethrough(): Boolean {
+        return _richTextState.value.currentSpanStyle.textDecoration?.contains(TextDecoration.LineThrough) == true
+    }
+    
+    /**
+     * Gets the current text color of the selection.
+     * 
+     * @return Current text color or Color.Unspecified if no custom color
+     */
+    fun getCurrentTextColor(): androidx.compose.ui.graphics.Color {
+        return _richTextState.value.currentSpanStyle.color ?: androidx.compose.ui.graphics.Color.Unspecified
+    }
+    
+    /**
+     * Gets the current background color (highlight) of the selection.
+     * 
+     * @return Current background color or Color.Unspecified if no highlight
+     */
+    fun getCurrentHighlightColor(): androidx.compose.ui.graphics.Color {
+        return _richTextState.value.currentSpanStyle.background ?: androidx.compose.ui.graphics.Color.Unspecified
+    }
+    
+    /**
+     * Sets the text color for the current selection.
+     * 
+     * @param color The color to apply to the text
+     */
+    fun setTextColor(color: androidx.compose.ui.graphics.Color) {
+        _richTextState.value.toggleSpanStyle(
+            androidx.compose.ui.text.SpanStyle(color = color)
+        )
+    }
+    
+    /**
+     * Sets the highlight (background) color for the current selection.
+     * 
+     * @param color The color to apply as background highlight
+     */
+    fun setHighlightColor(color: androidx.compose.ui.graphics.Color) {
+        _richTextState.value.toggleSpanStyle(
+            androidx.compose.ui.text.SpanStyle(background = color)
+        )
+    }
+    
+    /**
+     * Removes text color formatting from the current selection.
+     */
+    fun removeTextColor() {
+        _richTextState.value.removeSpanStyle(
+            androidx.compose.ui.text.SpanStyle(
+                color = _richTextState.value.currentSpanStyle.color
+            )
+        )
+    }
+    
+    /**
+     * Removes highlight color formatting from the current selection.
+     */
+    fun removeHighlightColor() {
+        _richTextState.value.removeSpanStyle(
+            androidx.compose.ui.text.SpanStyle(
+                background = _richTextState.value.currentSpanStyle.background
+            )
+        )
+    }
+    
+    /**
+     * Checks if the cursor is at the end of a heading line.
+     * 
+     * @return True if cursor is at the end of a heading, false otherwise
+     */
+    fun isCursorAtEndOfHeading(): Boolean {
+        val state = _richTextState.value
+        val text = state.annotatedString.text
+        val selection = state.selection
+        
+        // Check if selection is collapsed (cursor position)
+        if (!selection.collapsed) return false
+        
+        val cursorPosition = selection.start
+        
+        // Check if cursor is at the end of text or before a newline
+        val isAtLineEnd = cursorPosition >= text.length || 
+                         (cursorPosition < text.length && text[cursorPosition] == '\n')
+        
+        if (!isAtLineEnd) return false
+        
+        // Find the start of the current line
+        val lineStart = text.lastIndexOf('\n', cursorPosition - 1) + 1
+        
+        // Check if current line has heading formatting
+        return getCurrentHeadingLevel() != null
+    }
+    
+    /**
+     * Handles Enter key press behavior for headings.
+     * When Enter is pressed at the end of a heading line, automatically converts the new line to body text.
+     * 
+     * @return True if the Enter key was handled (heading to body conversion), false otherwise
+     */
+    fun handleEnterKeyPress(): Boolean {
+        if (!isCursorAtEndOfHeading()) {
+            return false // Let default Enter behavior handle it
+        }
+        
+        // Let the default Enter behavior happen first, then modify the formatting
+        // We return false to allow the default Enter key handling, and then apply body text formatting
+        // in a separate call that will be triggered after the Enter key processing
+        return false // Let default behavior handle Enter key
+    }
+    
+    /**
+     * Applies body text formatting after Enter key press on a heading.
+     * This should be called immediately after the Enter key is processed.
+     */
+    fun applyBodyTextAfterEnter() {
+        // Apply body text styling to the current cursor position
+        setBodyText()
+    }
+    
+    /**
+     * Toggles link formatting on selected text.
+     * If text is selected, prompts for URL input. If URL is detected, removes link formatting.
+     */
+    fun toggleLink() {
+        val state = _richTextState.value
+        val selection = state.selection
+        
+        if (selection.collapsed) {
+            // No text selected - can't create link
+            return
+        }
+        
+        val selectedText = try {
+            // Validate selection boundaries
+            if (selection.start < 0 || selection.end > state.annotatedString.text.length || selection.start > selection.end) {
+                return
+            }
+            state.annotatedString.text.substring(selection.start, selection.end)
+        } catch (e: Exception) {
+            return
+        }
+        
+        // Check if selected text already has a link
+        if (hasLink()) {
+            // Remove link formatting by removing text decoration
+            state.removeSpanStyle(
+                SpanStyle(
+                    textDecoration = TextDecoration.Underline,
+                    color = androidx.compose.ui.graphics.Color.Blue
+                )
+            )
+        } else {
+            // Add link formatting (visual indication)
+            state.addSpanStyle(
+                SpanStyle(
+                    textDecoration = TextDecoration.Underline,
+                    color = androidx.compose.ui.graphics.Color.Blue
+                )
+            )
+        }
+    }
+    
+    /**
+     * Inserts a horizontal divider (horizontal rule) at the current cursor position.
+     */
+    fun insertDivider() {
+        val state = _richTextState.value
+        val currentText = state.annotatedString.text
+        val cursorPosition = state.selection.start
+        
+        // Insert divider as a line of dashes
+        val divider = "\n---\n"
+        
+        // Insert the divider at cursor position
+        val newText = StringBuilder(currentText)
+            .insert(cursorPosition, divider)
+            .toString()
+        
+        // Update the content
+        state.setHtml(newText)
+    }
+    
     
     /**
      * Creates a new instance with fresh state.

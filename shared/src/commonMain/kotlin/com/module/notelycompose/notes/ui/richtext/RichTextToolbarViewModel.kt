@@ -3,15 +3,19 @@ package com.module.notelycompose.notes.ui.richtext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.notes.presentation.detail.RichTextFormattingState
 import com.module.notelycompose.notes.presentation.helpers.RichTextEditorHelper
+import com.module.notelycompose.notes.ui.components.ColorPickerMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 /**
  * Shared ViewModel for rich text toolbar components providing centralized state management.
@@ -55,25 +59,68 @@ class RichTextToolbarViewModel(
     private val _canRedo = MutableStateFlow(false)
     val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
     
+    // Color picker state
+    private val _isColorPickerVisible = MutableStateFlow(false)
+    val isColorPickerVisible: StateFlow<Boolean> = _isColorPickerVisible.asStateFlow()
+    
+    private val _colorPickerMode = MutableStateFlow(ColorPickerMode.TEXT_COLOR)
+    val colorPickerMode: StateFlow<ColorPickerMode> = _colorPickerMode.asStateFlow()
+    
+    private val _currentTextColor = MutableStateFlow<Color?>(null)
+    val currentTextColor: StateFlow<Color?> = _currentTextColor.asStateFlow()
+    
+    private val _currentHighlightColor = MutableStateFlow<Color?>(null)
+    val currentHighlightColor: StateFlow<Color?> = _currentHighlightColor.asStateFlow()
+    
+    // Keyboard shortcuts overlay state
+    private val _isKeyboardShortcutsVisible = MutableStateFlow(false)
+    val isKeyboardShortcutsVisible: StateFlow<Boolean> = _isKeyboardShortcutsVisible.asStateFlow()
+    
     // Performance and UX state
     var isPerformingBulkOperation by mutableStateOf(false)
         private set
     
+    // Performance optimization: debouncing for formatting state refresh
+    private var refreshJob: Job? = null
+    private companion object {
+        const val REFRESH_DEBOUNCE_DELAY = 100L // 100ms debounce for state refresh
+    }
+    
     /**
      * Updates the formatting state by querying the current state from RichTextEditorHelper.
      * This should be called when the text selection changes or formatting is applied.
+     * Uses debouncing to prevent excessive state refresh during rapid user interactions.
      */
     fun refreshFormattingState() {
         if (isPerformingBulkOperation) return
         
-        viewModelScope.launch {
+        // Cancel previous refresh job if still pending (performance optimization)
+        refreshJob?.cancel()
+        
+        refreshJob = viewModelScope.launch {
+            delay(REFRESH_DEBOUNCE_DELAY)
+            
+            // Update current colors from editor
+            val textColor = richTextEditorHelper.getCurrentTextColor()
+            val highlightColor = richTextEditorHelper.getCurrentHighlightColor()
+            
+            _currentTextColor.value = if (textColor != Color.Unspecified) textColor else null
+            _currentHighlightColor.value = if (highlightColor != Color.Unspecified) highlightColor else null
+            
             val newState = RichTextFormattingState(
                 isBold = richTextEditorHelper.isSelectionBold(),
                 isItalic = richTextEditorHelper.isSelectionItalic(),
                 isUnderlined = richTextEditorHelper.isSelectionUnderlined(),
                 isUnorderedList = richTextEditorHelper.isUnorderedList(),
                 isOrderedList = richTextEditorHelper.isOrderedList(),
-                currentAlignment = richTextEditorHelper.getCurrentAlignment()
+                currentAlignment = richTextEditorHelper.getCurrentAlignment(),
+                currentHeadingLevel = richTextEditorHelper.getCurrentHeadingLevel(),
+                hasTextColor = richTextEditorHelper.hasTextColor(),
+                hasHighlight = richTextEditorHelper.hasHighlight(),
+                indentLevel = richTextEditorHelper.getIndentLevel(),
+                hasLink = richTextEditorHelper.hasLink(),
+                isCodeBlock = richTextEditorHelper.isCodeBlock(),
+                isQuoteBlock = richTextEditorHelper.isQuoteBlock()
             )
             _formattingState.value = newState
         }
@@ -156,6 +203,46 @@ class RichTextToolbarViewModel(
         refreshFormattingState()
     }
     
+    fun toggleStrikethrough() {
+        richTextEditorHelper.toggleStrikethrough()
+        refreshFormattingState()
+    }
+    
+    fun toggleCodeBlock() {
+        richTextEditorHelper.toggleCodeBlock()
+        refreshFormattingState()
+    }
+    
+    fun toggleQuoteBlock() {
+        richTextEditorHelper.toggleQuoteBlock()
+        refreshFormattingState()
+    }
+    
+    fun setBodyText() {
+        richTextEditorHelper.setBodyText()
+        refreshFormattingState()
+    }
+    
+    fun increaseIndent() {
+        richTextEditorHelper.increaseIndent()
+        refreshFormattingState()
+    }
+    
+    fun decreaseIndent() {
+        richTextEditorHelper.decreaseIndent()
+        refreshFormattingState()
+    }
+    
+    fun toggleLink() {
+        richTextEditorHelper.toggleLink()
+        refreshFormattingState()
+    }
+    
+    fun insertDivider() {
+        richTextEditorHelper.insertDivider()
+        refreshFormattingState()
+    }
+    
     /**
      * Performs multiple formatting operations efficiently with single state refresh.
      */
@@ -182,6 +269,71 @@ class RichTextToolbarViewModel(
     }
     
     /**
+     * Shows the color picker for text color selection.
+     */
+    fun showTextColorPicker() {
+        _colorPickerMode.value = ColorPickerMode.TEXT_COLOR
+        _isColorPickerVisible.value = true
+    }
+    
+    /**
+     * Shows the color picker for highlight color selection.
+     */
+    fun showHighlightColorPicker() {
+        _colorPickerMode.value = ColorPickerMode.HIGHLIGHT_COLOR
+        _isColorPickerVisible.value = true
+    }
+    
+    /**
+     * Hides the color picker.
+     */
+    fun hideColorPicker() {
+        _isColorPickerVisible.value = false
+    }
+    
+    /**
+     * Applies the selected text color and refreshes formatting state.
+     */
+    fun applyTextColor(color: Color?) {
+        if (color != null) {
+            richTextEditorHelper.setTextColor(color)
+        } else {
+            richTextEditorHelper.removeTextColor()
+        }
+        _currentTextColor.value = color
+        refreshFormattingState()
+        hideColorPicker()
+    }
+    
+    /**
+     * Applies the selected highlight color and refreshes formatting state.
+     */
+    fun applyHighlightColor(color: Color?) {
+        if (color != null) {
+            richTextEditorHelper.setHighlightColor(color)
+        } else {
+            richTextEditorHelper.removeHighlightColor()
+        }
+        _currentHighlightColor.value = color
+        refreshFormattingState()
+        hideColorPicker()
+    }
+    
+    /**
+     * Shows the keyboard shortcuts overlay.
+     */
+    fun showKeyboardShortcuts() {
+        _isKeyboardShortcutsVisible.value = true
+    }
+    
+    /**
+     * Hides the keyboard shortcuts overlay.
+     */
+    fun hideKeyboardShortcuts() {
+        _isKeyboardShortcutsVisible.value = false
+    }
+    
+    /**
      * Toggles between floating and bottom toolbar modes.
      */
     fun toggleToolbarMode() {
@@ -191,6 +343,15 @@ class RichTextToolbarViewModel(
             ToolbarMode.Hidden -> ToolbarMode.Bottom
         }
         setToolbarMode(newMode)
+    }
+    
+    /**
+     * Cleanup method to cancel pending operations and prevent memory leaks.
+     * Should be called when the ViewModel is being cleared.
+     */
+    override fun onCleared() {
+        super.onCleared()
+        refreshJob?.cancel()
     }
 }
 
@@ -252,7 +413,9 @@ fun RichTextToolbarViewModel.createFormattingSnapshot(): RichTextFormattingState
  */
 fun RichTextFormattingState.hasAnyFormatting(): Boolean {
     return isBold || isItalic || isUnderlined || isUnorderedList || isOrderedList ||
-           currentAlignment != TextAlign.Start
+           currentAlignment != TextAlign.Start || currentHeadingLevel != null ||
+           hasTextColor || hasHighlight || indentLevel > 0 || hasLink ||
+           isCodeBlock || isQuoteBlock
 }
 
 /**
@@ -268,5 +431,14 @@ fun RichTextFormattingState.toDebugString(): String {
     if (currentAlignment != TextAlign.Start) {
         activeFormats.add("Align:${currentAlignment.toString()}")
     }
+    currentHeadingLevel?.let { level ->
+        activeFormats.add("H$level")
+    }
+    if (hasTextColor) activeFormats.add("TextColor")
+    if (hasHighlight) activeFormats.add("Highlight")
+    if (indentLevel > 0) activeFormats.add("Indent:$indentLevel")
+    if (hasLink) activeFormats.add("Link")
+    if (isCodeBlock) activeFormats.add("Code")
+    if (isQuoteBlock) activeFormats.add("Quote")
     return if (activeFormats.isEmpty()) "NoFormatting" else activeFormats.joinToString(", ")
 }

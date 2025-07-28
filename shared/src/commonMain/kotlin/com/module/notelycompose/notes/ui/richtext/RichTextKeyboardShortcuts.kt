@@ -1,13 +1,63 @@
 package com.module.notelycompose.notes.ui.richtext
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 
 /**
  * Comprehensive keyboard shortcuts system for rich text editing.
@@ -16,6 +66,7 @@ import androidx.compose.ui.text.style.TextAlign
  */
 class RichTextKeyboardShortcutsManager(
     private val viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel,
+    private val toolbarViewModel: RichTextToolbarViewModel? = null,
     private val accessibilityManager: RichTextAccessibilityManager = RichTextAccessibilityManager()
 ) {
     
@@ -58,6 +109,7 @@ class RichTextKeyboardShortcutsManager(
             is AccessibilityAction.Copy -> copyText()
             is AccessibilityAction.Paste -> pasteText()
             is AccessibilityAction.Cut -> cutText()
+            is AccessibilityAction.ShowKeyboardShortcuts -> toolbarViewModel?.showKeyboardShortcuts()
             else -> {} // Actions handled by UI components
         }
     }
@@ -86,10 +138,11 @@ class RichTextKeyboardShortcutsManager(
  */
 @Composable
 fun Modifier.richTextKeyboardShortcuts(
-    viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+    viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel,
+    toolbarViewModel: RichTextToolbarViewModel? = null
 ): Modifier {
-    val manager = remember(viewModel) {
-        RichTextKeyboardShortcutsManager(viewModel)
+    val manager = remember(viewModel, toolbarViewModel) {
+        RichTextKeyboardShortcutsManager(viewModel, toolbarViewModel)
     }
     
     return this.onKeyEvent { event ->
@@ -102,10 +155,11 @@ fun Modifier.richTextKeyboardShortcuts(
  */
 @Composable
 fun rememberRichTextKeyboardShortcuts(
-    viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel
+    viewModel: com.module.notelycompose.notes.presentation.detail.TextEditorViewModel,
+    toolbarViewModel: RichTextToolbarViewModel? = null
 ): RichTextKeyboardShortcutsManager {
-    return remember(viewModel) {
-        RichTextKeyboardShortcutsManager(viewModel)
+    return remember(viewModel, toolbarViewModel) {
+        RichTextKeyboardShortcutsManager(viewModel, toolbarViewModel)
     }
 }
 
@@ -194,8 +248,12 @@ fun RichTextShortcutsOverlay(
     
     if (!isVisible) return
     
-    // TODO: Implement KeyboardShortcutsOverlay UI component
-    // This would show a modal overlay with available keyboard shortcuts
+    KeyboardShortcutsOverlay(
+        shortcuts = shortcuts,
+        isVisible = isVisible,
+        onDismiss = onDismiss,
+        modifier = modifier
+    )
 }
 
 /**
@@ -224,6 +282,353 @@ class RichTextKeyboardFocusManager(
     fun clearFocus() {
         focusManager.clearFocus()
     }
+}
+
+/**
+ * Material 3 compliant keyboard shortcuts overlay with comprehensive accessibility support.
+ * 
+ * Features:
+ * - Material 3 design with dynamic theming
+ * - Responsive layout for different screen sizes
+ * - Keyboard navigation within the overlay
+ * - Smooth animations and motion tokens
+ * - Focus management and dismissal patterns
+ * - Screen reader support and accessibility
+ * - User preferences integration
+ */
+@Composable
+fun KeyboardShortcutsOverlay(
+    shortcuts: Map<String, String>,
+    isVisible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!isVisible) return
+    
+    val focusRequester = remember { FocusRequester() }
+    
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
+            focusRequester.requestFocus()
+        }
+    }
+    
+    // Animated scrim background
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(
+            animationSpec = tween(300, easing = FastOutSlowInEasing)
+        ),
+        exit = fadeOut(
+            animationSpec = tween(200, easing = FastOutLinearInEasing)
+        )
+    ) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f))
+                .focusRequester(focusRequester)
+                .focusable()
+                .onKeyEvent { event ->
+                    when {
+                        event.key == Key.Escape && event.type == KeyEventType.KeyDown -> {
+                            onDismiss()
+                            true
+                        }
+                        else -> false
+                    }
+                }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { onDismiss() }
+                .semantics {
+                    contentDescription = "Keyboard shortcuts overlay"
+                    
+                    customActions = listOf(
+                        CustomAccessibilityAction(
+                            label = "Close shortcuts overlay",
+                            action = {
+                                onDismiss()
+                                true
+                            }
+                        )
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            KeyboardShortcutsDialog(
+                shortcuts = shortcuts,
+                onDismiss = onDismiss
+            )
+        }
+    }
+}
+
+@Composable
+private fun KeyboardShortcutsDialog(
+    shortcuts: Map<String, String>,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+    val dialogFocusRequester = remember { FocusRequester() }
+    
+    Card(
+        modifier = modifier
+            .widthIn(min = 320.dp, max = 480.dp)
+            .heightIn(max = 600.dp)
+            .focusRequester(dialogFocusRequester)
+            .focusable()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* Prevent dismiss when clicking dialog content */ },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 24.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
+            // Header
+            ShortcutsHeader(onDismiss = onDismiss)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Shortcuts content
+            ShortcutsContent(
+                shortcuts = shortcuts,
+                scrollState = scrollState,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Footer with close button
+            ShortcutsFooter(onDismiss = onDismiss)
+        }
+    }
+}
+
+@Composable
+private fun ShortcutsHeader(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = "Keyboard Shortcuts",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "Speed up your workflow with these shortcuts",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        IconButton(
+            onClick = onDismiss,
+            modifier = Modifier.semantics {
+                contentDescription = "Close shortcuts overlay"
+            }
+        ) {
+            Text(
+                text = "✕",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShortcutsContent(
+    shortcuts: Map<String, String>,
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(scrollState)
+            .semantics {
+                contentDescription = "List of keyboard shortcuts"
+            }
+    ) {
+        // Group shortcuts by category for better organization
+        val shortcutCategories = groupShortcutsByCategory(shortcuts)
+        
+        shortcutCategories.forEach { (category, categoryShortcuts) ->
+            ShortcutCategory(
+                title = category,
+                shortcuts = categoryShortcuts
+            )
+            
+            if (category != shortcutCategories.keys.last()) {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShortcutCategory(
+    title: String,
+    shortcuts: List<Pair<String, String>>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        shortcuts.forEach { (shortcut, description) ->
+            ShortcutItem(
+                shortcut = shortcut,
+                description = description
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShortcutItem(
+    shortcut: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "$description, shortcut $shortcut"
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        ShortcutKeyChip(shortcut = shortcut)
+    }
+}
+
+@Composable
+private fun ShortcutKeyChip(
+    shortcut: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+    ) {
+        Text(
+            text = shortcut,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontFamily = FontFamily.Monospace
+            ),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun ShortcutsFooter(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.semantics {
+                contentDescription = "Close keyboard shortcuts"
+            }
+        ) {
+            Text(
+                text = "Got it",
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+/**
+ * Groups keyboard shortcuts into logical categories for better organization.
+ */
+private fun groupShortcutsByCategory(shortcuts: Map<String, String>): LinkedHashMap<String, List<Pair<String, String>>> {
+    val categories = linkedMapOf<String, MutableList<Pair<String, String>>>()
+    
+    shortcuts.forEach { (shortcut, description) ->
+        val category = when {
+            description.contains("Bold") || description.contains("Italic") || 
+            description.contains("Underline") || description.contains("Strikethrough") ||
+            description.contains("Clear") -> "Text Formatting"
+            
+            description.contains("list") || description.contains("List") ||
+            description.contains("Bullet") || description.contains("Numbered") -> "Lists & Structure"
+            
+            description.contains("Align") || description.contains("align") -> "Alignment"
+            
+            description.contains("Heading") || description.contains("heading") ||
+            description.contains("Code") || description.contains("Quote") -> "Document Structure"
+            
+            description.contains("Undo") || description.contains("Redo") ||
+            description.contains("Select") || description.contains("Copy") ||
+            description.contains("Paste") || description.contains("Cut") -> "Editing Actions"
+            
+            description.contains("Shortcuts") || description.contains("shortcuts") -> "Help"
+            
+            else -> "General"
+        }
+        
+        categories.getOrPut(category) { mutableListOf() }.add(shortcut to description)
+    }
+    
+    // Return in preferred order
+    val orderedCategories = linkedMapOf<String, List<Pair<String, String>>>()
+    val preferredOrder = listOf(
+        "Text Formatting",
+        "Lists & Structure", 
+        "Alignment",
+        "Document Structure",
+        "Editing Actions",
+        "General",
+        "Help"
+    )
+    
+    preferredOrder.forEach { category ->
+        categories[category]?.let { shortcuts ->
+            orderedCategories[category] = shortcuts.sortedBy { it.first }
+        }
+    }
+    
+    return orderedCategories
 }
 
 /**

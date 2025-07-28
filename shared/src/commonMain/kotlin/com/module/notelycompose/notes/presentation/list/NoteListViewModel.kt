@@ -41,6 +41,7 @@ class NoteListViewModel(
     private val deleteNoteById: DeleteNoteById,
     private val notePresentationMapper: NotePresentationMapper,
     private val notesFilterMapper: NotesFilterMapper,
+    private val securityHelper: SecurityHelper,
 ) :ViewModel(){
     private val _state = MutableStateFlow(NoteListPresentationState())
     val state: StateFlow<NoteListPresentationState> = _state
@@ -187,7 +188,7 @@ class NoteListViewModel(
             try {
                 // Clean up audio file if it exists using SecurityHelper
                 if (note.recordingPath.isNotEmpty()) {
-                    val fileDeleteResult = SecurityHelper.secureDeleteFile(note.recordingPath)
+                    val fileDeleteResult = securityHelper.secureDeleteFile(note.recordingPath)
                     
                     if (!fileDeleteResult.success) {
                         // Log the issue but continue with note deletion to avoid orphaned DB records

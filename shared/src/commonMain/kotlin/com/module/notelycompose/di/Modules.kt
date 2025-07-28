@@ -38,6 +38,7 @@ import com.module.notelycompose.notes.presentation.mapper.EditorPresentationToUi
 import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextAlignPresentationMapper
 import com.module.notelycompose.notes.presentation.mapper.TextFormatPresentationMapper
+import com.module.notelycompose.notes.presentation.settings.LanguageSelectionViewModel
 import com.module.notelycompose.onboarding.data.PreferencesRepository
 import com.module.notelycompose.onboarding.presentation.OnboardingViewModel
 import com.module.notelycompose.platform.presentation.PlatformViewModel
@@ -47,6 +48,8 @@ import com.module.notelycompose.transcription.data.repository.TranscriptionRepos
 import com.module.notelycompose.transcription.domain.repository.TranscriptionRepository
 import com.module.notelycompose.transcription.domain.WhisperModelManager
 import com.module.notelycompose.transcription.domain.WhisperModelLoader
+import com.module.notelycompose.core.security.SecurityHelper
+import com.module.notelycompose.core.security.SecurityMonitoringService
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -105,6 +108,7 @@ val viewModelModule = module {
     viewModelOf(::AudioRecorderViewModel)
     viewModelOf(::AudioPlayerViewModel)
     viewModelOf(::AudioImportViewModel)
+    viewModelOf(::LanguageSelectionViewModel)
 }
 
 val useCaseModule = module {
@@ -117,4 +121,10 @@ val useCaseModule = module {
     factory { UpdateNoteUseCase(get(), get(), get()) }
     factory { ModelAvailabilityService(get(), get()) }
     factory { BackgroundTranscriptionService(get(), get()) }
+}
+
+val securityModule = module {
+    // SecurityMonitoringService will be provided by platform-specific modules
+    // as it requires platform-specific implementations
+    single { SecurityHelper(get<SecurityMonitoringService>()) }
 }

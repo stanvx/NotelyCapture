@@ -50,6 +50,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -83,6 +89,8 @@ import com.module.notelycompose.notes.ui.richtext.rememberSystemInsets
 import com.module.notelycompose.notes.ui.detail.EditorUiState
 import com.module.notelycompose.notes.ui.detail.RecordingConfirmationUiModel
 import com.module.notelycompose.notes.ui.share.ShareDialog
+import com.module.notelycompose.notes.ui.components.ColorPickerBottomSheet
+import com.module.notelycompose.notes.ui.components.ColorPickerMode
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.resources.Res
@@ -122,6 +130,24 @@ fun NoteDetailScreen(
     val richTextToolbarViewModel = remember { createRichTextToolbarViewModel(richTextEditorHelper) }
     val formattingState by richTextToolbarViewModel.formattingState.collectAsStateWithLifecycle()
     val isToolbarVisible by richTextToolbarViewModel.isToolbarVisible.collectAsStateWithLifecycle()
+    
+    // Undo/Redo state from editor
+    val canUndo by editorViewModel.canUndo.collectAsStateWithLifecycle()
+    val canRedo by editorViewModel.canRedo.collectAsStateWithLifecycle()
+    
+    // Manage RichTextToolbarViewModel lifecycle to prevent memory leaks
+    DisposableEffect(richTextToolbarViewModel) {
+        onDispose {
+            // ViewModel cleanup is handled automatically by Compose navigation
+            // No manual cleanup needed for properly scoped ViewModels
+        }
+    }
+    
+    // Color picker state
+    val isColorPickerVisible by richTextToolbarViewModel.isColorPickerVisible.collectAsStateWithLifecycle()
+    val colorPickerMode by richTextToolbarViewModel.colorPickerMode.collectAsStateWithLifecycle()
+    val currentTextColor by richTextToolbarViewModel.currentTextColor.collectAsStateWithLifecycle()
+    val currentHighlightColor by richTextToolbarViewModel.currentHighlightColor.collectAsStateWithLifecycle()
     
     // Keyboard and system positioning awareness
     val keyboardHeight = rememberKeyboardHeight()
@@ -262,7 +288,20 @@ fun NoteDetailScreen(
                 onToggleOrderedList = richTextToolbarViewModel::toggleOrderedList,
                 onToggleUnorderedList = richTextToolbarViewModel::toggleUnorderedList,
                 onAddHeading = richTextToolbarViewModel::addHeading,
+                onSetBodyText = richTextToolbarViewModel::setBodyText,
                 onClearFormatting = richTextToolbarViewModel::clearFormatting,
+                onShowTextColorPicker = richTextToolbarViewModel::showTextColorPicker,
+                onShowHighlightColorPicker = richTextToolbarViewModel::showHighlightColorPicker,
+                onIncreaseIndent = richTextToolbarViewModel::increaseIndent,
+                onDecreaseIndent = richTextToolbarViewModel::decreaseIndent,
+                onToggleCodeBlock = richTextToolbarViewModel::toggleCodeBlock,
+                onToggleQuoteBlock = richTextToolbarViewModel::toggleQuoteBlock,
+                onInsertDivider = { richTextToolbarViewModel.insertDivider() },
+                onToggleLink = { richTextToolbarViewModel.toggleLink() },
+                onUndo = { editorViewModel.onUndo() },
+                onRedo = { editorViewModel.onRedo() },
+                canUndo = canUndo,
+                canRedo = canRedo,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .imePadding()
@@ -270,6 +309,22 @@ fun NoteDetailScreen(
         }
     }
 
+    // Color picker bottom sheet
+    ColorPickerBottomSheet(
+        isVisible = isColorPickerVisible,
+        mode = colorPickerMode,
+        selectedColor = when (colorPickerMode) {
+            ColorPickerMode.TEXT_COLOR -> currentTextColor
+            ColorPickerMode.HIGHLIGHT_COLOR -> currentHighlightColor
+        },
+        onColorSelected = { color ->
+            when (colorPickerMode) {
+                ColorPickerMode.TEXT_COLOR -> richTextToolbarViewModel.applyTextColor(color)
+                ColorPickerMode.HIGHLIGHT_COLOR -> richTextToolbarViewModel.applyHighlightColor(color)
+            }
+        },
+        onDismiss = richTextToolbarViewModel::hideColorPicker
+    )
 
     if (showDownloadDialog) {
         LocalSoftwareKeyboardController.current?.hide()
@@ -500,6 +555,7 @@ private fun NoteEditor(
 ) {
 
     val richTextState by richTextEditorHelper.richTextState.collectAsState()
+    var shouldApplyBodyTextAfterEnter by remember { mutableStateOf(false) }
     
     // Initialize rich text state with current content if needed
     LaunchedEffect(editorState.content.text) {
@@ -510,8 +566,15 @@ private fun NoteEditor(
         }
     }
     
-    // Update toolbar formatting state when rich text state changes
-    LaunchedEffect(richTextState.selection) {
+    // Consolidated state management to prevent race conditions
+    LaunchedEffect(richTextState.selection, richTextState.annotatedString, shouldApplyBodyTextAfterEnter) {
+        // Apply body text formatting after Enter key if needed (highest priority)
+        if (shouldApplyBodyTextAfterEnter) {
+            richTextEditorHelper.applyBodyTextAfterEnter()
+            shouldApplyBodyTextAfterEnter = false
+        }
+        
+        // Update toolbar formatting state (with debouncing handled in ViewModel)
         richTextToolbarViewModel.refreshFormattingState()
     }
 
@@ -522,6 +585,15 @@ private fun NoteEditor(
             .padding(horizontal = 16.dp)
             .onFocusChanged {
                 onFocusChange(it.isFocused)
+            }
+            .onPreviewKeyEvent { keyEvent ->
+                // Check if Enter key is about to be pressed on a heading
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Enter) {
+                    if (richTextEditorHelper.isCursorAtEndOfHeading()) {
+                        shouldApplyBodyTextAfterEnter = true
+                    }
+                }
+                false // Always let the default behavior handle the key
             },
         textStyle = TextStyle(
             color = LocalCustomColors.current.bodyContentColor,

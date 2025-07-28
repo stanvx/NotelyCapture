@@ -74,6 +74,7 @@ object MaterialSymbols {
     const val FormatIndentDecrease = "\ue23d"
     const val FormatColorText = "\ue23a"
     const val FormatColorFill = "\ue23b"
+    const val FormatColorReset = "\ue239"
     const val FormatClear = "\ue239"
     const val Code = "\ue86f"
     const val FormatQuote = "\ue244"

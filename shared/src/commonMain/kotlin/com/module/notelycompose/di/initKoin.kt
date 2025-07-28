@@ -13,6 +13,7 @@ fun KoinApplication.init() {
         repositoryModule,
         useCaseModule,
         mapperModule,
+        securityModule,
         platformModule,
         audioModule
     )
@@ -27,6 +28,7 @@ fun initKoinApplication(config: KoinAppDeclaration? = null) {
             repositoryModule,
             useCaseModule,
             mapperModule,
+            securityModule,
             platformModule,
             audioModule
         )

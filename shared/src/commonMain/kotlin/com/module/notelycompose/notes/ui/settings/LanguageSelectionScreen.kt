@@ -25,14 +25,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,9 +40,9 @@ import androidx.compose.ui.unit.sp
 import com.module.notelycompose.notes.ui.detail.AndroidNoteTopBar
 import com.module.notelycompose.notes.ui.detail.IOSNoteTopBar
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
-import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.notes.presentation.settings.LanguageSelectionIntent
+import com.module.notelycompose.notes.presentation.settings.LanguageSelectionViewModel
 import com.module.notelycompose.platform.getPlatform
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.language_selection_no_languages_found
@@ -86,19 +83,9 @@ val languageCodeMap = mapOf(
 @Composable
 fun LanguageSelectionScreen(
     navigateBack: () -> Unit,
-    preferencesRepository: PreferencesRepository = koinInject()
+    viewModel: LanguageSelectionViewModel = koinInject()
 ) {
-    // TODO: move this implementation to a ViewModel
-    val previousSelectedLanguage by preferencesRepository.getDefaultTranscriptionLanguage()
-        .collectAsState(languageCodeMap.entries.first().key)
-    val coroutineScope = rememberCoroutineScope()
-    var searchText by remember { mutableStateOf("") }
-    val filteredLanguages by derivedStateOf {
-        languageCodeMap.filter { (language, code) ->
-            language.contains(searchText, ignoreCase = true) ||
-                    code.contains(searchText, ignoreCase = true)
-        }
-    }
+    val state by viewModel.state.collectAsState()
 
     Column(
         modifier = Modifier
@@ -136,8 +123,10 @@ fun LanguageSelectionScreen(
 
             // Search Bar
             OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = state.searchQuery,
+                onValueChange = { query ->
+                    viewModel.onProcessIntent(LanguageSelectionIntent.OnSearchQueryChanged(query))
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
@@ -155,9 +144,11 @@ fun LanguageSelectionScreen(
                     )
                 },
                 trailingIcon = {
-                    if (searchText.isNotEmpty()) {
+                    if (state.searchQuery.isNotEmpty()) {
                         IconButton(
-                            onClick = { searchText = "" },
+                            onClick = {
+                                viewModel.onProcessIntent(LanguageSelectionIntent.OnClearSearch)
+                            },
                             modifier = Modifier
                                 .size(20.dp)
                                 .background(
@@ -185,6 +176,26 @@ fun LanguageSelectionScreen(
                 singleLine = true
             )
 
+            // Error handling
+            state.error?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 8.dp)
+                )
+                TextButton(
+                    onClick = {
+                        viewModel.onProcessIntent(LanguageSelectionIntent.OnRetry)
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                ) {
+                    Text("Retry")
+                }
+            }
+
             // Language List
             Text(
                 text = stringResource(Res.string.language_selection_supported_languages),
@@ -205,7 +216,7 @@ fun LanguageSelectionScreen(
                         color = MaterialTheme.colorScheme.outlineVariant,
                         shape = RoundedCornerShape(12.dp))
             ) {
-                if (filteredLanguages.isEmpty()) {
+                if (state.filteredLanguages.isEmpty()) {
                     Text(
                         text = stringResource(Res.string.language_selection_no_languages_found),
                         modifier = Modifier
@@ -220,15 +231,17 @@ fun LanguageSelectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(0.dp)
                     ) {
-                        itemsIndexed(filteredLanguages.entries.toList()) { index, languageEntry ->
+                        itemsIndexed(state.filteredLanguages.entries.toList()) { index, languageEntry ->
                             Surface(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            preferencesRepository.setDefaultTranscriptionLanguage(languageEntry.key)
+                                    .clickable(enabled = !state.isLoading) {
+                                        if (!state.isLoading) {
+                                            viewModel.onProcessIntent(
+                                                LanguageSelectionIntent.OnLanguageSelected(languageEntry.key)
+                                            )
+                                            navigateBack()
                                         }
-                                        navigateBack()
                                     },
                                 color = LocalCustomColors.current.languageListBackgroundColor,
                             ) {
@@ -243,16 +256,25 @@ fun LanguageSelectionScreen(
                                             fontSize = 16.sp,
                                             modifier = Modifier.weight(1f)
                                         )
-                                        if(languageEntry.key == previousSelectedLanguage) {
-                                            MaterialIcon(
-                                                symbol = MaterialSymbols.Check,
-                                                contentDescription = "Selected",
-                                                tint = LocalCustomColors.current.languageListTextColor,
-                                                size = 20.dp
-                                            )
+                                        when {
+                                            state.isLoading && languageEntry.key == state.selectedLanguageCode -> {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(20.dp),
+                                                    strokeWidth = 2.dp,
+                                                    color = LocalCustomColors.current.languageListTextColor
+                                                )
+                                            }
+                                            languageEntry.key == state.selectedLanguageCode -> {
+                                                MaterialIcon(
+                                                    symbol = MaterialSymbols.Check,
+                                                    contentDescription = "Selected",
+                                                    tint = LocalCustomColors.current.languageListTextColor,
+                                                    size = 20.dp
+                                                )
+                                            }
                                         }
                                     }
-                                    if (index < filteredLanguages.size - 1) {
+                                    if (index < state.filteredLanguages.size - 1) {
                                         Divider(
                                             thickness = 0.5.dp,
                                             color = LocalCustomColors.current.languageListDividerColor

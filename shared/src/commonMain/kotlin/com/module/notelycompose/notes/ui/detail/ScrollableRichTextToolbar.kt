@@ -2,6 +2,7 @@ package com.module.notelycompose.notes.ui.detail
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -43,6 +44,8 @@ import com.module.notelycompose.notes.ui.richtext.RichTextAccessibilityManager
 import com.module.notelycompose.notes.ui.richtext.AccessibilityAction
 import com.module.notelycompose.notes.ui.richtext.RichTextButtonType
 import com.module.notelycompose.notes.ui.richtext.rememberRichTextFocusManager
+import com.module.notelycompose.notes.ui.components.MaterialIcon
+import com.module.notelycompose.notes.ui.theme.MaterialSymbols
 
 /**
  * Scrollable rich text toolbar designed for bottom alignment above the keyboard.
@@ -67,15 +70,20 @@ fun ScrollableRichTextToolbar(
     onToggleOrderedList: () -> Unit,
     onToggleUnorderedList: () -> Unit,
     onAddHeading: (Int) -> Unit,
+    onSetBodyText: () -> Unit,
     onClearFormatting: () -> Unit,
-    onToggleTextColor: () -> Unit = {},
-    onToggleHighlight: () -> Unit = {},
+    onShowTextColorPicker: () -> Unit = {},
+    onShowHighlightColorPicker: () -> Unit = {},
     onIncreaseIndent: () -> Unit = {},
     onDecreaseIndent: () -> Unit = {},
     onToggleCodeBlock: () -> Unit = {},
     onToggleQuoteBlock: () -> Unit = {},
     onInsertDivider: () -> Unit = {},
     onToggleLink: () -> Unit = {},
+    onUndo: () -> Unit = {},
+    onRedo: () -> Unit = {},
+    canUndo: Boolean = false,
+    canRedo: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -151,9 +159,17 @@ fun ScrollableRichTextToolbar(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    // Group 1: Headings (most structural)
+                    // Group 1: Headings (simplified for mobile UX)
                     item {
                         FormattingGroup(title = "Headings") {
+                            BodyButton(
+                                isSelected = formattingState.currentHeadingLevel == null,
+                                onClick = {
+                                    onSetBodyText()
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                            )
+                            
                             HeadingButton(
                                 level = 1,
                                 isSelected = formattingState.currentHeadingLevel == 1,
@@ -178,33 +194,6 @@ fun ScrollableRichTextToolbar(
                                 onClick = {
                                     onAddHeading(3)
                                     hapticFeedback.headingApplied(3)
-                                }
-                            )
-                            
-                            HeadingButton(
-                                level = 4,
-                                isSelected = formattingState.currentHeadingLevel == 4,
-                                onClick = {
-                                    onAddHeading(4)
-                                    hapticFeedback.headingApplied(4)
-                                }
-                            )
-                            
-                            HeadingButton(
-                                level = 5,
-                                isSelected = formattingState.currentHeadingLevel == 5,
-                                onClick = {
-                                    onAddHeading(5)
-                                    hapticFeedback.headingApplied(5)
-                                }
-                            )
-                            
-                            HeadingButton(
-                                level = 6,
-                                isSelected = formattingState.currentHeadingLevel == 6,
-                                onClick = {
-                                    onAddHeading(6)
-                                    hapticFeedback.headingApplied(6)
                                 }
                             )
                         }
@@ -249,25 +238,25 @@ fun ScrollableRichTextToolbar(
 
                     item { GroupDivider() }
 
-                    // Group 3: Highlight
+                    // Group 3: Colors
                     item {
-                        FormattingGroup(title = "Highlight") {
-                            FormattingButton(
-                                icon = Icons.Filled.FormatColorText,
+                        FormattingGroup(title = "Colors") {
+                            MaterialSymbolButton(
+                                symbol = MaterialSymbols.FormatColorText,
                                 contentDescription = "Text Color",
                                 isSelected = formattingState.hasTextColor,
                                 onClick = {
-                                    onToggleTextColor()
+                                    onShowTextColorPicker()
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
                             )
                             
-                            FormattingButton(
-                                icon = Icons.Filled.FormatColorFill,
-                                contentDescription = "Highlight",
+                            MaterialSymbolButton(
+                                symbol = MaterialSymbols.FormatColorFill,
+                                contentDescription = "Highlight Color",
                                 isSelected = formattingState.hasHighlight,
                                 onClick = {
-                                    onToggleHighlight()
+                                    onShowHighlightColorPicker()
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
                             )
@@ -412,16 +401,27 @@ fun ScrollableRichTextToolbar(
 
                     item { GroupDivider() }
 
-                    // Group 8: Actions
+                    // Group 8: History
                     item {
-                        FormattingGroup(title = "Actions") {
+                        FormattingGroup(title = "History") {
                             FormattingButton(
-                                icon = Icons.Filled.HorizontalRule,
-                                contentDescription = "Insert Divider",
+                                icon = Icons.Filled.Undo,
+                                contentDescription = "Undo",
                                 onClick = {
-                                    onInsertDivider()
+                                    onUndo()
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                }
+                                },
+                                enabled = canUndo
+                            )
+                            
+                            FormattingButton(
+                                icon = Icons.Filled.Redo,
+                                contentDescription = "Redo",
+                                onClick = {
+                                    onRedo()
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                },
+                                enabled = canRedo
                             )
                             
                             FormattingButton(
@@ -522,6 +522,54 @@ private fun FormattingButton(
 }
 
 /**
+ * Body text button for normal paragraph formatting
+ */
+@Composable
+private fun BodyButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(200, easing = FastOutSlowInEasing)
+    )
+    
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+        animationSpec = tween(200, easing = FastOutSlowInEasing)
+    )
+    
+    Surface(
+        onClick = onClick,
+        modifier = modifier.size(36.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = "Body",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = textColor,
+                fontSize = 9.sp
+            )
+        }
+    }
+}
+
+/**
  * Heading button with level indicator
  */
 @Composable
@@ -613,6 +661,54 @@ private fun CodeBlockButton(
                 fontWeight = FontWeight.Bold,
                 color = textColor,
                 fontSize = 10.sp
+            )
+        }
+    }
+}
+
+/**
+ * Material Symbol button for formatting actions with Material 3 styling.
+ */
+@Composable
+private fun MaterialSymbolButton(
+    symbol: String,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    enabled: Boolean = true,
+    tint: Color = if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(200, easing = FastOutSlowInEasing),
+        label = "background_animation"
+    )
+    
+    Surface(
+        onClick = onClick,
+        modifier = modifier.size(36.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor,
+        enabled = enabled
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            MaterialIcon(
+                symbol = symbol,
+                contentDescription = contentDescription,
+                tint = if (enabled) tint else tint.copy(alpha = 0.38f),
+                modifier = Modifier.size(18.dp)
             )
         }
     }

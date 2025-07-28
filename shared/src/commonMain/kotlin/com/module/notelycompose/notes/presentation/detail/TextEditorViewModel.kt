@@ -60,6 +60,7 @@ class TextEditorViewModel(
     private val textAlignPresentationMapper: TextAlignPresentationMapper,
     private val textEditorHelper: TextEditorHelper,
     private val richTextEditorHelper: RichTextEditorHelper,
+    private val securityHelper: SecurityHelper,
     private val audioPlayer: com.module.notelycompose.platform.PlatformAudioPlayer
 ) : ViewModel() {
 
@@ -134,10 +135,18 @@ class TextEditorViewModel(
     fun onUpdateContent(newContent: TextFieldValue) {
         val oldContent = _editorPresentationState.value.content.text
         
-        // SECURITY: Validate content input using SecurityHelper
-        if (!SecurityHelper.validateNoteContent(newContent.text)) {
-            return
+        // Perform security validation in coroutine
+        viewModelScope.launch {
+            // SECURITY: Validate content input using SecurityHelper
+            if (!securityHelper.validateNoteContent(newContent.text)) {
+                return@launch
+            }
+            
+            continueUpdateContent(newContent, oldContent)
         }
+    }
+    
+    private fun continueUpdateContent(newContent: TextFieldValue, oldContent: String) {
         
         val sanitizedContent = newContent
         
@@ -186,12 +195,12 @@ class TextEditorViewModel(
     }
 
     fun onUpdateRecordingPath(recordingPath: String) {
-        // SECURITY: Validate recording path before updating using SecurityHelper
-        if (recordingPath.isNotEmpty() && !SecurityHelper.isPathSafe(recordingPath)) {
-            return
-        }
-        
         viewModelScope.launch {
+            // SECURITY: Validate recording path before updating using SecurityHelper
+            if (recordingPath.isNotEmpty() && !securityHelper.isPathSafe(recordingPath)) {
+                return@launch
+            }
+            
             val recordingModel = recordingPath(recordingPath)
             _editorPresentationState.update {
                 it.copy(recording = recordingModel)
@@ -205,7 +214,7 @@ class TextEditorViewModel(
         
         viewModelScope.launch {
             // Use SecurityHelper for secure file deletion
-            val deleteResult = SecurityHelper.secureDeleteFile(recordingPath)
+            val deleteResult = securityHelper.secureDeleteFile(recordingPath)
             
             if (!deleteResult.success) {
                 // Log warnings but continue with UI update
@@ -238,7 +247,7 @@ class TextEditorViewModel(
     private suspend fun getAudioDuration(recordingPath: String): Int {
         return if (recordingPath.isNotEmpty()) {
             // SECURITY: Validate path before accessing audio file using SecurityHelper
-            if (!SecurityHelper.isPathSafe(recordingPath)) {
+            if (!securityHelper.isPathSafe(recordingPath)) {
                 return 0
             }
             
@@ -312,14 +321,36 @@ class TextEditorViewModel(
         
         saveJob = viewModelScope.launch {
             delay(SAVE_DEBOUNCE_DELAY)
-            createOrUpdateEvent(
-                title = title,
-                content = content,
-                starred = starred,
-                formatting = formatting,
-                textAlign = textAlign,
-                recordingPath = recordingPath
-            )
+            
+            // Capture the current note ID at the time of save execution
+            val currentNoteId = _currentNoteId.value
+            when {
+                currentNoteId != null && currentNoteId != ID_NOT_SET -> {
+                    updateNote(
+                        noteId = currentNoteId,
+                        title = title,
+                        content = content,
+                        starred = starred,
+                        formatting = formatting,
+                        textAlign = textAlign,
+                        recordingPath = recordingPath
+                    )
+                }
+                else -> {
+                    // For new notes, insert and immediately update the current note ID
+                    val newNoteId = insertNoteUseCase.execute(
+                        title = title,
+                        content = content,
+                        starred = starred,
+                        formatting = formatting.map { textFormatPresentationMapper.mapToDomainModel(it) },
+                        textAlign = textAlignPresentationMapper.mapToDomainModel(textAlign),
+                        recordingPath = recordingPath
+                    )
+                    newNoteId?.let { id ->
+                        _currentNoteId.value = id
+                    }
+                }
+            }
         }
     }
     
@@ -342,25 +373,6 @@ class TextEditorViewModel(
         return editorPresentationToUiStateMapper.mapToUiState(presentationState)
     }
 
-    private fun insertNote(
-        title: String,
-        content: String,
-        starred: Boolean,
-        formatting: List<TextPresentationFormat>,
-        textAlign: TextAlign,
-        recordingPath: String
-    ) {
-        viewModelScope.launch {
-            _currentNoteId.value = insertNoteUseCase.execute(
-                title = title,
-                content = content,
-                starred = starred,
-                formatting = formatting.map { textFormatPresentationMapper.mapToDomainModel(it) },
-                textAlign = textAlignPresentationMapper.mapToDomainModel(textAlign),
-                recordingPath = recordingPath
-            )
-        }
-    }
 
     private fun updateNote(
         noteId: Long,
@@ -390,7 +402,7 @@ class TextEditorViewModel(
             
             viewModelScope.launch {
                 // Use SecurityHelper for secure file deletion
-                val deleteResult = SecurityHelper.secureDeleteFile(path)
+                val deleteResult = securityHelper.secureDeleteFile(path)
                 
                 if (!deleteResult.success) {
                     // Log warnings but continue with note deletion
@@ -443,40 +455,6 @@ class TextEditorViewModel(
         return createdAt.formattedDate()
     }
 
-    private fun createOrUpdateEvent(
-        title: String,
-        content: String,
-        starred: Boolean,
-        formatting: List<TextPresentationFormat>,
-        textAlign: TextAlign,
-        recordingPath: String
-    ) {
-        val currentNoteId = _currentNoteId.value
-        when {
-            currentNoteId != null && currentNoteId != ID_NOT_SET -> {
-                updateNote(
-                    noteId = currentNoteId,
-                    title = title,
-                    content = content,
-                    starred = starred,
-                    formatting = formatting,
-                    textAlign = textAlign,
-                    recordingPath = recordingPath
-                )
-            }
-
-            else -> {
-                insertNote(
-                    title = title,
-                    content = content,
-                    starred = starred,
-                    formatting = formatting,
-                    textAlign = textAlign,
-                    recordingPath = recordingPath
-                )
-            }
-        }
-    }
 
     private fun updateContent(newContent: TextFieldValue) {
         textEditorHelper.updateContent(
@@ -567,7 +545,7 @@ class TextEditorViewModel(
             val starred = _editorPresentationState.value.starred
             val recordingPath = _editorPresentationState.value.recording.recordingPath
             if (content.text.isNotEmpty()) {
-                createOrUpdateEvent(
+                debouncedSave(
                     title = content.text,
                     content = content.text,
                     starred = starred,
@@ -685,6 +663,10 @@ class TextEditorViewModel(
             isOrderedList = richTextEditorHelper.isOrderedList(),
             currentAlignment = richTextEditorHelper.getCurrentAlignment(),
             currentHeadingLevel = richTextEditorHelper.getCurrentHeadingLevel(),
+            hasTextColor = richTextEditorHelper.hasTextColor(),
+            hasHighlight = richTextEditorHelper.hasHighlight(),
+            indentLevel = richTextEditorHelper.getIndentLevel(),
+            hasLink = richTextEditorHelper.hasLink(),
             isCodeBlock = richTextEditorHelper.isCodeBlock(),
             isQuoteBlock = richTextEditorHelper.isQuoteBlock()
         )
