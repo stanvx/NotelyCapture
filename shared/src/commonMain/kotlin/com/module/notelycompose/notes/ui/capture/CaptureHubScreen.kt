@@ -51,7 +51,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import com.module.notelycompose.notes.ui.components.ExtendedVoiceFAB
 import com.module.notelycompose.notes.ui.components.UnifiedHeaderCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -171,13 +170,6 @@ fun CaptureHubScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Unified Header Section
-            item {
-                UnifiedHeaderCard(
-                    title = "Capture Everything",
-                    subtitle = "Ideas • Moments • Memories"
-                )
-            }
             
             // Pinned Templates Section
             item {

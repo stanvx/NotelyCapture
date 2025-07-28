@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.ui.list
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,18 +18,26 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.search_bar_search_description
 import com.module.notelycompose.resources.search_bar_search_text
 import com.module.notelycompose.core.validation.InputValidator
+import com.module.notelycompose.notes.domain.SearchSuggestion
+import com.module.notelycompose.notes.domain.SearchSuggestionProvider
+import com.module.notelycompose.notes.ui.components.SearchSuggestionDropdown
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -36,12 +45,36 @@ fun SearchBar(
     onSearchByKeyword: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit = {},
     externalActivation: Boolean = false,
-    onValidationError: (String?) -> Unit = {}
+    onValidationError: (String?) -> Unit = {},
+    suggestionProvider: SearchSuggestionProvider? = null,
+    enableAutoComplete: Boolean = true
 ) {
     var searchText by remember { mutableStateOf("") }
     var validationError by remember { mutableStateOf<String?>(null) }
+    var isFieldFocused by remember { mutableStateOf(false) }
+    var showSuggestions by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Get suggestions from provider
+    val suggestions by remember(suggestionProvider, searchText) {
+        if (suggestionProvider != null && enableAutoComplete && searchText.isNotBlank()) {
+            suggestionProvider.getSuggestions(searchText)
+        } else {
+            kotlinx.coroutines.flow.flowOf(emptyList())
+        }
+    }.collectAsState(initial = emptyList())
+    
+    // Control suggestion visibility
+    LaunchedEffect(searchText, isFieldFocused) {
+        if (enableAutoComplete && isFieldFocused && searchText.isNotBlank()) {
+            delay(300) // Debounce
+            showSuggestions = suggestions.isNotEmpty()
+        } else {
+            showSuggestions = false
+        }
+    }
     
     LaunchedEffect(externalActivation) {
         if (externalActivation) {
@@ -50,25 +83,26 @@ fun SearchBar(
         }
     }
 
-    Column {
-        OutlinedTextField(
-        value = searchText,
-        onValueChange = { newText ->
-            val validation = InputValidator.validateSearchQuery(newText)
-            if (validation.isValid) {
-                val sanitizedText = InputValidator.sanitizeSearchQuery(newText)
-                searchText = sanitizedText
-                validationError = null
-                onValidationError(null)
-                onSearchByKeyword(sanitizedText)
-            } else {
-                validationError = validation.errorMessage
-                onValidationError(validation.errorMessage)
-                if (newText.length <= InputValidator.Limits.MAX_SEARCH_QUERY_LENGTH) {
-                    searchText = newText
-                }
-            }
-        },
+    Box {
+        Column {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { newText ->
+                    val validation = InputValidator.validateSearchQuery(newText)
+                    if (validation.isValid) {
+                        val sanitizedText = InputValidator.sanitizeSearchQuery(newText)
+                        searchText = sanitizedText
+                        validationError = null
+                        onValidationError(null)
+                        onSearchByKeyword(sanitizedText)
+                    } else {
+                        validationError = validation.errorMessage
+                        onValidationError(validation.errorMessage)
+                        if (newText.length <= InputValidator.Limits.MAX_SEARCH_QUERY_LENGTH) {
+                            searchText = newText
+                        }
+                    }
+                },
         placeholder = {
             Text(
                 text = stringResource(Res.string.search_bar_search_text),
@@ -119,19 +153,47 @@ fun SearchBar(
             focusedBorderColor = MaterialTheme.colorScheme.outline,
             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         ),
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .focusRequester(focusRequester)
-        )
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { focusState ->
+                        isFieldFocused = focusState.isFocused
+                        onActiveChange(focusState.isFocused)
+                    }
+            )
         
-        validationError?.let { error ->
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            validationError?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+        }
+        
+        // Auto-complete suggestion dropdown
+        if (enableAutoComplete && suggestionProvider != null) {
+            SearchSuggestionDropdown(
+                suggestions = suggestions,
+                isVisible = showSuggestions,
+                onSuggestionClick = { suggestion ->
+                    // Handle suggestion selection
+                    searchText = suggestion.text
+                    showSuggestions = false
+                    onSearchByKeyword(suggestion.text)
+                    
+                    // Record the search for future suggestions
+                    coroutineScope.launch {
+                        suggestionProvider.recordSearch(suggestion.text)
+                    }
+                },
+                onDismiss = {
+                    showSuggestions = false
+                },
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
     }

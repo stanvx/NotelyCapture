@@ -80,6 +80,7 @@ object MaterialSymbols {
     const val Link = "\ue157"
     const val LinkOff = "\ue16f"
     const val HorizontalRule = "\uf6aa"
+    const val Title = "\ue264"
     
     // Interface Elements
     const val Search = "\ue8b6"

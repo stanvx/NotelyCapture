@@ -2,8 +2,8 @@ package com.module.notelycompose.notes.presentation.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import audio.utils.deleteFile
-import com.module.notelycompose.core.validation.InputValidator
+import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.core.security.SecurityHelper
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
@@ -18,6 +18,7 @@ import com.module.notelycompose.notes.presentation.mapper.NotePresentationMapper
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.debounce
@@ -43,6 +44,20 @@ class NoteListViewModel(
 ) :ViewModel(){
     private val _state = MutableStateFlow(NoteListPresentationState())
     val state: StateFlow<NoteListPresentationState> = _state
+
+    // User feedback state for delete operations
+    private val _deleteOperationState = MutableStateFlow<DeleteOperationState>(DeleteOperationState.Idle)
+    val deleteOperationState: StateFlow<DeleteOperationState> = _deleteOperationState.asStateFlow()
+
+    /**
+     * Represents the state of delete operations for user feedback
+     */
+    sealed class DeleteOperationState {
+        object Idle : DeleteOperationState()
+        object InProgress : DeleteOperationState()
+        data class Success(val noteTitle: String) : DeleteOperationState()
+        data class Error(val message: String) : DeleteOperationState()
+    }
 
     // Search query flow
     private val searchQuery = MutableStateFlow("")
@@ -167,24 +182,53 @@ class NoteListViewModel(
 
     private fun handleNoteDeletion(note: NoteUiModel) {
         viewModelScope.launch {
-            // Clean up audio file if it exists with security validation
-            if (note.recordingPath.isNotEmpty()) {
-                try {
-                    // Security validation to prevent path traversal attacks
-                    if (isPathSafe(note.recordingPath)) {
-                        deleteFile(note.recordingPath)
-                    } else {
-                        // Log security issue but continue with note deletion
-                        reportSecurityError("Invalid recording path detected during deletion: ${note.recordingPath}")
+            _deleteOperationState.value = DeleteOperationState.InProgress
+            
+            try {
+                // Clean up audio file if it exists using SecurityHelper
+                if (note.recordingPath.isNotEmpty()) {
+                    val fileDeleteResult = SecurityHelper.secureDeleteFile(note.recordingPath)
+                    
+                    if (!fileDeleteResult.success) {
+                        // Log the issue but continue with note deletion to avoid orphaned DB records
+                        if (fileDeleteResult.securityError != null) {
+                            println("Security warning: ${fileDeleteResult.securityError}")
+                        }
+                        if (fileDeleteResult.fileError != null) {
+                            println("File deletion warning: ${fileDeleteResult.fileError}")
+                        }
                     }
-                } catch (e: Exception) {
-                    // Log error but continue with note deletion to avoid orphaned DB records
-                    println("Failed to delete audio file ${note.recordingPath}: ${e.message}")
+                }
+                
+                // Delete the database record on IO dispatcher
+                launch(Dispatchers.IO) {
+                    deleteNoteById.execute(note.id)
+                }
+                
+                // Success feedback
+                _deleteOperationState.value = DeleteOperationState.Success(note.title)
+                debugPrintln { "Successfully deleted note: ${note.title} (id: ${note.id})" }
+                
+                // Reset state after showing success
+                launch {
+                    kotlinx.coroutines.delay(3000)
+                    _deleteOperationState.value = DeleteOperationState.Idle
+                }
+                
+            } catch (e: Exception) {
+                // Handle database deletion errors with user feedback
+                val errorMessage = "Failed to delete '${note.title}': ${e.message}"
+                _deleteOperationState.value = DeleteOperationState.Error(errorMessage)
+                
+                println("Database error: Failed to delete note '${note.title}' with id ${note.id}: ${e.message}")
+                debugPrintln { "Delete operation failed for note ${note.id}. Exception: ${e::class.simpleName}" }
+                
+                // Reset error state after showing it
+                launch {
+                    kotlinx.coroutines.delay(5000)
+                    _deleteOperationState.value = DeleteOperationState.Idle
                 }
             }
-            
-            deleteNoteById.execute(note.id)
-            // No need to manually refresh - flow will handle it
         }
     }
 
@@ -268,22 +312,10 @@ class NoteListViewModel(
         }
     }
     
-    // Security validation method (consistent with other ViewModels)
-    private fun isPathSafe(filePath: String): Boolean {
-        if (filePath.isBlank()) return true // Empty path is safe
-        
-        val validationResult = InputValidator.validateFilePath(filePath)
-        
-        if (!validationResult.isValid) {
-            reportSecurityError("Invalid file path detected: ${validationResult.errorMessage}")
-            return false
-        }
-        
-        return true
-    }
-    
-    private fun reportSecurityError(message: String) {
-        // Log security incident for monitoring
-        println("SECURITY_ALERT: $message")
+    /**
+     * Clears any active delete operation state (for UI reset)
+     */
+    fun clearDeleteOperationState() {
+        _deleteOperationState.value = DeleteOperationState.Idle
     }
 }

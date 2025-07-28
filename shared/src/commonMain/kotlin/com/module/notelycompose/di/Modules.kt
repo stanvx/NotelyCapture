@@ -18,6 +18,12 @@ import com.module.notelycompose.notes.domain.GetNoteById
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
 import com.module.notelycompose.notes.domain.NoteDataSource
 import com.module.notelycompose.notes.domain.SearchNotesUseCase
+import com.module.notelycompose.notes.domain.SearchSuggestionProvider
+import com.module.notelycompose.notes.domain.SearchHistoryManager
+import com.module.notelycompose.notes.domain.SearchHistoryDataSource
+import com.module.notelycompose.notes.domain.TextContentPredictor
+import com.module.notelycompose.notes.domain.LanguageAwareAutoComplete
+import com.module.notelycompose.notes.data.SearchHistoryDataSourceImpl
 import com.module.notelycompose.notes.domain.UpdateNoteUseCase
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
 import com.module.notelycompose.notes.domain.mapper.TextFormatMapper
@@ -56,6 +62,10 @@ val appModule = module {
             database = NoteDatabase(get())
         )
     }
+    
+    single<SearchHistoryDataSource> {
+        SearchHistoryDataSourceImpl(get())
+    }
 
 }
 
@@ -69,7 +79,7 @@ val mapperModule = module {
     single { NotePresentationMapper(get()) }
     single { TextFormatPresentationMapper() }
     single { TextAlignPresentationMapper() }
-    single { TextEditorHelper() }
+    single { TextEditorHelper(get()) }
     single { RichTextEditorHelper() }
     single { AmplitudeCollector() }
     single { AudioWaveformExtractor() }
@@ -78,6 +88,10 @@ val repositoryModule = module {
     singleOf(::PreferencesRepository)
     single { WhisperModelManager(get()) }
     single<TranscriptionRepository> { TranscriptionRepositoryImpl(get(), get()) }
+    single { SearchHistoryManager(get()) }
+    single { SearchSuggestionProvider(get(), get()) }
+    single { TextContentPredictor(get()) }
+    single { LanguageAwareAutoComplete(get()) }
 }
 
 val viewModelModule = module {

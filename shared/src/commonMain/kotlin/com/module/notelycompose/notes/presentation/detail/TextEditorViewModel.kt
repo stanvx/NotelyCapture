@@ -5,7 +5,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import audio.utils.deleteFile
+import com.module.notelycompose.core.debugPrintln
+import com.module.notelycompose.core.security.SecurityHelper
 import com.module.notelycompose.notes.domain.DeleteNoteById
 import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
@@ -38,11 +39,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import com.module.notelycompose.core.validation.InputValidator
 
 private const val ID_NOT_SET = 0L
 private const val SAVE_DEBOUNCE_DELAY = 500L // 500ms debounce for save operations
@@ -86,9 +87,6 @@ class TextEditorViewModel(
     // Expose rich text state for UI components
     val richTextState: StateFlow<com.mohamedrejeb.richeditor.model.RichTextState> = richTextEditorHelper.richTextState
     
-    // Security: Error handling for security violations
-    private val _securityErrors = MutableStateFlow<String?>(null)
-    val securityErrors: StateFlow<String?> = _securityErrors.asStateFlow()
     
     // Security: Safe recordings directory - platform-specific implementation needed
     private val safeRecordingsDirectory: String by lazy {
@@ -136,10 +134,8 @@ class TextEditorViewModel(
     fun onUpdateContent(newContent: TextFieldValue) {
         val oldContent = _editorPresentationState.value.content.text
         
-        // SECURITY: Validate content input
-        val validation = InputValidator.validateNoteContent(newContent.text)
-        if (!validation.isValid) {
-            reportSecurityError("Invalid note content: ${validation.errorMessage}")
+        // SECURITY: Validate content input using SecurityHelper
+        if (!SecurityHelper.validateNoteContent(newContent.text)) {
             return
         }
         
@@ -190,9 +186,8 @@ class TextEditorViewModel(
     }
 
     fun onUpdateRecordingPath(recordingPath: String) {
-        // SECURITY: Validate recording path before updating
-        if (recordingPath.isNotEmpty() && !isPathSafe(recordingPath)) {
-            reportSecurityError("Invalid recording path provided")
+        // SECURITY: Validate recording path before updating using SecurityHelper
+        if (recordingPath.isNotEmpty() && !SecurityHelper.isPathSafe(recordingPath)) {
             return
         }
         
@@ -208,14 +203,16 @@ class TextEditorViewModel(
     fun onDeleteRecord() {
         val recordingPath = _editorPresentationState.value.recording.recordingPath
         
-        // SECURITY: Validate path before deletion to prevent path traversal attacks
-        if (!isPathSafe(recordingPath)) {
-            reportSecurityError("Invalid recording path detected during deletion")
-            return
-        }
-        
-        deleteFile(recordingPath)
         viewModelScope.launch {
+            // Use SecurityHelper for secure file deletion
+            val deleteResult = SecurityHelper.secureDeleteFile(recordingPath)
+            
+            if (!deleteResult.success) {
+                // Log warnings but continue with UI update
+                deleteResult.securityError?.let { println("Security warning: $it") }
+                deleteResult.fileError?.let { println("File deletion warning: $it") }
+            }
+            
             val recordingModel = recordingPath(/*reset record path */"")
             _editorPresentationState.update {
                 it.copy(recording = recordingModel)
@@ -240,9 +237,8 @@ class TextEditorViewModel(
     
     private suspend fun getAudioDuration(recordingPath: String): Int {
         return if (recordingPath.isNotEmpty()) {
-            // SECURITY: Validate path before accessing audio file
-            if (!isPathSafe(recordingPath)) {
-                reportSecurityError("Invalid recording path detected during audio duration check")
+            // SECURITY: Validate path before accessing audio file using SecurityHelper
+            if (!SecurityHelper.isPathSafe(recordingPath)) {
                 return 0
             }
             
@@ -392,22 +388,41 @@ class TextEditorViewModel(
         _currentNoteId.value?.let { noteId ->
             val path = _editorPresentationState.value.recording.recordingPath
             
-            // SECURITY: Validate path before deletion to prevent path traversal attacks
-            if (path.isNotEmpty() && !isPathSafe(path)) {
-                reportSecurityError("Invalid recording path detected during note deletion")
-                // Still proceed with note deletion but skip file deletion
+            viewModelScope.launch {
+                // Use SecurityHelper for secure file deletion
+                val deleteResult = SecurityHelper.secureDeleteFile(path)
+                
+                if (!deleteResult.success) {
+                    // Log warnings but continue with note deletion
+                    deleteResult.securityError?.let { println("Security warning: $it") }
+                    deleteResult.fileError?.let { println("File deletion warning: $it") }
+                }
+                
                 deleteNote(id = noteId)
-                return@let
             }
-            
-            deleteFile(filePath = path)
-            deleteNote(id = noteId)
         }
     }
 
     private fun deleteNote(id: Long) {
         viewModelScope.launch {
-            deleteNoteUseCase.execute(id)
+            try {
+                // Execute database operation on IO dispatcher
+                launch(Dispatchers.IO) {
+                    deleteNoteUseCase.execute(id)
+                }
+                
+                // Success - log for debugging if needed
+                debugPrintln { "Successfully deleted note with id: $id" }
+                
+            } catch (e: Exception) {
+                // Handle database deletion errors gracefully
+                println("Database error: Failed to delete note with id $id: ${e.message}")
+                
+                // Consider showing user-facing error in the future
+                // For now, we log the error to prevent crashes
+                // The UI will remain in current state, user can retry
+                debugPrintln { "Delete operation failed for note $id. Exception: ${e::class.simpleName}" }
+            }
         }
     }
 
@@ -801,25 +816,6 @@ class TextEditorViewModel(
     }
     
     /**
-     * Security: Validates if a file path is safe to access (prevents path traversal attacks).
-     * 
-     * @param filePath The file path to validate
-     * @return True if the path is safe, false otherwise
-     */
-    private fun isPathSafe(filePath: String): Boolean {
-        if (filePath.isBlank()) return true // Empty path is safe
-        
-        val validationResult = InputValidator.validateFilePath(filePath)
-        
-        if (!validationResult.isValid) {
-            reportSecurityError("Invalid file path detected: ${validationResult.errorMessage}")
-            return false
-        }
-        
-        return true
-    }
-    
-    /**
      * Security: Gets the safe recordings directory path.
      * This should be overridden by platform-specific implementations.
      */
@@ -829,29 +825,6 @@ class TextEditorViewModel(
         return "/safe/recordings/directory"
     }
     
-    /**
-     * Security: Reports security errors for monitoring and user feedback.
-     * 
-     * @param message The security error message
-     */
-    private fun reportSecurityError(message: String) {
-        _securityErrors.value = message
-        // Log security incident for monitoring
-        println("SECURITY_ALERT: $message")
-        
-        // Clear error after showing it
-        viewModelScope.launch {
-            delay(5000) // Show error for 5 seconds
-            _securityErrors.value = null
-        }
-    }
-    
-    /**
-     * Security: Clears any active security error messages.
-     */
-    fun clearSecurityError() {
-        _securityErrors.value = null
-    }
     
     /**
      * Cleanup method to cancel pending operations and prevent memory leaks.

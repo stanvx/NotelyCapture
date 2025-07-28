@@ -7,12 +7,23 @@ import com.module.notelycompose.notes.presentation.detail.model.TextFormatPresen
 import com.module.notelycompose.notes.presentation.detail.model.TextPresentationFormat
 import com.module.notelycompose.notes.presentation.detail.model.TextPresentationFormats
 import com.module.notelycompose.notes.presentation.helpers.TextFormatHelper.updateFormats
+import com.module.notelycompose.notes.domain.TextContentPredictor
+import com.module.notelycompose.notes.domain.TextCompletion
+import com.module.notelycompose.notes.domain.FormattingSuggestion
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
-class TextEditorHelper {
+class TextEditorHelper(
+    private val contentPredictor: TextContentPredictor? = null
+) {
     
     // Performance optimization: cache for reduced allocations
     private var lastProcessedLength = 0
     private var formatUpdateCache = mutableListOf<TextPresentationFormat>()
+    
+    // Content prediction state
+    private var lastPredictionText = ""
+    private var lastPredictionCursor = -1
 
     fun updateContent(
         newContent: TextFieldValue,
@@ -299,6 +310,149 @@ class TextEditorHelper {
         formatUpdateCache.clear()
         formatUpdateCache.addAll(formats)
         return operation(formatUpdateCache)
+    }
+
+    /**
+     * Gets text completion suggestions for the current cursor position.
+     * 
+     * @param content Current text field value
+     * @param limit Maximum number of suggestions
+     * @return Flow of text completions
+     */
+    fun getTextCompletions(
+        content: TextFieldValue,
+        limit: Int = 5
+    ): Flow<List<TextCompletion>> {
+        return if (contentPredictor != null && shouldUpdatePredictions(content)) {
+            contentPredictor.getTextCompletions(
+                currentText = content.text,
+                cursorPosition = content.selection.start,
+                limit = limit
+            )
+        } else {
+            flowOf(emptyList())
+        }
+    }
+    
+    /**
+     * Gets formatting suggestions based on current context.
+     * 
+     * @param content Current text field value
+     * @return List of formatting suggestions
+     */
+    fun getFormattingSuggestions(content: TextFieldValue): List<FormattingSuggestion> {
+        return contentPredictor?.getFormattingSuggestions(
+            text = content.text,
+            cursorPosition = content.selection.start
+        ) ?: emptyList()
+    }
+    
+    /**
+     * Applies a text completion to the current content.
+     * 
+     * @param content Current text field value
+     * @param completion The completion to apply
+     * @return Updated text field value
+     */
+    fun applyTextCompletion(
+        content: TextFieldValue,
+        completion: TextCompletion
+    ): TextFieldValue {
+        val cursorPosition = content.selection.start
+        val textBeforeCursor = content.text.substring(0, cursorPosition)
+        val textAfterCursor = content.text.substring(cursorPosition)
+        
+        // Find the word being completed
+        val currentWord = extractCurrentWord(textBeforeCursor)
+        val wordStartPosition = cursorPosition - currentWord.length
+        
+        // Replace the current word with the completion
+        val newText = content.text.substring(0, wordStartPosition) +
+                completion.text +
+                textAfterCursor
+        
+        val newCursorPosition = wordStartPosition + completion.text.length
+        
+        return TextFieldValue(
+            text = newText,
+            selection = TextRange(newCursorPosition)
+        )
+    }
+    
+    /**
+     * Applies a formatting suggestion to the current content.
+     * 
+     * @param content Current text field value
+     * @param suggestion The formatting suggestion to apply
+     * @return Updated text field value
+     */
+    fun applyFormattingSuggestion(
+        content: TextFieldValue,
+        suggestion: FormattingSuggestion
+    ): TextFieldValue {
+        val cursorPosition = content.selection.start
+        val textBeforeCursor = content.text.substring(0, cursorPosition)
+        val textAfterCursor = content.text.substring(cursorPosition)
+        
+        val newText = textBeforeCursor + suggestion.action + textAfterCursor
+        val newCursorPosition = cursorPosition + suggestion.action.length
+        
+        return TextFieldValue(
+            text = newText,
+            selection = TextRange(newCursorPosition)
+        )
+    }
+    
+    /**
+     * Records the current text for learning user patterns.
+     * 
+     * @param content Current text content
+     */
+    suspend fun recordTextPattern(content: String) {
+        contentPredictor?.recordTextPattern(content)
+    }
+    
+    // Private helper methods for content prediction
+    
+    private fun shouldUpdatePredictions(content: TextFieldValue): Boolean {
+        val textChanged = content.text != lastPredictionText
+        val cursorChanged = content.selection.start != lastPredictionCursor
+        
+        // Update prediction state
+        lastPredictionText = content.text
+        lastPredictionCursor = content.selection.start
+        
+        // Only update if cursor is at end of a word and text has meaningful changes
+        return textChanged && content.selection.start == content.selection.end &&
+                content.text.length >= lastProcessedLength + 2
+    }
+    
+    private fun extractCurrentWord(textBeforeCursor: String): String {
+        val words = textBeforeCursor.split("\\s+".toRegex())
+        return words.lastOrNull()?.trim() ?: ""
+    }
+    
+    /**
+     * Enhanced bullet list toggle with smart formatting suggestions.
+     */
+    fun toggleBulletListWithSuggestions(
+        currentState: EditorPresentationState,
+        updateState: (EditorPresentationState) -> Unit
+    ) {
+        // First check if we should suggest formatting
+        val suggestions = getFormattingSuggestions(currentState.content)
+        val listSuggestion = suggestions.find { 
+            it.type == com.module.notelycompose.notes.domain.FormattingSuggestionType.BULLET_LIST 
+        }
+        
+        if (listSuggestion != null) {
+            // Apply the smart suggestion
+            val updatedContent = applyFormattingSuggestion(currentState.content, listSuggestion)
+            updateState(currentState.copy(content = updatedContent))
+        } else {
+            // Fall back to original toggle logic
+            toggleBulletList(currentState, updateState)
+        }
     }
 
     // Extension function for IntRange

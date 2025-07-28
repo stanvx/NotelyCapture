@@ -146,8 +146,6 @@ fun NoteDetailScreen(
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
     
-    // Security error handling
-    val securityError by editorViewModel.securityErrors.collectAsStateWithLifecycle()
     
     // Update keyboard visibility state based on actual keyboard height
     LaunchedEffect(keyboardHeight) {
@@ -325,21 +323,6 @@ fun NoteDetailScreen(
         option = RecordingConfirmationUiModel.Record
     )
 
-    // Security error dialog
-    securityError?.let { error ->
-        AlertDialog(
-            onDismissRequest = { editorViewModel.clearSecurityError() },
-            title = { Text("Security Warning") },
-            text = { Text(error) },
-            confirmButton = {
-                Button(
-                    onClick = { editorViewModel.clearSecurityError() }
-                ) {
-                    Text("OK")
-                }
-            }
-        )
-    }
 
     if (showShareDialog) {
         ShareDialog(
