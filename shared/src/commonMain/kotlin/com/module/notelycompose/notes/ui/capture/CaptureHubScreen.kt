@@ -52,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import com.module.notelycompose.notes.ui.components.ExtendedVoiceFAB
+import com.module.notelycompose.notes.ui.components.UnifiedHeaderCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -170,14 +171,12 @@ fun CaptureHubScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Hero Section
+            // Unified Header Section
             item {
-                HeroSection()
-            }
-            
-            // Quick Stats Widget
-            item {
-                QuickStatsWidget()
+                UnifiedHeaderCard(
+                    title = "Capture Everything",
+                    subtitle = "Ideas • Moments • Memories"
+                )
             }
             
             // Pinned Templates Section
@@ -240,173 +239,7 @@ fun CaptureHubScreen(
     }
 }
 
-@Composable
-private fun HeroSection() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp),
-        shape = RoundedCornerShape(28.dp),
-        elevation = CardElevationPresets.enhanced()
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Animated gradient background
-            val infiniteTransition = rememberInfiniteTransition(label = "hero_animation")
-            val animatedOffset by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1000f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(20000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                ),
-                label = "gradient_offset"
-            )
-            
-            // Extract theme colors outside Canvas
-            val gradientColors = listOf(
-                MaterialTheme.colorScheme.heroGradientStart,
-                MaterialTheme.colorScheme.heroGradientMiddle,
-                MaterialTheme.colorScheme.heroGradientEnd,
-                MaterialTheme.colorScheme.heroGradientStart
-            )
-            
-            val isDark = isSystemInDarkTheme()
-            val particleColor = if (isDark) {
-                Color.White.copy(alpha = 0.1f)
-            } else {
-                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)
-            }
-            
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(
-                    brush = Brush.linearGradient(
-                        colors = gradientColors,
-                        start = Offset(animatedOffset, 0f),
-                        end = Offset(animatedOffset + size.width, size.height)
-                    )
-                )
-                
-                // Theme-aware floating particles effect
-                val particleCount = 8
-                for (i in 0 until particleCount) {
-                    drawCircle(
-                        color = particleColor,
-                        radius = (8 + i * 3).dp.toPx(),
-                        center = Offset(
-                            x = size.width * (0.1f + i * 0.12f),
-                            y = size.height * (0.2f + (i % 3) * 0.2f)
-                        )
-                    )
-                }
-            }
-            
-            // Content overlay
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Capture Everything",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = if (isSystemInDarkTheme()) {
-                        Color.White
-                    } else {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    },
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Ideas • Moments • Memories",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (isSystemInDarkTheme()) {
-                        Color.White.copy(alpha = 0.9f)
-                    } else {
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    },
-                    letterSpacing = 1.sp,
-                    maxLines = 2,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-}
 
-@Composable
-private fun QuickStatsWidget() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            StatItem(
-                icon = MaterialSymbols.Schedule,
-                label = "Today",
-                value = "3"
-            )
-            StatItem(
-                icon = MaterialSymbols.TrendingUp,
-                label = "This Week", 
-                value = "12"
-            )
-            StatItem(
-                icon = MaterialSymbols.Mic,
-                label = "Voice Notes",
-                value = "8"
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatItem(
-    icon: String,
-    label: String,
-    value: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        MaterialIcon(
-            symbol = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            size = 28.dp // Increased size for better visibility
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
 
 @Composable
 private fun PinnedTemplatesSection() {

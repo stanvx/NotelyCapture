@@ -1607,7 +1607,7 @@ private fun EmptyDateView() {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Your thoughts for this day will appear here",
+                    text = "Your Captures for this day will appear here",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

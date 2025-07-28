@@ -115,11 +115,8 @@ fun NoteListScreen(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Vibrant header with note count and search
+                    // Vibrant header with note count
                     NoteListHeader(
-                        onSearchClick = {
-                            viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(!notesListState.isSearchActive))
-                        },
                         noteCount = notesListState.filteredNotes.size,
                         isTablet = platformUiState.isTablet
                     )
@@ -190,11 +187,8 @@ private fun NoteListWithHeader(
         // Header as the first item in the grid
         item(span = androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.FullLine) {
             Column {
-                // Vibrant header with note count and search
+                // Vibrant header with note count
                 NoteListHeader(
-                    onSearchClick = {
-                        viewModel.onProcessIntent(NoteListIntent.OnToggleSearch(!notesListState.isSearchActive))
-                    },
                     noteCount = notesListState.filteredNotes.size,
                     isTablet = platformUiState.isTablet
                 )

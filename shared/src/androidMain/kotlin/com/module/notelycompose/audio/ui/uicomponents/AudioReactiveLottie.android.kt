@@ -26,14 +26,15 @@ actual fun AudioReactiveLottie(
     // 2. Animate the amplitude to prevent jittery visual feedback.
     val smoothAmplitude by animateFloatAsState(
         targetValue = if (isRecording) amplitude else 0f,
-        animationSpec = tween(durationMillis = 120), // Fast response
+        animationSpec = tween(durationMillis = 180), // Increased by 50% (120ms → 180ms) for slower response
         label = "smoothAmplitude"
     )
 
     // 3. Use derivedStateOf to efficiently calculate the target speed and scale.
     val targetSpeed by remember {
         derivedStateOf {
-            if (isRecording) 1.0f + (smoothAmplitude * 2.5f) else 0.5f
+            // Reduced by 50% for slower animation (1.0f → 0.5f, 2.5f → 1.25f, 0.5f → 0.25f)
+            if (isRecording) 0.5f + (smoothAmplitude * 1.25f) else 0.25f
         }
     }
     val targetScale by remember {
@@ -45,7 +46,7 @@ actual fun AudioReactiveLottie(
     // 4. Animate transitions to the target speed and scale for a fluid feel.
     val animatedSpeed by animateFloatAsState(
         targetValue = targetSpeed,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing), // Increased by 50% (600ms → 900ms)
         label = "animatedSpeed"
     )
     val animatedScale by animateFloatAsState(
