@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.ui.list
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,15 +28,18 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.search_bar_search_description
 import com.module.notelycompose.resources.search_bar_search_text
+import com.module.notelycompose.core.validation.InputValidator
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SearchBar(
     onSearchByKeyword: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit = {},
-    externalActivation: Boolean = false
+    externalActivation: Boolean = false,
+    onValidationError: (String?) -> Unit = {}
 ) {
     var searchText by remember { mutableStateOf("") }
+    var validationError by remember { mutableStateOf<String?>(null) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     
@@ -46,11 +50,24 @@ fun SearchBar(
         }
     }
 
-    OutlinedTextField(
+    Column {
+        OutlinedTextField(
         value = searchText,
         onValueChange = { newText ->
-            searchText = newText
-            onSearchByKeyword(newText)
+            val validation = InputValidator.validateSearchQuery(newText)
+            if (validation.isValid) {
+                val sanitizedText = InputValidator.sanitizeSearchQuery(newText)
+                searchText = sanitizedText
+                validationError = null
+                onValidationError(null)
+                onSearchByKeyword(sanitizedText)
+            } else {
+                validationError = validation.errorMessage
+                onValidationError(validation.errorMessage)
+                if (newText.length <= InputValidator.Limits.MAX_SEARCH_QUERY_LENGTH) {
+                    searchText = newText
+                }
+            }
         },
         placeholder = {
             Text(
@@ -82,7 +99,6 @@ fun SearchBar(
                     )
                 }
             } else {
-                // Show close button when search is empty to close the search UI
                 IconButton(
                     onClick = {
                         onActiveChange(false)
@@ -108,5 +124,15 @@ fun SearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .focusRequester(focusRequester)
-    )
+        )
+        
+        validationError?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+        }
+    }
 }

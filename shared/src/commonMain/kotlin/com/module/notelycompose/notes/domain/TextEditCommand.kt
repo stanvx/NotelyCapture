@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.mohamedrejeb.richeditor.model.RichTextState
-// import com.module.notelycompose.security.HtmlSanitizer // Temporarily disabled for build
+import com.module.notelycompose.security.HtmlSanitizer
 import kotlinx.datetime.Clock
 
 /**
@@ -180,7 +180,9 @@ class InsertTextCommand(
 ) : TextEditCommand {
     
     override suspend fun execute() {
-        richTextState.insertHtml(text, insertPosition)
+        // SECURITY: Sanitize text content to prevent XSS attacks during command execution
+        val sanitizedText = HtmlSanitizer.sanitize(text)
+        richTextState.insertHtml(sanitizedText, insertPosition)
     }
     
     override suspend fun undo() {

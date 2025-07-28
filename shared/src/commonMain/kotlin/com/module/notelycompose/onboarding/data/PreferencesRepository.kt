@@ -12,6 +12,7 @@ import com.module.notelycompose.platform.Theme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import com.module.notelycompose.core.validation.InputValidator
 
 class PreferencesRepository(
     private val dataStore: DataStore<Preferences>
@@ -64,12 +65,24 @@ class PreferencesRepository(
     }
 
     suspend fun setDefaultTranscriptionLanguage(language: String) {
+        // Validate language code
+        val validation = InputValidator.validateLanguage(language)
+        if (!validation.isValid) {
+            throw IllegalArgumentException("Invalid language: ${validation.errorMessage}")
+        }
+        
         dataStore.edit { prefs ->
             prefs[KEY_LANGUAGE] = language
         }
     }
 
     suspend fun setTheme(theme: String) {
+        // Validate theme value
+        val validation = InputValidator.validateTheme(theme)
+        if (!validation.isValid) {
+            throw IllegalArgumentException("Invalid theme: ${validation.errorMessage}")
+        }
+        
         dataStore.edit { prefs ->
             prefs[KEY_THEME] = theme
         }

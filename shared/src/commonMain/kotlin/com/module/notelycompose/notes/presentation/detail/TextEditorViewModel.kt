@@ -42,16 +42,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-// import com.module.notelycompose.security.InputValidator // Temporarily disabled for build
-
-// Temporary stub for InputValidator to fix build
-private object InputValidator {
-    fun validateNoteContent(content: String): String = content
-    fun validateRecordingPath(recordingPath: String, recordingsDirectory: String): ValidationResult = 
-        ValidationResult(isValid = true, errorMessage = null)
-}
-
-private data class ValidationResult(val isValid: Boolean, val errorMessage: String?)
+import com.module.notelycompose.core.validation.InputValidator
 
 private const val ID_NOT_SET = 0L
 private const val SAVE_DEBOUNCE_DELAY = 500L // 500ms debounce for save operations
@@ -145,13 +136,14 @@ class TextEditorViewModel(
     fun onUpdateContent(newContent: TextFieldValue) {
         val oldContent = _editorPresentationState.value.content.text
         
-        // SECURITY: Validate and sanitize content input
-        val validatedText = InputValidator.validateNoteContent(newContent.text)
-        val sanitizedContent = if (validatedText != newContent.text) {
-            newContent.copy(text = validatedText)
-        } else {
-            newContent
+        // SECURITY: Validate content input
+        val validation = InputValidator.validateNoteContent(newContent.text)
+        if (!validation.isValid) {
+            reportSecurityError("Invalid note content: ${validation.errorMessage}")
+            return
         }
+        
+        val sanitizedContent = newContent
         
         updateContent(sanitizedContent)
         
@@ -817,10 +809,7 @@ class TextEditorViewModel(
     private fun isPathSafe(filePath: String): Boolean {
         if (filePath.isBlank()) return true // Empty path is safe
         
-        val validationResult = InputValidator.validateRecordingPath(
-            recordingPath = filePath,
-            recordingsDirectory = safeRecordingsDirectory
-        )
+        val validationResult = InputValidator.validateFilename(filePath)
         
         if (!validationResult.isValid) {
             reportSecurityError("Invalid file path detected: ${validationResult.errorMessage}")

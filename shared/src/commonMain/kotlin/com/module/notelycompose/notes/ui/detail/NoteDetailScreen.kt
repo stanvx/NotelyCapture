@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import com.module.notelycompose.security.HtmlSanitizer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -144,6 +145,9 @@ fun NoteDetailScreen(
     var showErrorDialog by remember { mutableStateOf(false) }
     var showDownloadQuestionDialog by remember { mutableStateOf(false) }
     var showExistingRecordConfirmDialog by remember { mutableStateOf(false) }
+    
+    // Security error handling
+    val securityError by editorViewModel.securityErrors.collectAsStateWithLifecycle()
     
     // Update keyboard visibility state based on actual keyboard height
     LaunchedEffect(keyboardHeight) {
@@ -320,6 +324,22 @@ fun NoteDetailScreen(
         },
         option = RecordingConfirmationUiModel.Record
     )
+
+    // Security error dialog
+    securityError?.let { error ->
+        AlertDialog(
+            onDismissRequest = { editorViewModel.clearSecurityError() },
+            title = { Text("Security Warning") },
+            text = { Text(error) },
+            confirmButton = {
+                Button(
+                    onClick = { editorViewModel.clearSecurityError() }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     if (showShareDialog) {
         ShareDialog(
@@ -501,7 +521,9 @@ private fun NoteEditor(
     // Initialize rich text state with current content if needed
     LaunchedEffect(editorState.content.text) {
         if (richTextState.annotatedString.text != editorState.content.text) {
-            richTextState.setHtml(editorState.content.text)
+            // SECURITY: Sanitize HTML content to prevent XSS attacks when loading from storage
+            val sanitizedContent = HtmlSanitizer.sanitize(editorState.content.text)
+            richTextState.setHtml(sanitizedContent)
         }
     }
     

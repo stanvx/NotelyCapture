@@ -7,14 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlin.jvm.JvmStatic
 
 /**
- * Validator for audio files used in transcription.
- * Provides security validation, format checking, and file access verification.
- * 
- * Features:
- * - Audio format validation
- * - Path security validation (directory traversal protection)
- * - File existence and access verification
- * - Secure filename generation for logging
+ * Validator for audio files used in transcription with security validation and format checking.
  */
 object AudioFileValidator {
     
@@ -27,15 +20,10 @@ object AudioFileValidator {
     
     /**
      * Validates an audio file for transcription processing.
-     * 
-     * @param filePath Path to the audio file
-     * @param appDirectory Optional app directory to validate against (for security)
-     * @return Result indicating success or failure with appropriate error
      */
     @JvmStatic
     suspend fun validateAudioFile(filePath: String, appDirectory: String? = null): Result<Unit> {
         return try {
-            // Check for empty/blank path
             if (filePath.isBlank()) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
@@ -45,8 +33,16 @@ object AudioFileValidator {
                 )
             }
             
-            // Validate file format
             val extension = getFileExtension(filePath).lowercase()
+            if (extension.isEmpty()) {
+                return Result.failure(
+                    TranscriptionError.AudioFileValidationError(
+                        message = "Audio file must have a valid extension",
+                        filePath = filePath
+                    )
+                )
+            }
+            
             if (!supportedExtensions.contains(extension)) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
@@ -56,7 +52,15 @@ object AudioFileValidator {
                 )
             }
             
-            // Security validation if app directory is provided
+            if (filePath.count { it == '.' } > 1) {
+                return Result.failure(
+                    TranscriptionError.AudioFileValidationError(
+                        message = "Invalid filename: multiple extensions detected",
+                        filePath = filePath
+                    )
+                )
+            }
+            
             appDirectory?.let { appDir ->
                 val securityValidation = validatePathSecurity(filePath, appDir)
                 if (securityValidation.isFailure) {
@@ -64,7 +68,6 @@ object AudioFileValidator {
                 }
             }
             
-            // Platform-specific file validation (run on default dispatcher)
             val platformValidation = withContext(Dispatchers.Default) {
                 validateFileAccess(filePath)
             }
@@ -85,21 +88,22 @@ object AudioFileValidator {
     
     /**
      * Validates path security to prevent directory traversal attacks.
-     * Enhanced with canonical path resolution and comprehensive security checks.
-     * 
-     * @param filePath The file path to validate
-     * @param appDirectory The app's data directory
-     * @return Result indicating if path is secure
      */
     private fun validatePathSecurity(filePath: String, appDirectory: String): Result<Unit> {
         try {
-            // Check for directory traversal patterns (comprehensive list)
             val dangerousPatterns = listOf(
                 "..", "./", ".\\", 
-                "%2e%2e", "%2E%2E", // URL encoded ..
-                "%2f", "%2F", "%5c", "%5C", // URL encoded / and \
-                "\\\\", "//", // Double separators
-                "\u0000", // Null byte injection
+                "%2e%2e", "%2E%2E",
+                "%2f", "%2F", "%5c", "%5C",
+                "\\\\", "//",
+                "\u0000",
+                "%00",
+                "~",
+                "$",
+                "`",
+                "|",
+                "&",
+                ";",
             )
             
             val lowerPath = filePath.lowercase()
@@ -114,7 +118,6 @@ object AudioFileValidator {
                 }
             }
             
-            // Check for suspicious characters and control characters
             if (filePath.any { it.isISOControl() && it != '\t' && it != '\n' && it != '\r' }) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
@@ -124,17 +127,14 @@ object AudioFileValidator {
                 )
             }
             
-            // Platform-specific path validation and normalization
             val securityValidation = validateCanonicalPath(filePath, appDirectory)
             if (securityValidation.isFailure) {
                 return securityValidation
             }
             
-            // Basic path normalization fallback for platforms without canonical path support
             val normalizedFilePath = filePath.replace("\\", "/").replace("//", "/")
             val normalizedAppDir = appDirectory.replace("\\", "/").replace("//", "/")
             
-            // Ensure file path is within app directory bounds
             if (!normalizedFilePath.startsWith(normalizedAppDir)) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
@@ -157,10 +157,8 @@ object AudioFileValidator {
     
     /**
      * Platform-specific file access validation.
-     * Actual implementation provided by platform-specific expect/actual.
      */
     private fun validateFileAccess(filePath: String): Result<Unit> {
-        // For now, just check basic file operations that should work on all platforms
         try {
             if (!validateFileExists(filePath)) {
                 return Result.failure(
@@ -190,7 +188,6 @@ object AudioFileValidator {
                 )
             }
             
-            // Check if file is too large (100MB limit)
             if (fileSize > AppConstants.Audio.MAX_FILE_SIZE_BYTES) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
@@ -225,10 +222,6 @@ object AudioFileValidator {
     
     /**
      * Generates a secure filename for logging purposes.
-     * Truncates long filenames and removes directory information.
-     * 
-     * @param filePath The full file path
-     * @return Secure filename suitable for logging
      */
     @JvmStatic
     fun getSecureFileName(filePath: String): String {

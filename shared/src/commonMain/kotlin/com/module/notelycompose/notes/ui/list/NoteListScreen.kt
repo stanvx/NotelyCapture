@@ -27,8 +27,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -44,8 +46,11 @@ import com.module.notelycompose.notes.ui.components.SpeedDialFAB
 import com.module.notelycompose.notes.ui.components.UnifiedNoteCard
 import com.module.notelycompose.notes.ui.components.NoteCardLayoutMode
 import com.module.notelycompose.notes.ui.list.model.NoteUiModel
+import com.module.notelycompose.notes.ui.share.ShareDialog
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
+import com.module.notelycompose.notes.utils.ShareUtils
 import com.module.notelycompose.platform.presentation.PlatformUiState
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import kotlinx.coroutines.launch
 import com.module.notelycompose.resources.Res
 import com.module.notelycompose.resources.note_list_add_note
@@ -67,19 +72,20 @@ fun NoteListScreen(
     val focusManager = LocalFocusManager.current
     val lazyStaggeredGridState = rememberLazyStaggeredGridState()
     
-    // Single shared audio player for all notes
     val sharedAudioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
     val sharedAudioPlayerUiState by sharedAudioPlayerViewModel.uiState.collectAsState()
     
-    // Manage MediaPlayer lifecycle to prevent resource leaks
+    val platformViewModel: PlatformViewModel = koinViewModel()
+    
+    var showShareDialog by remember { mutableStateOf(false) }
+    var selectedNoteForSharing by remember { mutableStateOf<NoteUiModel?>(null) }
+    
     DisposableEffect(sharedAudioPlayerViewModel) {
         onDispose {
-            // Release MediaPlayer resources when note list screen is disposed
             sharedAudioPlayerViewModel.onClear()
         }
     }
     
-    // Pass scroll state to parent  
     onScrollStateChanged(lazyStaggeredGridState)
     
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -89,7 +95,6 @@ fun NoteListScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
-        // TopBar
         TopBar(
             onMenuClicked = {
                navigateToMenu()
@@ -100,7 +105,6 @@ fun NoteListScreen(
             scrollBehavior = scrollBehavior
         )
         
-        // Content - Single scrollable container
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -115,13 +119,11 @@ fun NoteListScreen(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Vibrant header with note count
                     NoteListHeader(
                         noteCount = notesListState.filteredNotes.size,
                         isTablet = platformUiState.isTablet
                     )
                     
-                    // Search Bar (shown when search is active)
                     if (notesListState.isSearchActive) {
                         SearchBar(
                             onSearchByKeyword = { keyword ->
@@ -134,7 +136,6 @@ fun NoteListScreen(
                         )
                     }
                     
-                    // Filter Tab Bar
                     FilterTabBar(
                         selectedTabTitle = notesListState.selectedTabTitle,
                         onFilterTabItemClicked = { title ->
@@ -153,10 +154,40 @@ fun NoteListScreen(
                     lazyStaggeredGridState = lazyStaggeredGridState,
                     navigateToNoteDetails = navigateToNoteDetails,
                     sharedAudioPlayerViewModel = sharedAudioPlayerViewModel,
-                    sharedAudioPlayerUiState = sharedAudioPlayerUiState
+                    sharedAudioPlayerUiState = sharedAudioPlayerUiState,
+                    onShareClick = { note ->
+                        selectedNoteForSharing = note
+                        showShareDialog = true
+                    }
                 )
             }
         }
+    }
+    
+    if (showShareDialog && selectedNoteForSharing != null) {
+        ShareDialog(
+            onShareAudioRecording = {
+                selectedNoteForSharing?.let { note ->
+                    if (ShareUtils.canShareRecording(note.recordingPath)) {
+                        platformViewModel.shareRecording(note.recordingPath!!)
+                    }
+                }
+                showShareDialog = false
+                selectedNoteForSharing = null
+            },
+            onShareTexts = {
+                selectedNoteForSharing?.let { note ->
+                    val shareText = ShareUtils.buildShareText(note)
+                    platformViewModel.shareText(shareText)
+                }
+                showShareDialog = false
+                selectedNoteForSharing = null
+            },
+            onDismiss = { 
+                showShareDialog = false
+                selectedNoteForSharing = null
+            }
+        )
     }
 
 }
@@ -170,30 +201,28 @@ private fun NoteListWithHeader(
     lazyStaggeredGridState: LazyStaggeredGridState,
     navigateToNoteDetails: (String) -> Unit,
     sharedAudioPlayerViewModel: AudioPlayerViewModel,
-    sharedAudioPlayerUiState: com.module.notelycompose.audio.presentation.AudioPlayerPresentationState
+    sharedAudioPlayerUiState: com.module.notelycompose.audio.presentation.AudioPlayerPresentationState,
+    onShareClick: (NoteUiModel) -> Unit
 ) {
     LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Adaptive(minSize = 280.dp), // Reduced from 300dp for wider cards
+        columns = StaggeredGridCells.Adaptive(minSize = 280.dp),
         state = lazyStaggeredGridState,
         modifier = Modifier.fillMaxSize(),
         verticalItemSpacing = 8.dp,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         contentPadding = PaddingValues(
-            start = 8.dp, // Further reduced for cards closer to edges
-            end = 8.dp,   // Further reduced for cards closer to edges
-            bottom = 88.dp // Extra padding for FAB
+            start = 8.dp,
+            end = 8.dp,
+            bottom = 88.dp
         )
     ) {
-        // Header as the first item in the grid
         item(span = androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.FullLine) {
             Column {
-                // Vibrant header with note count
                 NoteListHeader(
                     noteCount = notesListState.filteredNotes.size,
                     isTablet = platformUiState.isTablet
                 )
                 
-                // Search Bar (shown when search is active)
                 if (notesListState.isSearchActive) {
                     SearchBar(
                         onSearchByKeyword = { keyword ->
@@ -206,7 +235,6 @@ private fun NoteListWithHeader(
                     )
                 }
                 
-                // Filter Tab Bar
                 FilterTabBar(
                     selectedTabTitle = notesListState.selectedTabTitle,
                     onFilterTabItemClicked = { title ->
@@ -216,12 +244,10 @@ private fun NoteListWithHeader(
             }
         }
         
-        // Note items with stable keys for proper virtualization
         itemsIndexed(
             items = noteList,
-            key = { _, note -> note.id } // Stable key prevents unnecessary recomposition
+            key = { _, note -> note.id }
         ) { index, note ->
-            // Use UnifiedNoteCard for enhanced experience with audio playback
             UnifiedNoteCard(
                 note = note,
                 layoutMode = NoteCardLayoutMode.LIST,
@@ -229,7 +255,7 @@ private fun NoteListWithHeader(
                     navigateToNoteDetails("${note.id}")
                 },
                 onShareClick = { noteId ->
-                    // TODO: Implement share functionality
+                    onShareClick(note)
                 },
                 onEditClick = { noteId ->
                     navigateToNoteDetails("$noteId")

@@ -11,12 +11,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-// import com.module.notelycompose.security.HtmlSanitizer // Temporarily disabled for build
-
-// Temporary stub for HtmlSanitizer to fix build
-private object HtmlSanitizer {
-    fun sanitize(content: String): String = content
-}
+import com.module.notelycompose.security.HtmlSanitizer
 
 /**
  * Helper class for managing Rich Text Editor state and operations with performance optimizations.

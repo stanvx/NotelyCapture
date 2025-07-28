@@ -129,6 +129,9 @@ import com.module.notelycompose.notes.ui.calendar.formatToDisplayString
 import com.module.notelycompose.notes.ui.calendar.MonthlyStatsSummary
 import com.module.notelycompose.notes.ui.components.UnifiedNoteCard
 import com.module.notelycompose.notes.ui.components.NoteCardLayoutMode
+import com.module.notelycompose.notes.ui.share.ShareDialog
+import com.module.notelycompose.notes.utils.ShareUtils
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 
 // Material 3 Motion Specifications
 private object CalendarMotionTokens {
@@ -574,6 +577,13 @@ fun CalendarScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
     
+    // Platform utilities for sharing functionality
+    val platformViewModel: PlatformViewModel = koinViewModel()
+    
+    // Share dialog state management
+    var showShareDialog by remember { mutableStateOf(false) }
+    var selectedNoteForSharing by remember { mutableStateOf<com.module.notelycompose.notes.presentation.list.model.NotePresentationModel?>(null) }
+    
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     var currentMonth by remember { mutableStateOf(YearMonthKt(today.year, today.month)) }
     var selectedDate by remember { mutableStateOf(today) }
@@ -731,7 +741,8 @@ fun CalendarScreen(
                             // TODO: Implement delete functionality
                         },
                         onShareClick = { noteId ->
-                            // TODO: Implement share functionality
+                            selectedNoteForSharing = note
+                            showShareDialog = true
                         },
                         onEditClick = { noteId ->
                             navigateToNoteDetails(noteId.toString())
@@ -743,6 +754,33 @@ fun CalendarScreen(
                 }
             }
         }
+    }
+    
+    // Share dialog for note sharing functionality
+    if (showShareDialog && selectedNoteForSharing != null) {
+        ShareDialog(
+            onShareAudioRecording = {
+                selectedNoteForSharing?.let { note ->
+                    if (ShareUtils.canShareRecording(note.recordingPath)) {
+                        platformViewModel.shareRecording(note.recordingPath!!)
+                    }
+                }
+                showShareDialog = false
+                selectedNoteForSharing = null
+            },
+            onShareTexts = {
+                selectedNoteForSharing?.let { note ->
+                    val shareText = ShareUtils.buildShareText(note)
+                    platformViewModel.shareText(shareText)
+                }
+                showShareDialog = false
+                selectedNoteForSharing = null
+            },
+            onDismiss = { 
+                showShareDialog = false
+                selectedNoteForSharing = null
+            }
+        )
     }
 }
 

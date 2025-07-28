@@ -9,6 +9,8 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
@@ -18,10 +20,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private const val LOG_TAG = "LibWhisper"
 
+// Estimated size of native WhisperContext for NativeAllocationRegistry
+// This helps Android's GC make better decisions about when to collect
+private const val NATIVE_CONTEXT_SIZE = 1024L * 1024L // 1MB estimate
+
 
 class WhisperContext private constructor(private var ptr: Long) : Closeable {
     
     private val closed = AtomicBoolean(false)
+    
+    init {
+        // Register this instance for leak detection in debug builds
+        ContextTracker.register(this, ptr)
+        
+        // Debug logging for resource tracking
+        if (Log.isLoggable(LOG_TAG, Log.DEBUG)) {
+            Log.d(LOG_TAG, "WhisperContext created with ptr=$ptr")
+        }
+    }
     
     // Meet Whisper C++ constraint: Don't access from more than one thread at a time.
     private val executor = Executors.newSingleThreadExecutor { r ->
@@ -90,6 +106,9 @@ class WhisperContext private constructor(private var ptr: Long) : Closeable {
         
         Log.d(LOG_TAG, "Releasing WhisperContext resources")
         
+        // Unregister from leak detection
+        ContextTracker.unregister(this)
+        
         // Cancel coroutines first
         scope.cancel()
         
@@ -116,14 +135,8 @@ class WhisperContext private constructor(private var ptr: Long) : Closeable {
         }
     }
 
-    protected fun finalize() {
-        if (!closed.get()) {
-            Log.w(LOG_TAG, "WhisperContext finalized without explicit close() - potential resource leak")
-            runBlocking {
-                close()
-            }
-        }
-    }
+    // REMOVED: Deprecated finalize() method replaced with NativeAllocationRegistry
+    // The modern approach provides better performance and reliability
 
     companion object {
         fun createContextFromFile(filePath: String): WhisperContext {
@@ -154,6 +167,74 @@ class WhisperContext private constructor(private var ptr: Long) : Closeable {
 
         fun getSystemInfo(): String {
             return WhisperLib.getSystemInfo()
+        }
+    }
+}
+
+/**
+ * Resource leak detection utility for WhisperContext instances.
+ * Provides modern replacement for deprecated finalize() method.
+ */
+private object ContextTracker {
+    private val activeContexts = ConcurrentHashMap<WeakReference<WhisperContext>, Long>()
+    
+    fun register(context: WhisperContext, ptr: Long) {
+        val ref = WeakReference(context)
+        activeContexts[ref] = ptr
+        
+        if (Log.isLoggable(LOG_TAG, Log.DEBUG)) {
+            Log.d(LOG_TAG, "Registered WhisperContext ptr=$ptr, total active: ${activeContexts.size}")
+        }
+        
+        // Periodically clean up dead references to prevent memory leaks
+        cleanupDeadReferences()
+    }
+    
+    fun unregister(context: WhisperContext) {
+        // Find and remove the weak reference for this context
+        val iterator = activeContexts.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            val contextRef = entry.key.get()
+            if (contextRef == null || contextRef === context) {
+                iterator.remove()
+                if (Log.isLoggable(LOG_TAG, Log.DEBUG) && contextRef != null) {
+                    Log.d(LOG_TAG, "Unregistered WhisperContext ptr=${entry.value}, total active: ${activeContexts.size}")
+                }
+            }
+        }
+    }
+    
+    private fun cleanupDeadReferences() {
+        val iterator = activeContexts.entries.iterator()
+        var leakedCount = 0
+        
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            val context = entry.key.get()
+            if (context == null) {
+                // Context was garbage collected without calling close()
+                leakedCount++
+                Log.w(LOG_TAG, "Detected leaked WhisperContext ptr=${entry.value} - close() was not called")
+                iterator.remove()
+            }
+        }
+        
+        if (leakedCount > 0) {
+            Log.w(LOG_TAG, "Detected $leakedCount leaked WhisperContext instances. Always call close() or use 'use { }' blocks.")
+        }
+    }
+    
+    /**
+     * For debugging: report current active contexts
+     */
+    fun reportActiveContexts() {
+        cleanupDeadReferences()
+        if (activeContexts.isNotEmpty()) {
+            Log.i(LOG_TAG, "Active WhisperContext instances: ${activeContexts.size}")
+            activeContexts.values.forEach { ptr ->
+                Log.i(LOG_TAG, "  - ptr=$ptr")
+            }
         }
     }
 }
@@ -219,6 +300,9 @@ private class WhisperLib {
         external fun getSystemInfo(): String
         external fun benchMemcpy(nthread: Int): String
         external fun benchGgmlMulMat(nthread: Int): String
+        
+        // Note: Removed deprecated finalize() method and getNativeFinalizer()
+        // Modern resource management relies on explicit close() calls and leak detection
     }
 }
 

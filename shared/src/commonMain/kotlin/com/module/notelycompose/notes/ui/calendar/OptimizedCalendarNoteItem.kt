@@ -24,6 +24,8 @@ import com.module.notelycompose.notes.presentation.list.model.NotePresentationMo
 import com.module.notelycompose.notes.ui.components.MaterialIcon
 import com.module.notelycompose.notes.ui.theme.*
 import com.module.notelycompose.notes.ui.calendar.parseToTimeString
+import com.module.notelycompose.notes.utils.ShareUtils
+import com.module.notelycompose.platform.presentation.PlatformViewModel
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -40,6 +42,9 @@ fun OptimizedCalendarNoteItem(
     var isExpanded by remember { mutableStateOf(false) }
     var showOptionsMenu by remember { mutableStateOf(false) }
     val hapticFeedback = LocalHapticFeedback.current
+    
+    // Platform utilities for sharing functionality
+    val platformViewModel: PlatformViewModel = koinViewModel()
     
     val scale by animateFloatAsState(
         targetValue = if (isExpanded) 1.02f else 1f,
@@ -141,7 +146,17 @@ fun OptimizedCalendarNoteItem(
                                 text = { Text("Share") },
                                 onClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // TODO: Implement share functionality
+                                    
+                                    // Share text content by default, or audio if available and preferred
+                                    if (note.isVoice && ShareUtils.canShareRecording(note.recordingPath)) {
+                                        // For voice notes with valid recordings, share the audio
+                                        platformViewModel.shareRecording(note.recordingPath!!)
+                                    } else {
+                                        // For text notes or voice notes without recordings, share text
+                                        val shareText = ShareUtils.buildShareText(note)
+                                        platformViewModel.shareText(shareText)
+                                    }
+                                    
                                     showOptionsMenu = false
                                 },
                                 leadingIcon = {
