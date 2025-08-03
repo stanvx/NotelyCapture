@@ -544,46 +544,40 @@ class TextEditorViewModel(
     }
 
     fun onToggleItalic() {
-        executeFormattingCommand("Toggle Italic") {
-            textEditorHelper.toggleFormat(
-                currentState = _editorPresentationState.value,
-                transform = { it.copy(isItalic = !it.isItalic) },
-                updateState = { newState ->
-                    _editorPresentationState.update { newState }
-                }
-            )
-            // Apply to rich text state as well
-            richTextEditorHelper.toggleItalic()
-            refreshSelection()
-        }
+        textEditorHelper.toggleFormat(
+            currentState = _editorPresentationState.value,
+            transform = { it.copy(isItalic = !it.isItalic) },
+            updateState = { newState ->
+                _editorPresentationState.update { newState }
+            }
+        )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleItalic()
+        refreshSelection()
     }
 
     fun setTextSize(size: Float) {
-        executeFormattingCommand("Set Text Size $size") {
-            textEditorHelper.toggleFormat(
-                currentState = _editorPresentationState.value,
-                transform = { it.copy(textSize = size) },
-                updateState = { newState ->
-                    _editorPresentationState.update { newState }
-                }
-            )
-            refreshSelection()
-        }
+        textEditorHelper.toggleFormat(
+            currentState = _editorPresentationState.value,
+            transform = { it.copy(textSize = size) },
+            updateState = { newState ->
+                _editorPresentationState.update { newState }
+            }
+        )
+        refreshSelection()
     }
 
     fun onToggleUnderline() {
-        executeFormattingCommand("Toggle Underline") {
-            textEditorHelper.toggleFormat(
-                currentState = _editorPresentationState.value,
-                transform = { it.copy(isUnderline = !it.isUnderline) },
-                updateState = { newState ->
-                    _editorPresentationState.update { newState }
-                }
-            )
-            // Apply to rich text state as well
-            richTextEditorHelper.toggleUnderline()
-            refreshSelection()
-        }
+        textEditorHelper.toggleFormat(
+            currentState = _editorPresentationState.value,
+            transform = { it.copy(isUnderline = !it.isUnderline) },
+            updateState = { newState ->
+                _editorPresentationState.update { newState }
+            }
+        )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleUnderline()
+        refreshSelection()
     }
 
     private fun refreshSelection() {
@@ -596,50 +590,44 @@ class TextEditorViewModel(
     }
 
     fun onSetAlignment(alignment: TextAlign) {
-        executeFormattingCommand("Set Alignment $alignment") {
-            _editorPresentationState.update { it.copy(textAlign = alignment) }
-            // Apply to rich text state as well
-            richTextEditorHelper.setAlignment(alignment)
-            val content = _editorPresentationState.value.content
-            val formats = _editorPresentationState.value.formats
-            val textAlign = _editorPresentationState.value.textAlign
-            val starred = _editorPresentationState.value.starred
-            val recordingPath = _editorPresentationState.value.recording.recordingPath
-            if (content.text.isNotEmpty()) {
-                debouncedSave(
-                    title = content.text,
-                    content = content.text,
-                    starred = starred,
-                    formatting = formats,
-                    textAlign = textAlign,
-                    recordingPath = recordingPath
-                )
-            }
+        _editorPresentationState.update { it.copy(textAlign = alignment) }
+        // Apply to rich text state as well
+        richTextEditorHelper.setAlignment(alignment)
+        val content = _editorPresentationState.value.content
+        val formats = _editorPresentationState.value.formats
+        val textAlign = _editorPresentationState.value.textAlign
+        val starred = _editorPresentationState.value.starred
+        val recordingPath = _editorPresentationState.value.recording.recordingPath
+        if (content.text.isNotEmpty()) {
+            debouncedSave(
+                title = content.text,
+                content = content.text,
+                starred = starred,
+                formatting = formats,
+                textAlign = textAlign,
+                recordingPath = recordingPath
+            )
         }
     }
 
     fun onToggleBulletList() {
-        executeFormattingCommand("Toggle Bullet List") {
-            textEditorHelper.toggleBulletList(
-                currentState = _editorPresentationState.value,
-                updateState = { newState ->
-                    _editorPresentationState.update { newState }
-                }
-            )
-            // Apply to rich text state as well
-            richTextEditorHelper.toggleUnorderedList()
-        }
+        textEditorHelper.toggleBulletList(
+            currentState = _editorPresentationState.value,
+            updateState = { newState ->
+                _editorPresentationState.update { newState }
+            }
+        )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleUnorderedList()
     }
     
     /**
      * Toggles ordered list formatting using the RichTextEditor.
      */
     fun onToggleOrderedList() {
-        executeFormattingCommand("Toggle Ordered List") {
-            richTextEditorHelper.toggleOrderedList()
-            // Sync changes back to traditional state
-            onUpdateRichContent()
-        }
+        richTextEditorHelper.toggleOrderedList()
+        // Sync changes back to traditional state
+        onUpdateRichContent()
     }
     
     /**
@@ -648,11 +636,9 @@ class TextEditorViewModel(
      * @param level The heading level (1-6)
      */
     fun onAddHeading(level: Int) {
-        executeFormattingCommand("Add Heading $level") {
-            richTextEditorHelper.addHeading(level)
-            // Sync changes back to traditional state
-            onUpdateRichContent()
-        }
+        richTextEditorHelper.addHeading(level)
+        // Sync changes back to traditional state
+        onUpdateRichContent()
     }
     
     /**
@@ -668,47 +654,39 @@ class TextEditorViewModel(
      * Clears all rich text formatting.
      */
     fun onClearFormatting() {
-        executeFormattingCommand("Clear Formatting") {
-            richTextEditorHelper.clearFormatting()
-            // Also clear traditional formatting
-            _editorPresentationState.update {
-                it.copy(formats = emptyList())
-            }
-            // Sync changes back
-            onUpdateRichContent()
+        richTextEditorHelper.clearFormatting()
+        // Also clear traditional formatting
+        _editorPresentationState.update {
+            it.copy(formats = emptyList())
         }
+        // Sync changes back
+        onUpdateRichContent()
     }
     
     /**
      * Toggles strikethrough formatting on selected text.
      */
     fun onToggleStrikethrough() {
-        executeFormattingCommand("Toggle Strikethrough") {
-            richTextEditorHelper.toggleStrikethrough()
-            refreshSelection()
-        }
+        richTextEditorHelper.toggleStrikethrough()
+        refreshSelection()
     }
     
     /**
      * Toggles code block formatting on selected text.
      */
     fun onToggleCodeBlock() {
-        executeFormattingCommand("Toggle Code Block") {
-            richTextEditorHelper.toggleCodeBlock()
-            // Sync changes back to traditional state
-            onUpdateRichContent()
-        }
+        richTextEditorHelper.toggleCodeBlock()
+        // Sync changes back to traditional state
+        onUpdateRichContent()
     }
     
     /**
      * Toggles quote block formatting on selected text.
      */
     fun onToggleQuoteBlock() {
-        executeFormattingCommand("Toggle Quote Block") {
-            richTextEditorHelper.toggleQuoteBlock()
-            // Sync changes back to traditional state
-            onUpdateRichContent()
-        }
+        richTextEditorHelper.toggleQuoteBlock()
+        // Sync changes back to traditional state
+        onUpdateRichContent()
     }
     
     /**
