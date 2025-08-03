@@ -103,10 +103,29 @@ class BackgroundTranscriptionService(
                     if (!uiState.inTranscription && !cleanupCompleted) {
                         cleanupCompleted = true
                         
-                        // Create note with transcribed content (handles empty transcription)
+                        // For longer transcriptions, wait briefly for fallback mechanism to provide complete text
+                        val transcribedText = if (uiState.originalText.isBlank()) {
+                            debugPrintln { "BackgroundTranscriptionService: Empty text detected, waiting for fallback mechanism..." }
+                            // Short delay to allow fallback logic in Transcriber.android.kt to complete
+                            kotlinx.coroutines.delay(100)
+                            
+                            // Check if text was populated by fallback
+                            val updatedState = transcriptionViewModel.uiState.value
+                            if (updatedState.originalText.isNotBlank()) {
+                                debugPrintln { "BackgroundTranscriptionService: Fallback mechanism provided text: '${updatedState.originalText.take(50)}${if (updatedState.originalText.length > 50) "..." else ""}'" }
+                                updatedState.originalText
+                            } else {
+                                debugPrintln { "BackgroundTranscriptionService: No text available after fallback delay, creating audio-only note" }
+                                uiState.originalText // Will be empty, creating audio-only note
+                            }
+                        } else {
+                            uiState.originalText
+                        }
+                        
+                        // Create note with final transcription result
                         val noteId = try {
                             createNoteFromTranscription(
-                                transcribedText = uiState.originalText,
+                                transcribedText = transcribedText,
                                 audioFilePath = audioFilePath
                             )
                         } catch (noteError: Exception) {
@@ -171,28 +190,26 @@ class BackgroundTranscriptionService(
     }
     
     /**
-     * Create a new note with the transcribed content and empty title for smart UI-based naming
-     * Handles empty transcriptions by creating audio-only notes
+     * Create a new note optimized for audio-first experience
+     * Audio-only notes are treated as first-class content, not failed transcriptions
      */
     private suspend fun createNoteFromTranscription(
         transcribedText: String,
         audioFilePath: String
     ): Long {
-        // Use empty title to leverage existing UI smart title generation from content
-        val title = ""
-        
-        // Handle empty transcriptions by providing placeholder content
-        val content = if (transcribedText.isBlank()) {
-            "[Audio recording - transcription unavailable]"
+        val (title, content) = if (transcribedText.isBlank()) {
+            // Audio-first design: empty content means audio-only note (not failed transcription)
+            "Voice Note" to ""
         } else {
-            transcribedText
+            // Standard note with transcription content
+            "" to transcribedText
         }
         
         debugPrintln { 
             if (transcribedText.isBlank()) {
-                "BackgroundTranscriptionService: Creating audio-only note (empty transcription)"
+                "BackgroundTranscriptionService: Creating audio-only note (voice note)"
             } else {
-                "BackgroundTranscriptionService: Creating note with transcribed content"
+                "BackgroundTranscriptionService: Creating note with transcription: '${transcribedText.take(50)}${if (transcribedText.length > 50) "..." else ""}'"
             }
         }
         
