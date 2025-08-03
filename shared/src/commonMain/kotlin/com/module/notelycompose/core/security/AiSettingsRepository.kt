@@ -36,7 +36,7 @@ class AiSettingsRepository(
         )
         
         securityHelper.reportSecurityEvent(
-            type = SecurityMonitoringService.SecurityEventType.ENCRYPTION_SUCCESS,
+            type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
             severity = SecurityMonitoringService.SecuritySeverity.LOW,
             message = "OpenAI API key stored successfully",
             details = mapOf(
@@ -64,7 +64,7 @@ class AiSettingsRepository(
             
             if (apiKey != null) {
                 securityHelper.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DECRYPTION_SUCCESS,
+                    type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
                     severity = SecurityMonitoringService.SecuritySeverity.LOW,
                     message = "OpenAI API key retrieved successfully",
                     details = mapOf(
@@ -78,7 +78,7 @@ class AiSettingsRepository(
             apiKey
         } catch (e: SecureStorageException) {
             securityHelper.reportSecurityEvent(
-                type = SecurityMonitoringService.SecurityEventType.DECRYPTION_FAILURE,
+                type = SecurityMonitoringService.SecurityEventType.CONFIGURATION_TAMPERING,
                 severity = SecurityMonitoringService.SecuritySeverity.HIGH,
                 message = "Failed to retrieve OpenAI API key",
                 details = mapOf(
@@ -103,7 +103,7 @@ class AiSettingsRepository(
         securePreferencesRepository.removeApiKey(SecurePreferencesRepository.OPENAI_API_KEY)
         
         securityHelper.reportSecurityEvent(
-            type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+            type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
             severity = SecurityMonitoringService.SecuritySeverity.LOW,
             message = "OpenAI API key removed",
             details = mapOf(
@@ -161,7 +161,7 @@ class AiSettingsRepository(
         securePreferencesRepository.clearAll()
         
         securityHelper.reportSecurityEvent(
-            type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+            type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
             severity = SecurityMonitoringService.SecuritySeverity.MEDIUM,
             message = "All AI data cleared",
             details = mapOf(

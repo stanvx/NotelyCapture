@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.module.notelycompose.notes.presentation.detail.RichTextFormattingState
 import com.module.notelycompose.notes.ui.theme.Material3ShapeTokens
-import com.module.notelycompose.notes.ui.richtext.AnimatedBottomToolbar
 import com.module.notelycompose.notes.ui.richtext.rememberRichTextHapticManager
 import com.module.notelycompose.notes.ui.richtext.RichTextHaptics.boldToggled
 import com.module.notelycompose.notes.ui.richtext.RichTextHaptics.italicToggled
@@ -80,10 +79,6 @@ fun ScrollableRichTextToolbar(
     onToggleQuoteBlock: () -> Unit = {},
     onInsertDivider: () -> Unit = {},
     onToggleLink: () -> Unit = {},
-    onUndo: () -> Unit = {},
-    onRedo: () -> Unit = {},
-    canUndo: Boolean = false,
-    canRedo: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -109,16 +104,10 @@ fun ScrollableRichTextToolbar(
         }
     }
     
-    AnimatedBottomToolbar(
+    com.module.notelycompose.notes.ui.richtext.AnimatedBottomToolbar(
         visible = isVisible,
         modifier = modifier.zIndex(10f)
     ) {
-        AccessibleToolbarContainer(
-            isVisible = isVisible,
-            formattingState = mockRichTextState,
-            onKeyboardShortcut = handleAccessibilityAction,
-            accessibilityManager = accessibilityManager
-        ) {
             Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -401,29 +390,9 @@ fun ScrollableRichTextToolbar(
 
                     item { GroupDivider() }
 
-                    // Group 8: History
+                    // Group 8: Clear Formatting
                     item {
-                        FormattingGroup(title = "History") {
-                            FormattingButton(
-                                icon = Icons.Filled.Undo,
-                                contentDescription = "Undo",
-                                onClick = {
-                                    onUndo()
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                enabled = canUndo
-                            )
-                            
-                            FormattingButton(
-                                icon = Icons.Filled.Redo,
-                                contentDescription = "Redo",
-                                onClick = {
-                                    onRedo()
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                },
-                                enabled = canRedo
-                            )
-                            
+                        FormattingGroup(title = "Clear") {
                             FormattingButton(
                                 icon = Icons.Filled.Clear,
                                 contentDescription = "Clear Formatting",
@@ -440,7 +409,6 @@ fun ScrollableRichTextToolbar(
         }
         }
     }
-}
 
 /**
  * Formatting group container with title

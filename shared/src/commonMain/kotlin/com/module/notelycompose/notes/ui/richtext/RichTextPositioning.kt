@@ -33,14 +33,14 @@ import kotlin.math.roundToInt
  * - Smooth position transitions with physics-based animations
  * - Accessibility-compliant positioning for screen readers
  */
-class RichTextPositioningManager(
+class ToolbarPositionCalculator(
     private val screenSize: IntSize,
-    private val systemInsets: SystemInsets,
-    private val keyboardHeight: Int = 0
+    private val systemInsets: SystemInsetsPixels,
+    private val keyboardHeight: Int,
+    private val toolbarMargin: Int = 16
 ) {
     
     private val safeArea = calculateSafeArea()
-    private val toolbarMargin = 16.dp.value.roundToInt() // Minimum margin from edges
     
     /**
      * Calculates optimal toolbar position with collision detection and keyboard awareness.
@@ -211,9 +211,9 @@ enum class PositioningStrategy {
 }
 
 /**
- * System insets for platform-aware positioning.
+ * System insets for platform-aware positioning (in pixels).
  */
-data class SystemInsets(
+data class SystemInsetsPixels(
     val left: Int = 0,
     val top: Int = 0,
     val right: Int = 0,
@@ -415,42 +415,4 @@ class FallbackStrategy : BasePositioningStrategy() {
             isValid = true
         )
     }
-}
-
-/**
- * Composable function to get system insets and keyboard height.
- */
-@Composable
-fun rememberSystemInsets(): SystemInsets {
-    val density = LocalDensity.current
-    val ime = WindowInsets.ime
-    
-    return remember {
-        with(density) {
-            SystemInsets(
-                left = 0,
-                top = 0, // Status bar would be handled by platform
-                right = 0,
-                bottom = ime.getBottom(this).toDp().value.roundToInt() // Use IME for keyboard height
-            )
-        }
-    }
-}
-
-/**
- * Composable hook for keyboard height detection.
- */
-@Composable
-fun rememberKeyboardHeight(): Int {
-    val density = LocalDensity.current
-    val ime = WindowInsets.ime
-    var keyboardHeight by remember { mutableStateOf(0) }
-    
-    LaunchedEffect(ime) {
-        keyboardHeight = with(density) {
-            ime.getBottom(this).toDp().value.roundToInt()
-        }
-    }
-    
-    return keyboardHeight
 }

@@ -316,7 +316,7 @@ class SecurityHelper(
         }
         
         securityMonitoringService.reportSecurityEvent(
-            type = SecurityMonitoringService.SecurityEventType.VALIDATION_SUCCESS,
+            type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
             severity = SecurityMonitoringService.SecuritySeverity.LOW,
             message = "OpenAI API key validation successful",
             details = mapOf(
@@ -380,7 +380,7 @@ class SecurityHelper(
                     else -> {
                         // Log unknown setting but don't fail validation
                         securityMonitoringService.reportSecurityEvent(
-                            type = SecurityMonitoringService.SecurityEventType.VALIDATION_WARNING,
+                            type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
                             severity = SecurityMonitoringService.SecuritySeverity.LOW,
                             message = "Unknown AI setting",
                             details = mapOf(
@@ -397,7 +397,7 @@ class SecurityHelper(
             
         } catch (e: Exception) {
             securityMonitoringService.reportSecurityEvent(
-                type = SecurityMonitoringService.SecurityEventType.VALIDATION_FAILURE,
+                type = SecurityMonitoringService.SecurityEventType.INPUT_VALIDATION_FAILURE,
                 severity = SecurityMonitoringService.SecuritySeverity.MEDIUM,
                 message = "AI settings validation failed",
                 details = mapOf(

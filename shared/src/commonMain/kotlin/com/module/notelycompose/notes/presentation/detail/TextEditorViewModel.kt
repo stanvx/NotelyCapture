@@ -12,13 +12,6 @@ import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.GetNoteById
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
 import com.module.notelycompose.notes.domain.UpdateNoteUseCase
-import com.module.notelycompose.notes.domain.TextEditCommandResult
-import com.module.notelycompose.notes.domain.UndoRedoManager
-import com.module.notelycompose.notes.domain.FormatCommand
-import com.module.notelycompose.notes.domain.CompositeCommand
-import com.module.notelycompose.notes.domain.TextEditCommand
-import com.module.notelycompose.notes.domain.InsertTextCommand
-import com.module.notelycompose.notes.domain.DeleteTextCommand
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
 import com.module.notelycompose.notes.presentation.detail.model.EditorPresentationState
 import com.module.notelycompose.notes.presentation.detail.model.RecordingPathPresentationModel
@@ -40,6 +33,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -71,19 +66,28 @@ class TextEditorViewModel(
     internal val currentNoteId: StateFlow<Long?> = _currentNoteId.asStateFlow()
     private val _noteIdTrigger = MutableStateFlow<Long?>(null)
     
-    // Undo/Redo functionality
-    private val undoRedoManager = UndoRedoManager()
     
     // Performance optimization fields
     private var saveJob: Job? = null
     private var syncJob: Job? = null
     private var lastContentHash: Int = 0
     
-    // Expose undo/redo state for UI
-    val canUndo: StateFlow<Boolean> = undoRedoManager.canUndo
-    val canRedo: StateFlow<Boolean> = undoRedoManager.canRedo
-    val undoDescription: StateFlow<String?> = undoRedoManager.undoDescription
-    val redoDescription: StateFlow<String?> = undoRedoManager.redoDescription
+    // Thread-safety for save operations and content synchronization
+    private val saveMutex = Mutex()
+    private val contentSyncMutex = Mutex()
+    
+    // Immutable content snapshot for atomic operations (protected by contentSyncMutex)
+    private var _contentSnapshot: ContentSnapshot? = null
+    
+    /**
+     * Immutable snapshot of content state for thread-safe operations.
+     */
+    private data class ContentSnapshot(
+        val plainText: String,
+        val htmlContent: String,
+        val timestamp: Long = System.currentTimeMillis()
+    )
+    
     
     // Expose rich text state for UI components
     val richTextState: StateFlow<com.mohamedrejeb.richeditor.model.RichTextState> = richTextEditorHelper.richTextState
@@ -133,75 +137,69 @@ class TextEditorViewModel(
     private fun getLastNote() = getLastNoteUseCase.execute()
 
     fun onUpdateContent(newContent: TextFieldValue) {
-        val oldContent = _editorPresentationState.value.content.text
-        
-        // Perform security validation in coroutine
         viewModelScope.launch {
             // SECURITY: Validate content input using SecurityHelper
             if (!securityHelper.validateNoteContent(newContent.text)) {
                 return@launch
             }
             
-            continueUpdateContent(newContent, oldContent)
+            contentSyncMutex.withLock {
+                val oldContent = _editorPresentationState.value.content.text
+                val sanitizedContent = newContent
+                
+                updateContent(sanitizedContent)
+                
+                if (oldContent != sanitizedContent.text) {
+                    syncContentToRichText(sanitizedContent.text)
+                    
+                    
+                    // Debounced save operation
+                    debouncedSave(
+                        title = sanitizedContent.text,
+                        content = sanitizedContent.text,
+                        starred = _editorPresentationState.value.starred,
+                        formatting = _editorPresentationState.value.formats,
+                        textAlign = _editorPresentationState.value.textAlign,
+                        recordingPath = _editorPresentationState.value.recording.recordingPath,
+                    )
+                }
+            }
         }
     }
     
-    private fun continueUpdateContent(newContent: TextFieldValue, oldContent: String) {
-        
-        val sanitizedContent = newContent
-        
-        updateContent(sanitizedContent)
-        
-        // Optimized sync: only sync if content actually changed
-        if (oldContent != sanitizedContent.text) {
-            syncContentToRichText(sanitizedContent.text)
-            
-            // Create undo/redo command for content changes
-            createContentUpdateCommand(oldContent, sanitizedContent.text)
-            
-            // Debounced save operation
-            debouncedSave(
-                title = sanitizedContent.text,
-                content = sanitizedContent.text,
-                starred = _editorPresentationState.value.starred,
-                formatting = _editorPresentationState.value.formats,
-                textAlign = _editorPresentationState.value.textAlign,
-                recordingPath = _editorPresentationState.value.recording.recordingPath,
-            )
-        }
-    }
     
     /**
-     * Handles content updates from the RichTextEditor with performance optimizations.
+     * Handles content updates from the RichTextEditor with thread-safe synchronization.
      * This method processes changes from the rich text editor and synchronizes
-     * them with the existing text formatting system.
+     * them with the existing text formatting system using atomic operations.
      */
     fun onUpdateRichContent() {
-        val oldContent = _editorPresentationState.value.content.text
-        syncContentFromRichText()
-        val currentState = _editorPresentationState.value
-        
-        // Only save if content actually changed
-        if (oldContent != currentState.content.text || _lastRichTextHtmlContent.isNotEmpty()) {
-            // Use HTML content for persistence when available, fallback to plain text
-            val contentToSave = if (_lastRichTextHtmlContent.isNotEmpty()) {
-                _lastRichTextHtmlContent
-            } else {
-                currentState.content.text
+        viewModelScope.launch {
+            contentSyncMutex.withLock {
+                val oldContent = _editorPresentationState.value.content.text
+                syncContentFromRichText()
+                val currentState = _editorPresentationState.value
+                val snapshot = _contentSnapshot
+                
+                // Only save if content actually changed and we have a valid snapshot
+                if (snapshot != null && (oldContent != currentState.content.text || snapshot.htmlContent.isNotEmpty())) {
+                    // Use HTML content for persistence when available, fallback to plain text
+                    val contentToSave = snapshot.htmlContent.ifEmpty { snapshot.plainText }
+                    
+                    // Use first line or first 50 chars as title
+                    val titleToSave = snapshot.plainText.lines().firstOrNull()?.take(50) 
+                        ?: snapshot.plainText.take(50)
+                    
+                    debouncedSave(
+                        title = titleToSave,
+                        content = contentToSave, // Save HTML content for rich formatting
+                        starred = currentState.starred,
+                        formatting = currentState.formats,
+                        textAlign = currentState.textAlign,
+                        recordingPath = currentState.recording.recordingPath,
+                    )
+                }
             }
-            
-            // Use first line or first 50 chars as title
-            val titleToSave = currentState.content.text.lines().firstOrNull()?.take(50) 
-                ?: currentState.content.text.take(50)
-            
-            debouncedSave(
-                title = titleToSave,
-                content = contentToSave, // Save HTML content for rich formatting
-                starred = currentState.starred,
-                formatting = currentState.formats,
-                textAlign = currentState.textAlign,
-                recordingPath = currentState.recording.recordingPath,
-            )
         }
     }
 
@@ -308,33 +306,47 @@ class TextEditorViewModel(
         // Synchronize content to rich text state - use original content which may be HTML
         syncContentToRichText(content)
         
-        // Store the original content for HTML persistence
+        // Create content snapshot if we have HTML content
         if (isHtmlContent) {
-            _lastRichTextHtmlContent = content
+            val snapshot = ContentSnapshot(
+                plainText = displayContent,
+                htmlContent = content
+            )
+            _contentSnapshot = snapshot
         }
     }
     
     /**
-     * Synchronizes content from plain text to RichTextState with debouncing.
+     * Synchronizes content from plain text to RichTextState with debouncing and error handling.
      * This ensures both text systems are kept in sync when loading notes.
+     * Uses content equality instead of hash comparison to prevent missed updates.
      */
     private fun syncContentToRichText(content: String) {
         // Cancel previous sync job if still pending
         syncJob?.cancel()
         
-        // Only sync if content actually changed (performance optimization)
-        val contentHash = content.hashCode()
-        if (contentHash == lastContentHash) return
-        lastContentHash = contentHash
+        // Use content equality instead of hash comparison to prevent collisions
+        if (content == lastSetContent) return
         
         syncJob = viewModelScope.launch {
             delay(SYNC_DEBOUNCE_DELAY)
-            richTextEditorHelper.setContent(content)
+            
+            try {
+                richTextEditorHelper.setContent(content)
+                lastSetContent = content // Update after successful sync
+            } catch (e: Exception) {
+                // Log sync failure but don't crash
+                println("Failed to sync content to rich text: ${e.message}")
+            }
         }
     }
     
+    // Track the last successfully synced content
+    private var lastSetContent: String = ""
+    
     /**
-     * Debounced save operation to improve performance during rapid text changes.
+     * Thread-safe debounced save operation with atomic operations to prevent race conditions.
+     * Uses mutex to ensure only one save operation can execute at a time.
      */
     private fun debouncedSave(
         title: String,
@@ -350,32 +362,45 @@ class TextEditorViewModel(
         saveJob = viewModelScope.launch {
             delay(SAVE_DEBOUNCE_DELAY)
             
-            // Capture the current note ID at the time of save execution
-            val currentNoteId = _currentNoteId.value
-            when {
-                currentNoteId != null && currentNoteId != ID_NOT_SET -> {
-                    updateNote(
-                        noteId = currentNoteId,
-                        title = title,
-                        content = content,
-                        starred = starred,
-                        formatting = formatting,
-                        textAlign = textAlign,
-                        recordingPath = recordingPath
-                    )
-                }
-                else -> {
-                    // For new notes, insert and immediately update the current note ID
-                    val newNoteId = insertNoteUseCase.execute(
-                        title = title,
-                        content = content,
-                        starred = starred,
-                        formatting = formatting.map { textFormatPresentationMapper.mapToDomainModel(it) },
-                        textAlign = textAlignPresentationMapper.mapToDomainModel(textAlign),
-                        recordingPath = recordingPath
-                    )
-                    newNoteId?.let { id ->
-                        _currentNoteId.value = id
+            // Use mutex to ensure atomic save operations and prevent race conditions
+            saveMutex.withLock {
+                val currentNoteId = _currentNoteId.value
+                when {
+                    currentNoteId != null && currentNoteId != ID_NOT_SET -> {
+                        try {
+                            updateNote(
+                                noteId = currentNoteId,
+                                title = title,
+                                content = content,
+                                starred = starred,
+                                formatting = formatting,
+                                textAlign = textAlign,
+                                recordingPath = recordingPath
+                            )
+                        } catch (e: Exception) {
+                            println("Failed to update note $currentNoteId: ${e.message}")
+                        }
+                    }
+                    else -> {
+                        // Double-check to prevent duplicate note creation
+                        val recentNoteId = _currentNoteId.value
+                        if (recentNoteId == null || recentNoteId == ID_NOT_SET) {
+                            try {
+                                val newNoteId = insertNoteUseCase.execute(
+                                    title = title,
+                                    content = content,
+                                    starred = starred,
+                                    formatting = formatting.map { textFormatPresentationMapper.mapToDomainModel(it) },
+                                    textAlign = textAlignPresentationMapper.mapToDomainModel(textAlign),
+                                    recordingPath = recordingPath
+                                )
+                                newNoteId?.let { id ->
+                                    _currentNoteId.value = id
+                                }
+                            } catch (e: Exception) {
+                                println("Failed to create new note: ${e.message}")
+                            }
+                        }
                     }
                 }
             }
@@ -383,14 +408,21 @@ class TextEditorViewModel(
     }
     
     /**
-     * Synchronizes content from RichTextState back to TextFieldValue.
+     * Synchronizes content from RichTextState back to TextFieldValue using immutable snapshots.
      * This is used when the rich text editor content changes.
-     * Enhanced to save both HTML and plain text content properly.
+     * Creates atomic content snapshots to prevent race conditions during save operations.
      */
     private fun syncContentFromRichText() {
         val richTextHtmlContent = richTextEditorHelper.getContent() // Get HTML for persistence
         val richTextPlainContent = richTextEditorHelper.getPlainText() // Get plain text for display
         val currentState = _editorPresentationState.value
+        
+        // Create immutable snapshot for thread-safe operations
+        val snapshot = ContentSnapshot(
+            plainText = richTextPlainContent,
+            htmlContent = richTextHtmlContent
+        )
+        _contentSnapshot = snapshot
         
         // Update the presentation state with plain text for backward compatibility
         if (currentState.content.text != richTextPlainContent) {
@@ -398,14 +430,7 @@ class TextEditorViewModel(
                 it.copy(content = TextFieldValue(richTextPlainContent))
             }
         }
-        
-        // Store the HTML content separately for rich text persistence
-        // This ensures formatting is preserved when the note is saved and loaded
-        _lastRichTextHtmlContent = richTextHtmlContent
     }
-    
-    // Track the last HTML content for proper persistence
-    private var _lastRichTextHtmlContent: String = ""
 
     fun onGetUiState(presentationState: EditorPresentationState): EditorUiState {
         return editorPresentationToUiStateMapper.mapToUiState(presentationState)
@@ -506,18 +531,16 @@ class TextEditorViewModel(
     }
 
     fun onToggleBold() {
-        executeFormattingCommand("Toggle Bold") {
-            textEditorHelper.toggleFormat(
-                currentState = _editorPresentationState.value,
-                transform = { it.copy(isBold = !it.isBold) },
-                updateState = { newState ->
-                    _editorPresentationState.update { newState }
-                }
-            )
-            // Apply to rich text state as well
-            richTextEditorHelper.toggleBold()
-            refreshSelection()
-        }
+        textEditorHelper.toggleFormat(
+            currentState = _editorPresentationState.value,
+            transform = { it.copy(isBold = !it.isBold) },
+            updateState = { newState ->
+                _editorPresentationState.update { newState }
+            }
+        )
+        // Apply to rich text state as well
+        richTextEditorHelper.toggleBold()
+        refreshSelection()
     }
 
     fun onToggleItalic() {
@@ -710,130 +733,9 @@ class TextEditorViewModel(
         )
     }
     
-    /**
-     * Undoes the last text editing operation.
-     */
-    fun onUndo() {
-        viewModelScope.launch {
-            val success = undoRedoManager.undo()
-            if (!success) {
-                // Handle undo failure - could show error message
-                println("Undo failed")
-            }
-        }
-    }
-    
-    /**
-     * Redoes the last undone text editing operation.
-     */
-    fun onRedo() {
-        viewModelScope.launch {
-            val success = undoRedoManager.redo()
-            if (!success) {
-                // Handle redo failure - could show error message
-                println("Redo failed")
-            }
-        }
-    }
     
     
-    /**
-     * Executes a formatting command with undo/redo support and performance optimizations.
-     * @param description Description of the command for undo/redo
-     * @param action The formatting action to execute
-     */
-    private fun executeFormattingCommand(description: String, action: () -> Unit) {
-        val beforeState = _editorPresentationState.value
-        val beforeContent = beforeState.content.text
-        val beforeFormats = beforeState.formats
-        val beforeAlignment = beforeState.textAlign
-        
-        // Execute the formatting action
-        action()
-        
-        val afterState = _editorPresentationState.value
-        val afterContent = afterState.content.text
-        val afterFormats = afterState.formats
-        val afterAlignment = afterState.textAlign
-        
-        // Only create command if there were actual changes (performance optimization)
-        val hasContentChange = beforeContent != afterContent
-        val hasFormatChange = beforeFormats != afterFormats
-        val hasAlignmentChange = beforeAlignment != afterAlignment
-        
-        if (hasContentChange || hasFormatChange || hasAlignmentChange) {
-            val commands = mutableListOf<TextEditCommand>()
-            
-            if (hasContentChange) {
-                // Determine if this is an insertion or deletion
-                if (afterContent.length > beforeContent.length) {
-                    // Text was inserted
-                    val insertPosition = beforeContent.length // Simplified - assuming append
-                    val insertedText = afterContent.substring(beforeContent.length)
-                    commands.add(
-                        InsertTextCommand(
-                            richTextState = richTextEditorHelper.richTextState.value,
-                            insertPosition = insertPosition,
-                            text = insertedText
-                        )
-                    )
-                } else if (beforeContent.length > afterContent.length) {
-                    // Text was deleted
-                    val deleteRange = TextRange(afterContent.length, beforeContent.length)
-                    val deletedText = beforeContent.substring(afterContent.length)
-                    commands.add(
-                        DeleteTextCommand(
-                            richTextState = richTextEditorHelper.richTextState.value,
-                            range = deleteRange,
-                            deletedText = deletedText
-                        )
-                    )
-                }
-            }
-            
-            if (commands.isNotEmpty()) {
-                val compositeCommand = if (commands.size == 1) {
-                    commands[0]
-                } else {
-                    CompositeCommand(commands)
-                }
-                viewModelScope.launch {
-                    undoRedoManager.executeCommand(compositeCommand)
-                }
-            }
-        }
-    }
     
-    /**
-     * Creates a command for content updates with undo/redo support.
-     */
-    private fun createContentUpdateCommand(oldContent: String, newContent: String) {
-        if (oldContent != newContent) {
-            val command = if (newContent.length > oldContent.length) {
-                // Text was inserted
-                val insertPosition = oldContent.length // Simplified - assuming append
-                val insertedText = newContent.substring(oldContent.length)
-                InsertTextCommand(
-                    richTextState = richTextEditorHelper.richTextState.value,
-                    insertPosition = insertPosition,
-                    text = insertedText
-                )
-            } else {
-                // Text was deleted
-                val deleteRange = TextRange(newContent.length, oldContent.length)
-                val deletedText = oldContent.substring(newContent.length)
-                DeleteTextCommand(
-                    richTextState = richTextEditorHelper.richTextState.value,
-                    range = deleteRange,
-                    deletedText = deletedText
-                )
-            }
-            
-            viewModelScope.launch {
-                undoRedoManager.executeCommand(command)
-            }
-        }
-    }
     
     /**
      * Security: Gets the safe recordings directory path.
@@ -854,6 +756,7 @@ class TextEditorViewModel(
         super.onCleared()
         saveJob?.cancel()
         syncJob?.cancel()
+        _contentSnapshot = null
     }
 }
 

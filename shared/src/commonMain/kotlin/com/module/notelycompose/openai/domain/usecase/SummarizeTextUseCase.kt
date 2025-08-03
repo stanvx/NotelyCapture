@@ -249,7 +249,16 @@ class SummarizeTextUseCase(
                 DEFAULT_SUMMARY_RATIO
             }
 
-            val summary = localSummarizer.summarize(text, summaryRatio)
+            val sentences = text.split(Regex("[.!?]+\\s*"))
+                .filter { it.isNotBlank() }
+            val targetSentenceCount = (sentences.size * summaryRatio).toInt().coerceAtLeast(1)
+            val summaryRate = targetSentenceCount.toFloat() / sentences.size.toFloat()
+            
+            val summaryIndices = localSummarizer.compute(text, summaryRate)
+            val summary = summaryIndices.sorted()
+                .map { sentences.getOrNull(it) ?: "" }
+                .filter { it.isNotBlank() }
+                .joinToString(". ") + if (summaryIndices.isNotEmpty()) "." else ""
             
             if (summary.isNotBlank()) {
                 SummarizationResult(

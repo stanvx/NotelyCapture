@@ -13,6 +13,20 @@ import androidx.compose.ui.unit.dp
  */
 
 /**
+ * Remembers the current keyboard height in pixels.
+ * This is useful for positioning toolbars above the keyboard.
+ */
+@Composable
+fun rememberKeyboardHeightPx(): Int {
+    val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
+    
+    return with(density) {
+        imeInsets.getBottom(density)
+    }
+}
+
+/**
  * Remembers the current keyboard height in dp.
  * This is useful for positioning toolbars above the keyboard.
  */
@@ -53,15 +67,3 @@ data class SystemInsets(
     val left: Dp = 0.dp,
     val right: Dp = 0.dp
 )
-
-/**
- * Toolbar display modes for rich text editor.
- */
-enum class ToolbarMode {
-    /** Always visible at the bottom */
-    Bottom,
-    /** Floating toolbar that appears when text is focused */
-    Floating,
-    /** Hidden toolbar */
-    Hidden
-}

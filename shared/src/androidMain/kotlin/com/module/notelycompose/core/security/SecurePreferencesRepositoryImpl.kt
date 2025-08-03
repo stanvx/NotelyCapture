@@ -31,27 +31,16 @@ class SecurePreferencesRepositoryImpl(
     
     private val encryptedPreferences: SharedPreferences by lazy {
         try {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            
             EncryptedSharedPreferences.create(
                 PREFERENCES_NAME,
-                masterKeyAlias,
+                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
                 context,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-            securityMonitoringService.reportSecurityEvent(
-                type = SecurityMonitoringService.SecurityEventType.ENCRYPTION_FAILURE,
-                severity = SecurityMonitoringService.SecuritySeverity.CRITICAL,
-                message = "Failed to initialize encrypted preferences",
-                details = mapOf(
-                    "error" to (e.message ?: "Unknown error"),
-                    "operation" to "initialization"
-                ),
-                throwable = e
-            )
-            throw SecureStorageException("Failed to initialize secure storage", e)
+            Napier.e("Failed to initialize encrypted preferences", e)
+            throw SecurityException("Failed to initialize secure storage", e)
         }
     }
     
@@ -69,7 +58,7 @@ class SecurePreferencesRepositoryImpl(
                 getOrCreatePresenceFlow(key).value = true
                 
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.ENCRYPTION_SUCCESS,
+                    type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
                     severity = SecurityMonitoringService.SecuritySeverity.LOW,
                     message = "API key stored successfully",
                     details = mapOf(
@@ -82,7 +71,7 @@ class SecurePreferencesRepositoryImpl(
                 
             } catch (e: Exception) {
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.ENCRYPTION_FAILURE,
+                    type = SecurityMonitoringService.SecurityEventType.CONFIGURATION_TAMPERING,
                     severity = SecurityMonitoringService.SecuritySeverity.HIGH,
                     message = "Failed to store API key",
                     details = mapOf(
@@ -93,11 +82,7 @@ class SecurePreferencesRepositoryImpl(
                     throwable = e
                 )
                 
-                if (e is SecureStorageException) {
-                    throw e
-                } else {
-                    throw SecureStorageException("Failed to store API key for $key", e)
-                }
+                throw SecureStorageException("Failed to store API key for $key", e)
             }
         }
     }
@@ -109,7 +94,7 @@ class SecurePreferencesRepositoryImpl(
                 
                 if (apiKey != null) {
                     securityMonitoringService.reportSecurityEvent(
-                        type = SecurityMonitoringService.SecurityEventType.DECRYPTION_SUCCESS,
+                        type = SecurityMonitoringService.SecurityEventType.SUSPICIOUS_ACTIVITY,
                         severity = SecurityMonitoringService.SecuritySeverity.LOW,
                         message = "API key retrieved successfully",
                         details = mapOf(
@@ -123,7 +108,7 @@ class SecurePreferencesRepositoryImpl(
                 
             } catch (e: Exception) {
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DECRYPTION_FAILURE,
+                    type = SecurityMonitoringService.SecurityEventType.CONFIGURATION_TAMPERING,
                     severity = SecurityMonitoringService.SecuritySeverity.HIGH,
                     message = "Failed to retrieve API key",
                     details = mapOf(
@@ -151,7 +136,7 @@ class SecurePreferencesRepositoryImpl(
                 getOrCreatePresenceFlow(key).value = false
                 
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+                    type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
                     severity = SecurityMonitoringService.SecuritySeverity.LOW,
                     message = "API key removed successfully",
                     details = mapOf(
@@ -164,7 +149,7 @@ class SecurePreferencesRepositoryImpl(
                 
             } catch (e: Exception) {
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+                    type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
                     severity = SecurityMonitoringService.SecuritySeverity.MEDIUM,
                     message = "Failed to remove API key",
                     details = mapOf(
@@ -186,7 +171,7 @@ class SecurePreferencesRepositoryImpl(
                 encryptedPreferences.getBoolean(key + PRESENCE_SUFFIX, false)
             } catch (e: Exception) {
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DECRYPTION_FAILURE,
+                    type = SecurityMonitoringService.SecurityEventType.CONFIGURATION_TAMPERING,
                     severity = SecurityMonitoringService.SecuritySeverity.LOW,
                     message = "Failed to check API key presence",
                     details = mapOf(
@@ -210,13 +195,13 @@ class SecurePreferencesRepositoryImpl(
             try {
                 encryptedPreferences.edit().clear().apply()
                 
-                // Reset all presence states
+                // Update all presence states
                 keyPresenceStates.values.forEach { flow ->
                     flow.value = false
                 }
                 
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+                    type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
                     severity = SecurityMonitoringService.SecuritySeverity.MEDIUM,
                     message = "All secure preferences cleared",
                     details = mapOf(
@@ -228,7 +213,7 @@ class SecurePreferencesRepositoryImpl(
                 
             } catch (e: Exception) {
                 securityMonitoringService.reportSecurityEvent(
-                    type = SecurityMonitoringService.SecurityEventType.DATA_DELETION,
+                    type = SecurityMonitoringService.SecurityEventType.PRIVACY_VIOLATION,
                     severity = SecurityMonitoringService.SecuritySeverity.HIGH,
                     message = "Failed to clear secure preferences",
                     details = mapOf(
@@ -245,27 +230,19 @@ class SecurePreferencesRepositoryImpl(
     
     private fun getOrCreatePresenceFlow(key: String): MutableStateFlow<Boolean> {
         return keyPresenceStates.getOrPut(key) {
-            val initialValue = encryptedPreferences.getBoolean(key + PRESENCE_SUFFIX, false)
-            MutableStateFlow(initialValue)
+            MutableStateFlow(encryptedPreferences.getBoolean(key + PRESENCE_SUFFIX, false))
         }
     }
     
     private fun validateApiKey(key: String, apiKey: String) {
-        when {
-            key.isBlank() -> throw SecureStorageException("API key identifier cannot be blank")
-            apiKey.isBlank() -> throw SecureStorageException("API key cannot be blank")
-            apiKey.length < 10 -> throw SecureStorageException("API key too short")
-            apiKey.length > 200 -> throw SecureStorageException("API key too long")
-            !apiKey.matches(Regex("^[a-zA-Z0-9\\-_.]+$")) -> {
-                throw SecureStorageException("API key contains invalid characters")
-            }
+        if (key.isBlank()) {
+            throw IllegalArgumentException("API key identifier cannot be blank")
         }
-        
-        // Additional validation for OpenAI API keys
-        if (key == SecurePreferencesRepository.OPENAI_API_KEY) {
-            if (!apiKey.startsWith("sk-")) {
-                throw SecureStorageException("Invalid OpenAI API key format")
-            }
+        if (apiKey.isBlank()) {
+            throw IllegalArgumentException("API key cannot be blank")
+        }
+        if (apiKey.length < 8) {
+            throw IllegalArgumentException("API key is too short")
         }
     }
 }

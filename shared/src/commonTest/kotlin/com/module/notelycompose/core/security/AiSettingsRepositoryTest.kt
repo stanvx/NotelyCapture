@@ -23,6 +23,7 @@ class AiSettingsRepositoryTest {
             message: String,
             details: Map<String, String>,
             userContext: SecurityMonitoringService.UserContext?,
+            remediation: String?,
             throwable: Throwable?
         ) {
             // Mock implementation - do nothing
@@ -44,6 +45,43 @@ class AiSettingsRepositoryTest {
             userContext: SecurityMonitoringService.UserContext?
         ) {
             // Mock implementation - do nothing
+        }
+        
+        override suspend fun reportSuspiciousActivity(
+            activityType: String,
+            description: String,
+            confidence: Double,
+            userContext: SecurityMonitoringService.UserContext?
+        ) {
+            // Mock implementation - do nothing
+        }
+        
+        override fun getSecurityEvents(): Flow<List<SecurityMonitoringService.SecurityEvent>> {
+            return MutableStateFlow(emptyList())
+        }
+        
+        override suspend fun getSecurityMetrics(): SecurityMonitoringService.SecurityMetrics {
+            return SecurityMonitoringService.SecurityMetrics(
+                totalEvents = 0,
+                eventsByType = emptyMap(),
+                eventsBySeverity = emptyMap(),
+                recentEventCount = 0,
+                averageEventsPerHour = 0.0,
+                topThreats = emptyList(),
+                systemHealth = "HEALTHY"
+            )
+        }
+        
+        override suspend fun cleanupOldEvents() {
+            // Mock implementation - do nothing
+        }
+        
+        override suspend fun updateConfiguration(config: SecurityMonitoringService.SecurityConfig) {
+            // Mock implementation - do nothing
+        }
+        
+        override suspend fun getConfiguration(): SecurityMonitoringService.SecurityConfig {
+            return SecurityMonitoringService.SecurityConfig()
         }
     }
     

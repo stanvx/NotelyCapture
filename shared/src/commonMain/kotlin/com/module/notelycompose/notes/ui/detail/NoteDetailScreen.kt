@@ -28,6 +28,8 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
+import com.module.notelycompose.notes.ui.richtext.rememberKeyboardHeightPx
+import com.module.notelycompose.notes.ui.richtext.rememberSystemInsets
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -131,9 +133,6 @@ fun NoteDetailScreen(
     val formattingState by richTextToolbarViewModel.formattingState.collectAsStateWithLifecycle()
     val isToolbarVisible by richTextToolbarViewModel.isToolbarVisible.collectAsStateWithLifecycle()
     
-    // Undo/Redo state from editor
-    val canUndo by editorViewModel.canUndo.collectAsStateWithLifecycle()
-    val canRedo by editorViewModel.canRedo.collectAsStateWithLifecycle()
     
     // Manage RichTextToolbarViewModel lifecycle to prevent memory leaks
     DisposableEffect(richTextToolbarViewModel) {
@@ -150,7 +149,7 @@ fun NoteDetailScreen(
     val currentHighlightColor by richTextToolbarViewModel.currentHighlightColor.collectAsStateWithLifecycle()
     
     // Keyboard and system positioning awareness
-    val keyboardHeight = rememberKeyboardHeight()
+    val keyboardHeight = rememberKeyboardHeightPx()
     val systemInsets = rememberSystemInsets()
 
     val audioPlayerUiState = audioPlayerViewModel.uiState.collectAsStateWithLifecycle().value
@@ -298,10 +297,6 @@ fun NoteDetailScreen(
                 onToggleQuoteBlock = richTextToolbarViewModel::toggleQuoteBlock,
                 onInsertDivider = { richTextToolbarViewModel.insertDivider() },
                 onToggleLink = { richTextToolbarViewModel.toggleLink() },
-                onUndo = { editorViewModel.onUndo() },
-                onRedo = { editorViewModel.onRedo() },
-                canUndo = canUndo,
-                canRedo = canRedo,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .imePadding()

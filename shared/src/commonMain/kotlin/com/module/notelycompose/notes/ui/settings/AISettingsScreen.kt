@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -44,9 +45,7 @@ fun AISettingsScreen(
     val currentApiKey by viewModel.currentApiKey.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
     
-    LaunchedEffect(Unit) {
-        viewModel.onProcessIntent(AISettingsIntent.LoadSettings)
-    }
+    // Initial state is loaded automatically in ViewModel init
     
     Scaffold(
         modifier = modifier,
@@ -89,14 +88,14 @@ fun AISettingsScreen(
             ApiKeyConfigurationSection(
                 uiState = uiState,
                 currentApiKey = currentApiKey,
-                onApiKeyChange = { viewModel.onProcessIntent(AISettingsIntent.UpdateApiKey(it)) },
-                onToggleVisibility = { viewModel.onProcessIntent(AISettingsIntent.ToggleApiKeyVisibility) },
+                onApiKeyChange = { viewModel.handleIntent(AISettingsIntent.UpdateApiKey(it)) },
+                onToggleVisibility = { viewModel.handleIntent(AISettingsIntent.ToggleApiKeyVisibility) },
                 onSaveApiKey = { 
                     keyboardController?.hide()
-                    viewModel.onProcessIntent(AISettingsIntent.SaveApiKey)
+                    viewModel.handleIntent(AISettingsIntent.SaveApiKey)
                 },
-                onRemoveApiKey = { viewModel.onProcessIntent(AISettingsIntent.RemoveApiKey) },
-                onClearErrors = { viewModel.onProcessIntent(AISettingsIntent.ClearErrors) }
+                onRemoveApiKey = { viewModel.handleIntent(AISettingsIntent.RemoveApiKey) },
+                onClearErrors = { viewModel.handleIntent(AISettingsIntent.ClearErrors) }
             )
             
             // Status Section

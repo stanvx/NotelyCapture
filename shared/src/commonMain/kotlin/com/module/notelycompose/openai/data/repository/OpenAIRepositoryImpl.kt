@@ -9,6 +9,7 @@ import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
+import io.ktor.client.plugins.HttpTimeout
 import com.module.notelycompose.core.security.SecurityHelper
 import com.module.notelycompose.openai.domain.NetworkConnectivityManager
 import com.module.notelycompose.openai.domain.model.OpenAIError
@@ -23,16 +24,23 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ServerResponseException
+import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import okio.Path.Companion.toPath
 import okio.Source
 import okio.buffer
 import okio.source
+import okio.Buffer
+import okio.ByteString.Companion.toByteString
+import kotlinx.io.files.Path
+import kotlinx.io.files.FileSystem
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import java.io.File
 import kotlin.math.ceil
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Implementation of OpenAIRepository using openai-kotlin library with Ktor client.
@@ -60,13 +68,7 @@ class OpenAIRepositoryImpl(
     private fun initializeClient(apiKey: String) {
         try {
             val config = OpenAIConfig(
-                token = apiKey,
-                timeout = currentConfig.timeoutMs.milliseconds,
-                retry = com.aallam.openai.client.RetryPolicy(
-                    maxRetries = currentConfig.maxRetries,
-                    base = 1.0,
-                    maxDelay = 8.0
-                )
+                token = apiKey
             )
             openAIClient = OpenAI(config)
             Napier.d("OpenAI client initialized successfully")
@@ -168,7 +170,9 @@ class OpenAIRepositoryImpl(
 
                 // Create file source for the audio file
                 val audioFile = File(request.audioFilePath)
-                val fileSource = FileSource(name = audioFile.name, source = audioFile.source().buffer())
+                val fileSource = FileSource(
+                    path = Path(request.audioFilePath)
+                )
 
                 val openAIRequest = OpenAITranscriptionRequest(
                     audio = fileSource,
