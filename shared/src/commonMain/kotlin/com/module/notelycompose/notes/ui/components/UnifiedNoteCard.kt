@@ -787,7 +787,6 @@ private fun ListModeContent(
                     )
                 }
             } else {
-                // SECURITY FIX: Use SecureCompactAudioPlayer with path validation
                 SecureCompactAudioPlayer(
                     noteData = noteData,
                     uiState = audioPlayerUiState,
