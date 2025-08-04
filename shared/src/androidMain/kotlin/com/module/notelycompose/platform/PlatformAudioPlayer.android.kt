@@ -7,26 +7,73 @@ actual class PlatformAudioPlayer {
     private var mediaPlayer: android.media.MediaPlayer? = null
 
     actual suspend fun prepare(filePath: String): Int {
-        mediaPlayer?.release()
+        android.util.Log.d("PlatformAudioPlayer", "prepare() called with filePath: $filePath")
+        
+        // Properly release existing MediaPlayer with error handling
+        mediaPlayer?.let { existingPlayer ->
+            try {
+                android.util.Log.d("PlatformAudioPlayer", "Releasing existing MediaPlayer")
+                if (existingPlayer.isPlaying) {
+                    existingPlayer.stop()
+                }
+                existingPlayer.release()
+                android.util.Log.d("PlatformAudioPlayer", "Existing MediaPlayer released successfully")
+            } catch (e: Exception) {
+                android.util.Log.w("PlatformAudioPlayer", "Error releasing existing MediaPlayer", e)
+            }
+        }
+        mediaPlayer = null
+        
         try {
+            android.util.Log.d("PlatformAudioPlayer", "Creating new MediaPlayer")
             val player = android.media.MediaPlayer().apply {
+                // Set error listener to handle MediaPlayer errors gracefully
+                setOnErrorListener { mp, what, extra ->
+                    android.util.Log.e("PlatformAudioPlayer", "MediaPlayer error: what=$what, extra=$extra")
+                    false // Return false to trigger onCompletion
+                }
+                
+                android.util.Log.d("PlatformAudioPlayer", "Setting data source: $filePath")
                 setDataSource(filePath)
+                android.util.Log.d("PlatformAudioPlayer", "Calling prepare()")
                 prepare()
+                android.util.Log.d("PlatformAudioPlayer", "MediaPlayer prepared successfully")
             }
             mediaPlayer = player
-            return player.duration
+            val duration = player.duration
+            android.util.Log.d("PlatformAudioPlayer", "Audio duration: ${duration}ms")
+            return duration
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("PlatformAudioPlayer", "Failed to prepare MediaPlayer", e)
+            mediaPlayer = null // Ensure null on failure
             return 0
         }
     }
 
     actual fun play() {
-        mediaPlayer?.start()
+        android.util.Log.d("PlatformAudioPlayer", "play() called")
+        mediaPlayer?.let {
+            try {
+                android.util.Log.d("PlatformAudioPlayer", "Starting MediaPlayer")
+                it.start()
+                android.util.Log.d("PlatformAudioPlayer", "MediaPlayer started successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("PlatformAudioPlayer", "Failed to start MediaPlayer", e)
+            }
+        } ?: android.util.Log.w("PlatformAudioPlayer", "Cannot play - MediaPlayer is null")
     }
 
     actual fun pause() {
-        mediaPlayer?.pause()
+        android.util.Log.d("PlatformAudioPlayer", "pause() called")
+        mediaPlayer?.let {
+            try {
+                android.util.Log.d("PlatformAudioPlayer", "Pausing MediaPlayer")
+                it.pause()
+                android.util.Log.d("PlatformAudioPlayer", "MediaPlayer paused successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("PlatformAudioPlayer", "Failed to pause MediaPlayer", e)
+            }
+        } ?: android.util.Log.w("PlatformAudioPlayer", "Cannot pause - MediaPlayer is null")
     }
 
     actual fun stop() {
@@ -34,7 +81,20 @@ actual class PlatformAudioPlayer {
     }
 
     actual fun release() {
-        mediaPlayer?.release()
+        android.util.Log.d("PlatformAudioPlayer", "release() called")
+        mediaPlayer?.let { player ->
+            try {
+                if (player.isPlaying) {
+                    android.util.Log.d("PlatformAudioPlayer", "Stopping MediaPlayer before release")
+                    player.stop()
+                }
+                android.util.Log.d("PlatformAudioPlayer", "Releasing MediaPlayer")
+                player.release()
+                android.util.Log.d("PlatformAudioPlayer", "MediaPlayer released successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("PlatformAudioPlayer", "Error during MediaPlayer release", e)
+            }
+        }
         mediaPlayer = null
     }
 

@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.security.AudioPathValidator
+import com.module.notelycompose.security.AudioPathValidator.ValidationResult
 
 /**
  * Platform-independent ViewModel for audio playback functionality
@@ -92,58 +94,116 @@ class AudioPlayerViewModel(
     }
 
     fun onLoadAudio(filePath: String, noteId: Long) {
+        println("[AUDIO-VM] onLoadAudio called: filePath='$filePath', noteId=$noteId")
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                // Stop any currently playing audio
-                if (_uiState.value.isPlaying) {
-                    audioPlayer.pause()
-                    onStopProgressUpdates()
+                // SECURITY: Validate audio path before processing (defense-in-depth)
+                // This provides an additional security layer beyond UI validation
+                println("[AUDIO-VM] Validating audio path: $filePath")
+                when (val validation = AudioPathValidator.validateAudioPath(filePath)) {
+                    is ValidationResult.Valid -> {
+                        // Path is validated - proceed with audio loading
+                        println("[AUDIO-VM] Path validation successful, loading audio")
+                        loadValidatedAudio(filePath, noteId)
+                    }
+                    is ValidationResult.Invalid -> {
+                        // Security threat detected - log and reject
+                        val threatLevel = validation.securityThreat
+                        val reason = validation.reason
+                        
+                        println("[SECURITY-BLOCK] AudioPlayerViewModel blocked path: $reason (Threat: $threatLevel)")
+                        
+                        _uiState.update { it.copy(
+                            errorMessage = when (threatLevel) {
+                                AudioPathValidator.SecurityThreat.CRITICAL -> "Audio file access denied for security reasons"
+                                AudioPathValidator.SecurityThreat.HIGH -> "Audio file format not supported"
+                                AudioPathValidator.SecurityThreat.MEDIUM -> "Audio file path is invalid"
+                                AudioPathValidator.SecurityThreat.LOW -> "Audio file is unavailable"
+                            },
+                            isLoaded = false,
+                            isPlaying = false
+                        ) }
+                    }
                 }
-                
-                val duration = audioPlayer.prepare(filePath)
-                val currentSpeed = _uiState.value.playbackSpeed
-                audioPlayer.setPlaybackSpeed(currentSpeed) // Apply current speed to new audio
-                
-                // Extract waveform data in parallel
-                val amplitudes = waveformExtractor.extractAmplitudesForDuration(filePath, duration)
-                
-                _uiState.update { it.copy(
-                    isLoaded = true,
-                    duration = duration,
-                    isPlaying = false,
-                    currentPosition = 0,
-                    filePath = filePath,
-                    currentPlayingNoteId = noteId,
-                    waveformAmplitudes = amplitudes
-                ) }
             } catch (e: Exception) {
+                println("[SECURITY-ERROR] Exception in audio loading: ${e.message}")
                 _uiState.update { it.copy(
-                    errorMessage = e.message ?: "Failed to load audio"
+                    errorMessage = "Failed to load audio safely"
                 ) }
             }
+        }
+    }
+    
+    /**
+     * Internal method to load audio after path validation has passed
+     */
+    private suspend fun loadValidatedAudio(validatedFilePath: String, noteId: Long) {
+        println("[AUDIO-VM] loadValidatedAudio called: filePath='$validatedFilePath', noteId=$noteId")
+        try {
+            // Stop any currently playing audio
+            if (_uiState.value.isPlaying) {
+                println("[AUDIO-VM] Stopping currently playing audio")
+                audioPlayer.pause()
+                onStopProgressUpdates()
+            }
+            
+            println("[AUDIO-VM] Calling audioPlayer.prepare()")
+            val duration = audioPlayer.prepare(validatedFilePath)
+            println("[AUDIO-VM] Audio prepared with duration: ${duration}ms")
+            val currentSpeed = _uiState.value.playbackSpeed
+            audioPlayer.setPlaybackSpeed(currentSpeed) // Apply current speed to new audio
+            
+            // Extract waveform data in parallel
+            val amplitudes = waveformExtractor.extractAmplitudesForDuration(validatedFilePath, duration)
+            
+            _uiState.update { it.copy(
+                isLoaded = true,
+                duration = duration,
+                isPlaying = false,
+                currentPosition = 0,
+                filePath = validatedFilePath,
+                currentPlayingNoteId = noteId,
+                waveformAmplitudes = amplitudes,
+                errorMessage = null // Clear any previous errors
+            ) }
+        } catch (e: Exception) {
+            println("[AUDIO-ERROR] Failed to load validated audio: ${e.message}")
+            _uiState.update { it.copy(
+                errorMessage = e.message ?: "Failed to load audio",
+                isLoaded = false,
+                isPlaying = false
+            ) }
         }
     }
 
     fun onTogglePlayPause(noteId: Long) {
+        println("[AUDIO-VM] onTogglePlayPause called for noteId=$noteId")
         val currentState = _uiState.value
+        println("[AUDIO-VM] Current state: currentPlayingNoteId=${currentState.currentPlayingNoteId}, isPlaying=${currentState.isPlaying}")
         
         // Only allow play/pause if this note is the currently loaded note
         if (currentState.currentPlayingNoteId == noteId) {
             if (currentState.isPlaying) {
+                println("[AUDIO-VM] Pausing audio")
                 onPause()
             } else {
+                println("[AUDIO-VM] Playing audio")
                 onPlay()
             }
+        } else {
+            println("[AUDIO-VM] Cannot toggle play/pause - note not loaded (expected=$noteId, loaded=${currentState.currentPlayingNoteId})")
         }
     }
 
     private fun onPlay() {
+        println("[AUDIO-VM] onPlay() called")
         audioPlayer.play()
         _uiState.update { it.copy(isPlaying = true) }
         onStartProgressUpdates()
     }
 
     private fun onPause() {
+        println("[AUDIO-VM] onPause() called")
         audioPlayer.pause()
         _uiState.update { it.copy(isPlaying = false) }
         onStopProgressUpdates()

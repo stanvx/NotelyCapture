@@ -102,18 +102,24 @@ fun CompactAudioPlayer(
                 // Play/Pause button with immediate feedback
                 CompactPlayButton(
                     isPlaying = isCurrentlyPlaying,
-                    isLoaded = isCurrentlyLoaded || (noteDurationMs > 0 && filePath.isNotEmpty()), // Show as loaded if we have valid audio
+                    isLoaded = isCurrentlyLoaded || filePath.isNotEmpty(), // Enable if loaded OR has file path (even without duration)
                     onClick = {
+                        println("[COMPACT-AUDIO] Play button clicked for noteId=$noteId")
+                        println("[COMPACT-AUDIO] isCurrentlyLoaded=$isCurrentlyLoaded, filePath='$filePath', noteDurationMs=$noteDurationMs")
+                        
                         hapticFeedback?.light()
                         // Immediate action for better UX - no two-click requirement
                         if (!isCurrentlyLoaded && filePath.isNotEmpty()) {
                             // Load and immediately start playing
+                            println("[COMPACT-AUDIO] Loading audio: $filePath")
                             onLoadAudio(filePath, noteId)
                             // Note: The ViewModel should handle auto-play after loading for immediate feedback
                         } else if (isCurrentlyLoaded) {
+                            println("[COMPACT-AUDIO] Toggling play/pause for loaded note")
                             onTogglePlayPause(noteId)
+                        } else {
+                            println("[COMPACT-AUDIO] No action - invalid audio file path or not loaded")
                         }
-                        // Do nothing if no valid audio file path
                     }
                 )
 

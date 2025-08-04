@@ -783,8 +783,7 @@ fun CalendarScreen(
                             navigateToNoteDetails(noteId.toString())
                         },
                         audioPlayerViewModel = audioPlayerViewModel,
-                        audioPlayerUiState = audioPlayerViewModel?.onGetUiState(audioPlayerViewModel.uiState.collectAsState().value),
-                        maxContentLines = 4
+                        audioPlayerUiState = audioPlayerViewModel?.onGetUiState(audioPlayerViewModel.uiState.collectAsState().value)
                     )
                 }
             }

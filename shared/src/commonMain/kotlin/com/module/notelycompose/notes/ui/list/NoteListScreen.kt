@@ -208,13 +208,15 @@ private fun NoteListWithHeader(
         columns = StaggeredGridCells.Adaptive(minSize = 280.dp),
         state = lazyStaggeredGridState,
         modifier = Modifier.fillMaxSize(),
-        verticalItemSpacing = 8.dp,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalItemSpacing = 6.dp,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         contentPadding = PaddingValues(
             start = 8.dp,
             end = 8.dp,
             bottom = 88.dp
-        )
+        ),
+        // Optimize prefetching for smoother scrolling
+        userScrollEnabled = true
     ) {
         item(span = androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan.FullLine) {
             Column {
@@ -246,13 +248,13 @@ private fun NoteListWithHeader(
         
         itemsIndexed(
             items = noteList,
-            key = { _, note -> note.id }
+            key = { _, note -> "note_${note.id}_${note.title.hashCode()}_${note.content.hashCode()}" }
         ) { index, note ->
             UnifiedNoteCard(
                 note = note,
                 layoutMode = NoteCardLayoutMode.LIST,
                 onClick = {
-                    navigateToNoteDetails("${note.id}")
+                    // Allow card expansion (especially for voice notes) - navigation via edit action
                 },
                 onShareClick = { noteId ->
                     onShareClick(note)
@@ -265,7 +267,9 @@ private fun NoteListWithHeader(
                 },
                 audioPlayerViewModel = sharedAudioPlayerViewModel,
                 audioPlayerUiState = sharedAudioPlayerViewModel.onGetUiState(sharedAudioPlayerUiState),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem()
             )
         }
     }

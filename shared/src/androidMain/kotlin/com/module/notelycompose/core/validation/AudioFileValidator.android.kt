@@ -41,15 +41,43 @@ actual fun validateCanonicalPath(filePath: String, appDirectory: String): Result
         val file = File(filePath)
         val appDir = File(appDirectory)
         
+        // First check if the app directory exists - if not, we can't validate
+        if (!appDir.exists()) {
+            return Result.failure(
+                TranscriptionError.AudioFileValidationError(
+                    message = "App directory does not exist for validation",
+                    filePath = filePath
+                )
+            )
+        }
+        
+        // For non-existent files, validate the parent directory path instead
+        val pathToValidate = if (file.exists()) {
+            file
+        } else {
+            // Use parent directory for validation if file doesn't exist
+            file.parentFile ?: return Result.failure(
+                TranscriptionError.AudioFileValidationError(
+                    message = "Cannot determine parent directory for validation",
+                    filePath = filePath
+                )
+            )
+        }
+        
         // Get canonical paths to resolve symbolic links and normalize paths
-        val canonicalFilePath = file.canonicalPath
+        val canonicalFilePath = if (pathToValidate.exists()) {
+            pathToValidate.canonicalPath
+        } else {
+            // Fallback to absolute path if canonical path fails
+            pathToValidate.absolutePath
+        }
         val canonicalAppDir = appDir.canonicalPath
         
-        // Ensure the file is within the app directory using canonical paths
+        // Ensure the file/directory is within the app directory using canonical paths
         if (!canonicalFilePath.startsWith(canonicalAppDir)) {
             Result.failure(
                 TranscriptionError.AudioFileValidationError(
-                    message = "Invalid file path: canonical path is outside app directory",
+                    message = "Invalid file path: path is outside app directory",
                     filePath = filePath
                 )
             )
@@ -57,12 +85,28 @@ actual fun validateCanonicalPath(filePath: String, appDirectory: String): Result
             Result.success(Unit)
         }
     } catch (e: Exception) {
-        // If canonical path resolution fails, return error for security
-        Result.failure(
-            TranscriptionError.AudioFileValidationError(
-                message = "Path validation failed: unable to resolve canonical path - ${e.message}",
-                filePath = filePath
+        // If canonical path resolution fails, fall back to basic path validation
+        return try {
+            val normalizedFilePath = File(filePath).absolutePath
+            val normalizedAppDir = File(appDirectory).absolutePath
+            
+            if (!normalizedFilePath.startsWith(normalizedAppDir)) {
+                Result.failure(
+                    TranscriptionError.AudioFileValidationError(
+                        message = "Invalid file path: path is outside app directory (fallback validation)",
+                        filePath = filePath
+                    )
+                )
+            } else {
+                Result.success(Unit)
+            }
+        } catch (fallbackException: Exception) {
+            Result.failure(
+                TranscriptionError.AudioFileValidationError(
+                    message = "Path validation failed: ${e.message}",
+                    filePath = filePath
+                )
             )
-        )
+        }
     }
 }

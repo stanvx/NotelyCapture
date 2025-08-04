@@ -54,6 +54,10 @@ class NoteSqlDelightDataSource(
         textAlign: TextAlignDataModel,
         recordingPath: String
     ) {
+        // Get the existing note to preserve the original creation date
+        val existingNote = queries.getNoteById(id).executeAsOneOrNull()
+        val originalCreatedAt = existingNote?.created_at ?: DateTimeUtil.toEpochMilli(DateTimeUtil.now())
+        
         queries.updateNote(
             id = id,
             title = title,
@@ -62,7 +66,7 @@ class NoteSqlDelightDataSource(
             formatting = json.encodeToString(formatting),
             text_align = textAlign.toString(),
             recording_path = recordingPath,
-            created_at = DateTimeUtil.toEpochMilli(DateTimeUtil.now())
+            created_at = originalCreatedAt // Preserve original creation date
         )
     }
 

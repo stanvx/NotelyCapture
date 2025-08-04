@@ -52,7 +52,9 @@ object AudioFileValidator {
                 )
             }
             
-            if (filePath.count { it == '.' } > 1) {
+            // Check for multiple extensions in filename only (not full path)
+            val fileName = filePath.substringAfterLast('/').substringAfterLast('\\')
+            if (fileName.count { it == '.' } > 1) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
                         message = "Invalid filename: multiple extensions detected",

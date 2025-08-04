@@ -38,6 +38,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
 private const val ID_NOT_SET = 0L
@@ -515,7 +516,7 @@ class TextEditorViewModel(
         createdAt: LocalDateTime = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault())
     ): String {
-        return createdAt.formattedDate()
+        return createdAt.toInstant(TimeZone.currentSystemDefault()).toString()
     }
 
 
