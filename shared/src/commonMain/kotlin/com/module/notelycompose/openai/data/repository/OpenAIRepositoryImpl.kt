@@ -39,8 +39,11 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import java.io.File
 import kotlin.math.ceil
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
+import kotlin.math.pow
+import com.module.notelycompose.core.constants.AppConstants
+import com.module.notelycompose.core.validation.getAudioDurationMs
+import com.module.notelycompose.openai.data.cache.OpenAIResponseCache
+import com.module.notelycompose.openai.domain.analytics.OpenAIAnalytics
 
 /**
  * Implementation of OpenAIRepository using openai-kotlin library with Ktor client.
@@ -49,7 +52,9 @@ import kotlin.time.Duration.Companion.seconds
 class OpenAIRepositoryImpl(
     private val networkConnectivityManager: NetworkConnectivityManager,
     private val securityHelper: SecurityHelper,
-    private val openAIApiKey: String? = null
+    private val openAIApiKey: String? = null,
+    private val responseCache: OpenAIResponseCache = OpenAIResponseCache(),
+    private val analytics: OpenAIAnalytics = OpenAIAnalytics()
 ) : OpenAIRepository {
 
     private var openAIClient: OpenAI? = null
@@ -118,7 +123,9 @@ class OpenAIRepositoryImpl(
                     maxTokens = 1
                 )
                 
-                client.chatCompletion(testRequest)
+                withRetry {
+                    client.chatCompletion(testRequest)
+                }
                 Napier.d("OpenAI connection test successful")
                 true
             } catch (e: Exception) {
@@ -130,6 +137,9 @@ class OpenAIRepositoryImpl(
 
     override suspend fun transcribeAudio(request: TranscriptionRequest): OpenAIResponse<TranscriptionResult> {
         return withContext(Dispatchers.Default) {
+            val startTime = System.currentTimeMillis()
+            val operation = "transcription"
+            
             try {
                 // Security validation
                 if (!securityHelper.isPathSafe(request.audioFilePath)) {
@@ -139,6 +149,15 @@ class OpenAIRepositoryImpl(
                             message = "Invalid audio file path detected"
                         )
                     )
+                }
+
+                // Check cache first for offline access
+                val cachedResponse = responseCache.getCachedTranscription(request)
+                if (cachedResponse != null) {
+                    Napier.d("Returning cached transcription result")
+                    val responseTime = System.currentTimeMillis() - startTime
+                    analytics.recordSuccessfulRequest(operation, responseTime, fromCache = true)
+                    return@withContext cachedResponse
                 }
 
                 // Network availability check
@@ -182,7 +201,9 @@ class OpenAIRepositoryImpl(
                     temperature = request.temperature
                 )
 
-                val response = client.transcription(openAIRequest)
+                val response = withRetry {
+                    client.transcription(openAIRequest)
+                }
                 
                 val result = TranscriptionResult(
                     text = response.text,
@@ -191,7 +212,12 @@ class OpenAIRepositoryImpl(
                 )
 
                 Napier.d("Audio transcription completed successfully")
-                OpenAIResponse(data = result)
+                val successResponse = OpenAIResponse(data = result)
+                
+                // Cache successful response for offline access
+                responseCache.cacheTranscription(request, successResponse)
+                
+                successResponse
 
             } catch (e: ClientRequestException) {
                 Napier.e("OpenAI client request error during transcription", e)
@@ -244,6 +270,13 @@ class OpenAIRepositoryImpl(
                     )
                 }
 
+                // Check cache first for offline access
+                val cachedResponse = responseCache.getCachedSummarization(request)
+                if (cachedResponse != null) {
+                    Napier.d("Returning cached summarization result")
+                    return@withContext cachedResponse
+                }
+
                 // Network availability check
                 if (!isNetworkAvailable()) {
                     return@withContext OpenAIResponse(
@@ -280,7 +313,9 @@ class OpenAIRepositoryImpl(
                     temperature = 0.3 // Lower temperature for more consistent summaries
                 )
 
-                val response = client.chatCompletion(chatRequest)
+                val response = withRetry {
+                    client.chatCompletion(chatRequest)
+                }
                 val summaryText = response.choices.firstOrNull()?.message?.content ?: ""
                 
                 if (summaryText.isBlank()) {
@@ -307,7 +342,12 @@ class OpenAIRepositoryImpl(
                 )
 
                 Napier.d("Text summarization completed successfully")
-                OpenAIResponse(data = result)
+                val successResponse = OpenAIResponse(data = result)
+                
+                // Cache successful response for offline access
+                responseCache.cacheSummarization(request, successResponse)
+                
+                successResponse
 
             } catch (e: ClientRequestException) {
                 Napier.e("OpenAI client request error during summarization", e)
@@ -413,12 +453,21 @@ class OpenAIRepositoryImpl(
             if (!file.exists()) return null
             
             // OpenAI Whisper pricing: $0.006 per minute
-            // Estimate duration based on file size (rough approximation)
-            val fileSizeKB = file.length() / 1024
-            val estimatedMinutes = fileSizeKB / 1000 // Very rough estimation
-            val costCents = ceil(estimatedMinutes * 0.6).toInt() // $0.006 = 0.6 cents
+            val durationMs = getAudioDurationMs(audioFilePath)
             
-            maxOf(1, costCents) // Minimum 1 cent
+            if (durationMs != null) {
+                // Use actual audio duration for accurate cost estimation
+                val durationMinutes = durationMs / 60_000.0 // Convert ms to minutes
+                val costCents = ceil(durationMinutes * 0.6).toInt() // $0.006 = 0.6 cents
+                maxOf(1, costCents) // Minimum 1 cent
+            } else {
+                // Fallback to file size estimation if duration cannot be determined
+                Napier.w("Cannot determine audio duration, falling back to file size estimation")
+                val fileSizeKB = file.length() / 1024
+                val estimatedMinutes = fileSizeKB / 1000 // Very rough estimation
+                val costCents = ceil(estimatedMinutes * 0.6).toInt()
+                maxOf(1, costCents) // Minimum 1 cent
+            }
         } catch (e: Exception) {
             Napier.e("Error estimating transcription cost", e)
             null
@@ -470,5 +519,75 @@ class OpenAIRepositoryImpl(
         } ?: ""
 
         return "$basePrompt$lengthGuidance"
+    }
+
+    /**
+     * Executes an operation with exponential backoff retry logic for transient failures.
+     * 
+     * @param operation The operation to retry
+     * @param maxAttempts Maximum number of retry attempts (default from AppConstants)
+     * @param shouldRetry Predicate to determine if the exception should trigger a retry
+     * @return Result of the operation
+     */
+    private suspend fun <T> withRetry(
+        maxAttempts: Int = AppConstants.ErrorHandling.MAX_RETRY_ATTEMPTS,
+        shouldRetry: (Exception) -> Boolean = ::isRetryableException,
+        operation: suspend () -> T
+    ): T {
+        var lastException: Exception? = null
+        
+        repeat(maxAttempts) { attempt ->
+            try {
+                return operation()
+            } catch (e: Exception) {
+                lastException = e
+                
+                // Don't retry on the last attempt or if the exception is not retryable
+                if (attempt == maxAttempts - 1 || !shouldRetry(e)) {
+                    throw e
+                }
+                
+                // Calculate exponential backoff delay
+                val baseDelayMs = AppConstants.ErrorHandling.BASE_RETRY_DELAY.inWholeMilliseconds
+                val delayMs = baseDelayMs * (2.0.pow(attempt.toDouble())).toLong()
+                val maxDelayMs = 30_000L // Cap at 30 seconds
+                val actualDelayMs = minOf(delayMs, maxDelayMs)
+                
+                Napier.w("OpenAI operation failed (attempt ${attempt + 1}/$maxAttempts), retrying in ${actualDelayMs}ms: ${e.message}")
+                delay(actualDelayMs)
+            }
+        }
+        
+        // This should never be reached, but throw the last exception as fallback
+        throw lastException ?: RuntimeException("Retry operation failed with unknown error")
+    }
+
+    /**
+     * Determines if an exception should trigger a retry attempt.
+     * Only transient errors that might resolve on retry should return true.
+     */
+    private fun isRetryableException(exception: Exception): Boolean {
+        return when (exception) {
+            is HttpRequestTimeoutException -> true
+            is UnresolvedAddressException -> true
+            is ServerResponseException -> {
+                // Retry on 5xx server errors (but not 4xx client errors)
+                exception.response.status.value >= 500
+            }
+            is ClientRequestException -> {
+                // Only retry on specific 4xx errors that might be transient
+                when (exception.response.status.value) {
+                    429 -> true // Rate limiting - should retry with backoff
+                    408 -> true // Request timeout
+                    else -> false // Other client errors are usually permanent
+                }
+            }
+            else -> {
+                // Retry on generic network/connection issues
+                exception.message?.contains("connection", ignoreCase = true) == true ||
+                exception.message?.contains("timeout", ignoreCase = true) == true ||
+                exception.message?.contains("network", ignoreCase = true) == true
+            }
+        }
     }
 }

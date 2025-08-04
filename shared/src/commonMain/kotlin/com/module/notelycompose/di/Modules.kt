@@ -106,10 +106,12 @@ val repositoryModule = module {
     single { AiSettingsRepository(get(), get()) }
     
     // OpenAI Integration
+    single { com.module.notelycompose.openai.data.cache.OpenAIResponseCache() }
     single<OpenAIRepository> { 
         OpenAIRepositoryImpl(
             networkConnectivityManager = get(),
-            securityHelper = get()
+            securityHelper = get(),
+            responseCache = get()
         )
     }
     single { TFIDFSummarizer() }

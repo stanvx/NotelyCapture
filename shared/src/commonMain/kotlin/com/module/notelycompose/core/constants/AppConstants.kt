@@ -69,6 +69,17 @@ object AppConstants {
     }
     
     /**
+     * Text editor timing and performance configurations
+     */
+    object Editor {
+        /** Debounce delay for save operations in milliseconds */
+        val SAVE_DEBOUNCE_DELAY: Duration = 500.milliseconds
+        
+        /** Debounce delay for rich text synchronization in milliseconds */
+        val SYNC_DEBOUNCE_DELAY: Duration = 150.milliseconds
+    }
+    
+    /**
      * UI dimension constants (in DP)
      */
     object UI {

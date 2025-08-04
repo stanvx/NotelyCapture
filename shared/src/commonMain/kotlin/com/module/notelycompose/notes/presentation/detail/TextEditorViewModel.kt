@@ -5,6 +5,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextRange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.module.notelycompose.core.constants.AppConstants
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.core.security.SecurityHelper
 import com.module.notelycompose.notes.domain.DeleteNoteById
@@ -42,8 +43,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
 private const val ID_NOT_SET = 0L
-private const val SAVE_DEBOUNCE_DELAY = 500L // 500ms debounce for save operations
-private const val SYNC_DEBOUNCE_DELAY = 150L // 150ms debounce for rich text sync
 
 class TextEditorViewModel(
     private val getNoteByIdUseCase: GetNoteById,
@@ -330,7 +329,7 @@ class TextEditorViewModel(
         if (content == lastSetContent) return
         
         syncJob = viewModelScope.launch {
-            delay(SYNC_DEBOUNCE_DELAY)
+            delay(AppConstants.Editor.SYNC_DEBOUNCE_DELAY)
             
             try {
                 richTextEditorHelper.setContent(content)
@@ -361,7 +360,7 @@ class TextEditorViewModel(
         saveJob?.cancel()
         
         saveJob = viewModelScope.launch {
-            delay(SAVE_DEBOUNCE_DELAY)
+            delay(AppConstants.Editor.SAVE_DEBOUNCE_DELAY)
             
             // Use mutex to ensure atomic save operations and prevent race conditions
             saveMutex.withLock {

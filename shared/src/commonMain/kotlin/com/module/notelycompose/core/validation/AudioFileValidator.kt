@@ -261,3 +261,9 @@ expect fun canReadFile(filePath: String): Boolean
  * Resolves symbolic links and validates against canonical app directory path.
  */
 expect fun validateCanonicalPath(filePath: String, appDirectory: String): Result<Unit>
+
+/**
+ * Platform-specific audio duration retrieval in milliseconds.
+ * Returns null if duration cannot be determined.
+ */
+expect fun getAudioDurationMs(filePath: String): Long?

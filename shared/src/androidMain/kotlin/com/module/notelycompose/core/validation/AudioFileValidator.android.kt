@@ -1,5 +1,6 @@
 package com.module.notelycompose.core.validation
 
+import android.media.MediaMetadataRetriever
 import com.module.notelycompose.transcription.error.TranscriptionError
 import java.io.File
 
@@ -108,5 +109,20 @@ actual fun validateCanonicalPath(filePath: String, appDirectory: String): Result
                 )
             )
         }
+    }
+}
+
+actual fun getAudioDurationMs(filePath: String): Long? {
+    return try {
+        val retriever = MediaMetadataRetriever()
+        retriever.use { metadataRetriever ->
+            metadataRetriever.setDataSource(filePath)
+            val durationStr = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            durationStr?.toLongOrNull()
+        }
+    } catch (e: Exception) {
+        // Log the error but don't throw - return null to indicate failure
+        android.util.Log.w("AudioFileValidator", "Failed to get audio duration for $filePath", e)
+        null
     }
 }
