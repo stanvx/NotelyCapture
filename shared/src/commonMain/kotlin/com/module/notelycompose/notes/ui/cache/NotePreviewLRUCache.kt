@@ -130,6 +130,11 @@ class NotePreviewLRUCache<K, V>(
         updateMemoryUsage()
     }
 
+    suspend fun size(): Int = mutex.withLock {
+        cache.size
+    }
+
+
     /**
      * Evict entries older than specified age
      */
@@ -233,13 +238,13 @@ data class NotePreviewCacheKey(
          */
         fun fromNoteData(
             id: Long,
-            title: String,
-            content: String,
+            title: String?,
+            content: String?,
             isVoice: Boolean,
             isStarred: Boolean
         ): NotePreviewCacheKey {
             // Use efficient hash calculation instead of storing full content
-            val contentHash = (title + content).hashCode()
+            val contentHash = ((title ?: "") + (content ?: "")).hashCode()
             return NotePreviewCacheKey(id, contentHash, isVoice, isStarred)
         }
     }

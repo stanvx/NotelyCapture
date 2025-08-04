@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.core.security.SecurityHelper
-import com.module.notelycompose.notes.domain.DeleteNoteById
-import com.module.notelycompose.notes.domain.GetAllNotesUseCase
+import com.module.notelycompose.notes.domain.interfaces.DeleteNoteByIdUseCase
+import com.module.notelycompose.notes.domain.interfaces.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
 import com.module.notelycompose.notes.domain.model.NotesFilterDomainModel
 import com.module.notelycompose.notes.presentation.helpers.getFirstNonEmptyLineAfterFirst
@@ -38,7 +38,7 @@ private const val SEARCH_DEBOUNCE = 300L
 
 class NoteListViewModel(
     private val getAllNotesUseCase: GetAllNotesUseCase,
-    private val deleteNoteById: DeleteNoteById,
+    private val deleteNoteById: DeleteNoteByIdUseCase,
     private val notePresentationMapper: NotePresentationMapper,
     private val notesFilterMapper: NotesFilterMapper,
     private val securityHelper: SecurityHelper,

@@ -217,10 +217,17 @@ class OpenAIRepositoryImpl(
                 // Cache successful response for offline access
                 responseCache.cacheTranscription(request, successResponse)
                 
+                // Record analytics
+                val responseTime = System.currentTimeMillis() - startTime
+                val estimatedCost = estimateTranscriptionCost(request.audioFilePath)
+                analytics.recordSuccessfulRequest(operation, responseTime, estimatedCost, fromCache = false)
+                
                 successResponse
 
             } catch (e: ClientRequestException) {
                 Napier.e("OpenAI client request error during transcription", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "CLIENT_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "CLIENT_ERROR",
@@ -230,6 +237,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: ServerResponseException) {
                 Napier.e("OpenAI server error during transcription", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "SERVER_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "SERVER_ERROR",
@@ -239,6 +248,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: HttpRequestTimeoutException) {
                 Napier.e("OpenAI request timeout during transcription", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "TIMEOUT_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "TIMEOUT_ERROR",
@@ -247,6 +258,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: Exception) {
                 Napier.e("Unexpected error during audio transcription", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "UNKNOWN_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "UNKNOWN_ERROR",
@@ -259,6 +272,9 @@ class OpenAIRepositoryImpl(
 
     override suspend fun summarizeText(request: SummarizationRequest): OpenAIResponse<SummarizationResult> {
         return withContext(Dispatchers.Default) {
+            val startTime = System.currentTimeMillis()
+            val operation = "summarization"
+            
             try {
                 // Input validation
                 if (request.text.isBlank()) {
@@ -274,6 +290,8 @@ class OpenAIRepositoryImpl(
                 val cachedResponse = responseCache.getCachedSummarization(request)
                 if (cachedResponse != null) {
                     Napier.d("Returning cached summarization result")
+                    val responseTime = System.currentTimeMillis() - startTime
+                    analytics.recordSuccessfulRequest(operation, responseTime, fromCache = true)
                     return@withContext cachedResponse
                 }
 
@@ -347,10 +365,17 @@ class OpenAIRepositoryImpl(
                 // Cache successful response for offline access
                 responseCache.cacheSummarization(request, successResponse)
                 
+                // Record analytics
+                val responseTime = System.currentTimeMillis() - startTime
+                val estimatedCost = estimateSummarizationCost(request.text)
+                analytics.recordSuccessfulRequest(operation, responseTime, estimatedCost, fromCache = false)
+                
                 successResponse
 
             } catch (e: ClientRequestException) {
                 Napier.e("OpenAI client request error during summarization", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "CLIENT_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "CLIENT_ERROR",
@@ -360,6 +385,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: ServerResponseException) {
                 Napier.e("OpenAI server error during summarization", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "SERVER_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "SERVER_ERROR",
@@ -369,6 +396,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: HttpRequestTimeoutException) {
                 Napier.e("OpenAI request timeout during summarization", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "TIMEOUT_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "TIMEOUT_ERROR",
@@ -377,6 +406,8 @@ class OpenAIRepositoryImpl(
                 )
             } catch (e: Exception) {
                 Napier.e("Unexpected error during text summarization", e)
+                val responseTime = System.currentTimeMillis() - startTime
+                analytics.recordFailedRequest(operation, "UNKNOWN_ERROR", responseTime)
                 OpenAIResponse(
                     error = OpenAIError(
                         code = "UNKNOWN_ERROR",

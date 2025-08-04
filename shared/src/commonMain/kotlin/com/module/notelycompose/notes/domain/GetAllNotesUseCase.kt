@@ -3,6 +3,7 @@ package com.module.notelycompose.notes.domain
 import com.module.notelycompose.core.CommonFlow
 import com.module.notelycompose.core.asFlow
 import com.module.notelycompose.core.toCommonFlow
+import com.module.notelycompose.notes.domain.interfaces.GetAllNotesUseCase
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
 import com.module.notelycompose.notes.domain.model.NoteDomainModel
 import com.module.notelycompose.notes.domain.model.NotesFilterDomainModel
@@ -15,8 +16,8 @@ import kotlinx.coroutines.flow.map
 class GetAllNotesUseCase(
     private val noteDataSource: NoteDataSource,
     private val noteDomainMapper: NoteDomainMapper
-) {
-    fun execute(): CommonFlow<List<NoteDomainModel>> {
+) : com.module.notelycompose.notes.domain.interfaces.GetAllNotesUseCase {
+    override fun execute(): CommonFlow<List<NoteDomainModel>> {
         return noteDataSource.getNotes().asFlow()
         .map { notes ->
             notes.map { noteDataModel ->

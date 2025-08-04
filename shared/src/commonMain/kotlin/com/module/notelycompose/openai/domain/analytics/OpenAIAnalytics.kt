@@ -119,8 +119,7 @@ class OpenAIAnalytics {
                 cacheHits = totalCacheHits,
                 cacheHitRate = cacheHitRate,
                 totalEstimatedCostCents = totalCostCents,
-                averageResponseTimeMs = avgResponseTime,
-                operationMetrics = metrics.toMap()
+                averageResponseTimeMs = avgResponseTime
             )
         }
     }
@@ -173,7 +172,7 @@ class OpenAIAnalytics {
 /**
  * Internal metric data storage.
  */
-private data class MetricData(
+internal data class MetricData(
     var totalRequests: Long = 0,
     var successfulRequests: Long = 0,
     var failedRequests: Long = 0,
@@ -196,7 +195,6 @@ data class AnalyticsSummary(
     val cacheHitRate: Double,
     val totalEstimatedCostCents: Long,
     val averageResponseTimeMs: Double,
-    val operationMetrics: Map<String, MetricData>
 ) {
     val estimatedCostDollars: Double
         get() = totalEstimatedCostCents / 100.0

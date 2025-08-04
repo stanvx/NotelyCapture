@@ -58,6 +58,12 @@ import com.module.notelycompose.summary.TFIDFSummarizer
 import com.module.notelycompose.core.security.AiSettingsRepository
 import com.module.notelycompose.core.security.SecurePreferencesRepository
 import com.module.notelycompose.notes.presentation.settings.AISettingsViewModel
+import com.module.notelycompose.notes.domain.interfaces.DeleteNoteByIdUseCase
+import com.module.notelycompose.notes.domain.interfaces.GetAllNotesUseCase
+import com.module.notelycompose.notes.domain.interfaces.GetLastNoteUseCase
+import com.module.notelycompose.notes.domain.interfaces.GetNoteByIdUseCase
+import com.module.notelycompose.notes.domain.interfaces.InsertNoteUseCase
+import com.module.notelycompose.notes.domain.interfaces.UpdateNoteUseCase
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -107,11 +113,13 @@ val repositoryModule = module {
     
     // OpenAI Integration
     single { com.module.notelycompose.openai.data.cache.OpenAIResponseCache() }
+    single { com.module.notelycompose.openai.domain.analytics.OpenAIAnalytics() }
     single<OpenAIRepository> { 
         OpenAIRepositoryImpl(
             networkConnectivityManager = get(),
             securityHelper = get(),
-            responseCache = get()
+            responseCache = get(),
+            analytics = get()
         )
     }
     single { TFIDFSummarizer() }
@@ -133,13 +141,16 @@ val viewModelModule = module {
 }
 
 val useCaseModule = module {
-    factory { DeleteNoteById(get()) }
-    factory { GetAllNotesUseCase(get(), get()) }
-    factory { GetLastNote(get(), get()) }
-    factory { GetNoteById(get(), get()) }
-    factory { InsertNoteUseCase(get(), get(), get()) }
+    // Use case interfaces for testability
+    factory<DeleteNoteByIdUseCase> { DeleteNoteById(get()) }
+    factory<GetAllNotesUseCase> { com.module.notelycompose.notes.domain.GetAllNotesUseCase(get(), get()) }
+    factory<GetLastNoteUseCase> { GetLastNote(get(), get()) }
+    factory<GetNoteByIdUseCase> { GetNoteById(get(), get()) }
+    factory<InsertNoteUseCase> { com.module.notelycompose.notes.domain.InsertNoteUseCase(get(), get(), get()) }
+    factory<UpdateNoteUseCase> { com.module.notelycompose.notes.domain.UpdateNoteUseCase(get(), get(), get()) }
+    
+    // Other use cases that don't need interface changes yet
     factory { SearchNotesUseCase(get(), get()) }
-    factory { UpdateNoteUseCase(get(), get(), get()) }
     factory { ModelAvailabilityService(get(), get()) }
     factory { BackgroundTranscriptionService(get(), get()) }
     

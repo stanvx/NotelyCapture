@@ -1,5 +1,6 @@
 package com.module.notelycompose.notes.domain
 
+import com.module.notelycompose.notes.domain.interfaces.UpdateNoteUseCase
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
 import com.module.notelycompose.notes.domain.mapper.TextFormatMapper
 import com.module.notelycompose.notes.domain.model.TextAlignDomainModel
@@ -9,8 +10,8 @@ class UpdateNoteUseCase(
     private val noteDataSource: NoteDataSource,
     private val textFormatMapper: TextFormatMapper,
     private val noteDomainMapper: NoteDomainMapper
-) {
-    suspend fun execute(
+) : com.module.notelycompose.notes.domain.interfaces.UpdateNoteUseCase {
+    override suspend fun execute(
         id: Long,
         title: String,
         content: String,
