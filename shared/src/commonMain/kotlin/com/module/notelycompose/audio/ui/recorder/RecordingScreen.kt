@@ -7,7 +7,6 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,14 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -168,52 +161,46 @@ fun RecordingScreen(
             }
 
             ScreenState.Success -> {
-                RecordingSuccessScreen()
+                // Skip the tick animation and go straight to processing
                 LaunchedEffect(Unit) {
                     if (isQuickRecordMode) {
-                        // Wait for recording path to be available using reactive approach with race condition protection
-                        val recordingPath = withTimeoutOrNull(AppConstants.Recording.RECORDING_PATH_TIMEOUT) {
-                            // Add small delay to ensure state updates are processed
-                            delay(AppConstants.Audio.RACE_CONDITION_DELAY)
-                            // Check current state first in case recording completed before we started waiting
-                            val currentState = viewModel.audioRecorderPresentationState.value
-                            if (currentState.recordingPath.isNotEmpty()) {
-                                currentState.recordingPath
-                            } else {
-                                // Wait for state update if path is not yet available
-                                viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }.recordingPath
-                            }
-                        }
+                        // Simplified path retrieval - direct state access
+                        val recordingPath = viewModel.audioRecorderPresentationState.first { it.recordingPath.isNotEmpty() }.recordingPath
                         
                         if (!recordingPath.isNullOrEmpty()) {
-                            debugPrintln { "Quick record completed: $recordingPath" }
-                            
                             backgroundTranscriptionService.startTranscription(
                                 audioFilePath = recordingPath,
                                 onComplete = { noteId ->
-                                    debugPrintln { "Background transcription completed for note: $noteId" }
-                                    // Navigate back to note list after successful transcription and note creation
                                     navigateBack()
                                 },
                                 onError = { error ->
-                                    debugPrintln { "Background transcription failed: ${error.message}" }
-                                    // Still update editor with recording path and navigate back
+                                    // Fallback: create audio-only note
                                     editorViewModel.onUpdateRecordingPath(recordingPath)
                                     navigateBack()
                                 }
                             )
                         } else {
-                            debugPrintln { "Quick record failed: Recording path not available after ${AppConstants.Recording.RECORDING_PATH_TIMEOUT}" }
-                            // Fallback: navigate back without transcription
                             navigateBack()
                         }
                     } else {
-                        // Traditional flow with configured delay
-                        delay(AppConstants.Recording.TRADITIONAL_FLOW_DELAY)
-                        debugPrintln { "%%%%%%%%%%% ${recordingState.recordingPath}" }
+                        // Traditional flow - no longer needs delay since no animation
                         editorViewModel.onUpdateRecordingPath(recordingState.recordingPath)
                         navigateBack()
                     }
+                }
+                
+                // Show a subtle processing indicator while transcription happens
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(LocalCustomColors.current.bodyBackgroundColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 3.dp
+                    )
                 }
             }
 
@@ -299,99 +286,7 @@ private fun RecordingInProgressScreen(
     )
 }
 
-@Composable
-private fun LoadingAnimation(
-    isRecordPaused: Boolean
-) {
-    val drawArcColor = LocalCustomColors.current.bodyContentColor
-    val rotationAngle = remember { Animatable(0f) }
 
-    LaunchedEffect(isRecordPaused) {
-        if (!isRecordPaused) {
-            rotationAngle.animateTo(
-                targetValue = rotationAngle.value + 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(2000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
-            )
-        } else {
-            rotationAngle.stop()
-        }
-    }
-
-    Canvas(modifier = Modifier.size(200.dp)) {
-        drawArc(
-            color = drawArcColor,
-            startAngle = rotationAngle.value,
-            sweepAngle = 300f,
-            useCenter = false,
-            style = Stroke(width = 4f, cap = StrokeCap.Round)
-        )
-    }
-}
-
-@Composable
-internal fun RecordingSuccessScreen() {
-    val pathColor = LocalCustomColors.current.bodyContentColor
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LocalCustomColors.current.bodyBackgroundColor),
-        contentAlignment = Alignment.Center
-    ) {
-        var animationPlayed by remember { mutableStateOf(false) }
-        val pathProgress by animateFloatAsState(
-            targetValue = if (animationPlayed) 1f else 0f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                easing = FastOutSlowInEasing
-            ),
-            label = stringResource(Res.string.recording_ui_checkmark)
-        )
-
-        LaunchedEffect(Unit) {
-            animationPlayed = true
-        }
-
-        Canvas(modifier = Modifier.size(AppConstants.UI.SUCCESS_ANIMATION_DP.dp)) {
-            val path = Path().apply {
-
-                addArc(
-                    Rect(
-                        offset = Offset(0f, 0f),
-                        size = Size(size.width, size.height)
-                    ),
-                    0f,
-                    360f * pathProgress
-                )
-
-                if (pathProgress > 0.5f) {
-                    val checkProgress = (pathProgress - 0.5f) * 2f
-                    moveTo(size.width * 0.2f, size.height * 0.5f)
-                    lineTo(
-                        size.width * 0.45f,
-                        size.height * 0.7f * checkProgress
-                    )
-                    lineTo(
-                        size.width * 0.8f,
-                        size.height * 0.3f * checkProgress
-                    )
-                }
-            }
-
-            drawPath(
-                path = path,
-                color = pathColor,
-                style = Stroke(
-                    width = 8f,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
-            )
-        }
-    }
-}
 
 @Composable
 private fun RecordingUiComponentBackButton(

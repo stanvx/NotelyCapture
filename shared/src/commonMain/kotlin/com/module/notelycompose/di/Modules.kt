@@ -106,8 +106,7 @@ val repositoryModule = module {
     singleOf(::PreferencesRepository)
     single { WhisperModelManager(get()) }
     single<TranscriptionRepository> { TranscriptionRepositoryImpl(get(), get()) }
-    single { SearchHistoryManager(get()) }
-    single { SearchSuggestionProvider(get(), get()) }
+    // Search functionality removed - keeping only essential text processing
     single { TextContentPredictor(get()) }
     single { LanguageAwareAutoComplete(get()) }
     single { AiSettingsRepository(get(), get()) }
@@ -151,7 +150,7 @@ val useCaseModule = module {
     factory { com.module.notelycompose.notes.domain.UpdateNoteUseCase(get(), get(), get()) }
     
     // Other use cases that don't need interface changes yet
-    factory { SearchNotesUseCase(get(), get()) }
+    // SearchNotesUseCase removed - deprecated functionality
     factory { ModelAvailabilityService(get(), get()) }
     factory { BackgroundTranscriptionService(get(), get(), get()) }
     

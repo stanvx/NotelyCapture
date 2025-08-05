@@ -77,11 +77,11 @@ class TranscriptionViewModel(
                         }
                     }, onNewSegment = { _, _, text ->
                         
-                        val delimiter = if(_uiState.value.originalText.endsWith(".")) "\n\n" else SPACE_STR
                         debugPrintln{"\n text ========================= $text"}
                         _uiState.update { current ->
+                            val delimiter = if(current.originalText.endsWith(".")) "\n\n" else SPACE_STR
                             current.copy(
-                                originalText = "${_uiState.value.originalText}$delimiter${text.trim()}".trim(),
+                                originalText = "${current.originalText}$delimiter${text.trim()}".trim(),
                                 partialText = text
                             )
                         }
@@ -126,6 +126,22 @@ class TranscriptionViewModel(
             initMutex.withLock {
                 recognizerReady = false
             }
+        }
+    }
+
+    /**
+     * Direct method for appending transcription segments.
+     * Used for direct callback integration without repository layer.
+     */
+    fun appendSegment(text: String) {
+        if (text.isBlank()) return
+        
+        _uiState.update { current ->
+            val delimiter = if(current.originalText.endsWith(".")) "\n\n" else SPACE_STR
+            current.copy(
+                originalText = "${current.originalText}$delimiter${text.trim()}".trim(),
+                partialText = text
+            )
         }
     }
 

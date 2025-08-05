@@ -100,29 +100,22 @@ class BackgroundTranscriptionService(
                 // Start transcription - model is now guaranteed to be ready
                 transcriptionViewModel.startRecognizer(audioFilePath)
                 
+                // Wait briefly to ensure transcription has started
+                kotlinx.coroutines.delay(50)
+                
                 // Monitor transcription progress and wait for completion
+                var transcriptionStarted = false
                 transcriptionViewModel.uiState.collect { uiState ->
-                    if (!uiState.inTranscription && !cleanupCompleted) {
+                    // Only proceed after we've seen transcription actually start
+                    if (uiState.inTranscription) {
+                        transcriptionStarted = true
+                    }
+                    
+                    if (!uiState.inTranscription && transcriptionStarted && !cleanupCompleted) {
                         cleanupCompleted = true
                         
-                        // For longer transcriptions, wait briefly for fallback mechanism to provide complete text
-                        val transcribedText = if (uiState.originalText.isBlank()) {
-                            debugPrintln { "BackgroundTranscriptionService: Empty text detected, waiting for fallback mechanism..." }
-                            // Short delay to allow fallback logic in Transcriber.android.kt to complete
-                            kotlinx.coroutines.delay(100)
-                            
-                            // Check if text was populated by fallback
-                            val updatedState = transcriptionViewModel.uiState.value
-                            if (updatedState.originalText.isNotBlank()) {
-                                debugPrintln { "BackgroundTranscriptionService: Fallback mechanism provided text: '${updatedState.originalText.take(50)}${if (updatedState.originalText.length > 50) "..." else ""}'" }
-                                updatedState.originalText
-                            } else {
-                                debugPrintln { "BackgroundTranscriptionService: No text available after fallback delay, creating audio-only note" }
-                                uiState.originalText // Will be empty, creating audio-only note
-                            }
-                        } else {
-                            uiState.originalText
-                        }
+                        // Get transcribed text directly from UI state
+                        val transcribedText = uiState.originalText
                         
                         // Create note with final transcription result
                         val noteId = try {
