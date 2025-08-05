@@ -2,7 +2,7 @@ package com.module.notelycompose.presentation.texteditor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.module.notelycompose.domain.audio.PlatformAudioPlayer
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.domain.model.Note
 import com.module.notelycompose.domain.repository.NoteRepository
 import com.module.notelycompose.domain.security.SecurityHelper
@@ -76,34 +76,32 @@ class TextEditorViewModel(
         
         effectiveScope.launch {
             try {
+                val noteId = currentState.noteId?.toLongOrNull() ?: generateNoteId()
                 val note = Note(
-                    id = currentState.noteId ?: generateNoteId(),
+                    id = noteId,
                     title = extractTitle(currentState.content),
                     content = currentState.content,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    timestamp = Clock.System.now().toEpochMilliseconds(),
                     isStarred = currentState.isStarred
                 )
                 
-                noteRepository.saveNote(note).fold(
-                    onSuccess = {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            isSaved = true,
-                            noteId = note.id
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Failed to save note: ${error.message}"
-                        )
-                    }
+                if (currentState.noteId != null) {
+                    // Update existing note
+                    noteRepository.updateNote(note)
+                } else {
+                    // Insert new note
+                    noteRepository.insertNote(note)
+                }
+                
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isSaved = true,
+                    noteId = note.id.toString()
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Unexpected error: ${e.message}"
+                    error = "Failed to save note: ${e.message}"
                 )
             }
         }
@@ -113,7 +111,8 @@ class TextEditorViewModel(
         effectiveScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isPlayingAudio = true)
-                audioPlayer.play(audioPath)
+                audioPlayer.prepare(audioPath)
+                audioPlayer.play()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isPlayingAudio = false,
@@ -127,30 +126,37 @@ class TextEditorViewModel(
         _uiState.value = _uiState.value.copy(isLoading = true)
         
         effectiveScope.launch {
-            noteRepository.getNote(noteId).fold(
-                onSuccess = { note ->
-                    if (note != null) {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            noteId = note.id,
-                            content = note.content,
-                            isStarred = note.isStarred,
-                            isSaved = true
-                        )
-                    } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Note not found"
-                        )
-                    }
-                },
-                onFailure = { error ->
+            try {
+                val noteIdLong = noteId.toLongOrNull()
+                if (noteIdLong == null) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Failed to load note: ${error.message}"
+                        error = "Invalid note ID format"
+                    )
+                    return@launch
+                }
+                
+                val note = noteRepository.getNoteById(noteIdLong)
+                if (note != null) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        noteId = note.id.toString(),
+                        content = note.content,
+                        isStarred = note.isStarred,
+                        isSaved = true
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "Note not found"
                     )
                 }
-            )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Failed to load note: ${e.message}"
+                )
+            }
         }
     }
     
@@ -204,8 +210,8 @@ class TextEditorViewModel(
             ?: "Untitled Note"
     }
     
-    private fun generateNoteId(): String {
-        return "note_${Clock.System.now().toEpochMilliseconds()}"
+    private fun generateNoteId(): Long {
+        return Clock.System.now().toEpochMilliseconds()
     }
 }
 

@@ -7,7 +7,7 @@ import com.module.notelycompose.notes.domain.model.TextFormatDomainModel
  * Interface for inserting a new note into the repository.
  * This contract defines the business logic for note creation operations.
  */
-interface InsertNoteUseCase {
+interface InsertNoteUseCaseContract {
     /**
      * Execute the use case to insert a new note
      * @param title The title of the note

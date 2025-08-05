@@ -351,11 +351,11 @@ private class FakeInsertNoteUseCase : InsertNoteUseCase(FakeNoteDataSource(), Te
         formatting: List<TextFormatDomainModel>, 
         textAlign: TextAlignDomainModel, 
         recordingPath: String
-    ): Long? {
+    ) {
         callCount++
         lastTitle = title
         lastContent = content
-        return nextId++
+        nextId++
     }
 }
 

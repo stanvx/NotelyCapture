@@ -1,6 +1,6 @@
 package com.module.notelycompose.presentation.texteditor
 
-import com.module.notelycompose.domain.audio.PlatformAudioPlayer
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.domain.model.Note
 import com.module.notelycompose.domain.repository.NoteRepository
 import com.module.notelycompose.domain.security.SecurityHelper

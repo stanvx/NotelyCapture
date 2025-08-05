@@ -25,8 +25,3 @@ val domainModule = module {
     }
 }
 
-/**
- * Platform-specific module that should be defined in androidMain and iosMain.
- * This module contains platform-specific implementations.
- */
-expect val platformModule: org.koin.core.module.Module

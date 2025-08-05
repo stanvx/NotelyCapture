@@ -1,6 +1,6 @@
 package com.module.notelycompose.integration
 
-import com.module.notelycompose.domain.audio.PlatformAudioPlayer
+import com.module.notelycompose.platform.PlatformAudioPlayer
 import com.module.notelycompose.domain.model.Note
 import com.module.notelycompose.domain.repository.NoteRepository
 import com.module.notelycompose.domain.security.SecurityHelper
@@ -57,7 +57,7 @@ class ViewModelLifecycleIntegrationTest {
         viewModel.onProcessIntent(TextEditorIntent.UpdateContent("<script>evil()</script>Safe content"))
         advanceUntilIdle()
         
-        val afterUpdateState = viewModel.uiState.awaitValue { it.content.isNotEmpty() }
+        val afterUpdateState = viewModel.uiState.awaitValue({ it.content.isNotEmpty() })
         assertEquals("Safe content", afterUpdateState.content)
         assertTrue(securityHelper.sanitizeWasCalled)
         
@@ -65,13 +65,13 @@ class ViewModelLifecycleIntegrationTest {
         viewModel.onProcessIntent(TextEditorIntent.SaveNote)
         
         // Verify loading state appears
-        val loadingState = viewModel.uiState.awaitValue { it.isLoading }
+        val loadingState = viewModel.uiState.awaitValue({ it.isLoading })
         assertTrue(loadingState.isLoading)
         
         advanceUntilIdle()
         
         // Verify save completed successfully
-        val savedState = viewModel.uiState.awaitValue { it.isSaved }
+        val savedState = viewModel.uiState.awaitValue({ it.isSaved })
         assertFalse(savedState.isLoading)
         assertTrue(savedState.isSaved)
         assertNull(savedState.error)
@@ -89,7 +89,7 @@ class ViewModelLifecycleIntegrationTest {
         viewModel.onProcessIntent(TextEditorIntent.ToggleStar)
         advanceUntilIdle()
         
-        val starredState = viewModel.uiState.awaitValue { it.isStarred }
+        val starredState = viewModel.uiState.awaitValue({ it.isStarred })
         assertTrue(starredState.isStarred)
         
         // Test error handling
@@ -98,7 +98,7 @@ class ViewModelLifecycleIntegrationTest {
         viewModel.onProcessIntent(TextEditorIntent.SaveNote)
         advanceUntilIdle()
         
-        val errorState = viewModel.uiState.awaitValue { it.error != null }
+        val errorState = viewModel.uiState.awaitValue({ it.error != null })
         assertNotNull(errorState.error)
         assertFalse(errorState.isSaved)
         
@@ -106,14 +106,14 @@ class ViewModelLifecycleIntegrationTest {
         viewModel.onProcessIntent(TextEditorIntent.ClearError)
         advanceUntilIdle()
         
-        val clearedErrorState = viewModel.uiState.awaitValue { it.error == null }
+        val clearedErrorState = viewModel.uiState.awaitValue({ it.error == null })
         assertNull(clearedErrorState.error)
         
         // Test long-running task with lifecycle management
         viewModel.onProcessIntent(TextEditorIntent.StartLongRunningTask)
         advanceTimeBy(100) // Let task start
         
-        val taskStartedState = viewModel.uiState.awaitValue { it.isLoading }
+        val taskStartedState = viewModel.uiState.awaitValue({ it.isLoading })
         assertTrue(taskStartedState.isLoading)
         
         // Clear ViewModel (simulate Activity/Fragment destruction)
@@ -237,24 +237,30 @@ private class TestNoteRepository : NoteRepository {
     var saveCallCount = 0
         private set
     
-    override suspend fun saveNote(note: Note): Result<Unit> {
+    override suspend fun insertNote(note: Note) {
         saveCallCount++
-        return if (shouldThrowError) {
-            Result.failure(Exception("Test repository error"))
-        } else {
-            Result.success(Unit)
+        if (shouldThrowError) {
+            throw Exception("Test repository error")
         }
     }
     
-    override suspend fun getNote(id: String): Result<Note?> {
-        return Result.success(null)
+    override suspend fun deleteNote(note: Note) {
+        if (shouldThrowError) {
+            throw Exception("Test repository error")
+        }
     }
     
-    override suspend fun getAllNotes(): Result<List<Note>> {
-        return Result.success(emptyList())
+    override suspend fun getNoteById(id: Long): Note? {
+        return null
     }
     
-    override suspend fun deleteNote(id: String): Result<Unit> {
-        return Result.success(Unit)
+    override suspend fun getAllNotes(): List<Note> {
+        return emptyList()
+    }
+    
+    override suspend fun updateNote(note: Note) {
+        if (shouldThrowError) {
+            throw Exception("Test repository error")
+        }
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.core.validation.AudioFileValidator
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
+import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.model.TextAlignDomainModel
 import com.module.notelycompose.transcription.error.TranscriptionError
 import com.module.notelycompose.transcription.error.isRecoverable
@@ -29,7 +30,8 @@ import kotlinx.datetime.toLocalDateTime
  */
 class BackgroundTranscriptionService(
     private val transcriptionViewModel: TranscriptionViewModel,
-    private val insertNoteUseCase: InsertNoteUseCase
+    private val insertNoteUseCase: InsertNoteUseCase,
+    private val getLastNoteUseCase: GetLastNote
 ) {
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     
@@ -213,14 +215,17 @@ class BackgroundTranscriptionService(
             }
         }
         
-        return insertNoteUseCase.execute(
+        insertNoteUseCase.execute(
             title = title,
             content = content,
             starred = false,
             formatting = emptyList(), // No special formatting for quick records
             textAlign = TextAlignDomainModel.Left,
             recordingPath = audioFilePath
-        ) ?: throw Exception("Failed to create note")
+        )
+        
+        // Get the ID of the note that was just inserted
+        return getLastNoteUseCase.execute()?.id ?: throw IllegalStateException("Failed to get note ID after insertion")
     }
     
     /**

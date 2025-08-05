@@ -1,6 +1,6 @@
 package com.module.notelycompose.notes.domain
 
-import com.module.notelycompose.notes.domain.interfaces.InsertNoteUseCase
+import com.module.notelycompose.notes.domain.interfaces.InsertNoteUseCaseContract
 import com.module.notelycompose.notes.domain.mapper.NoteDomainMapper
 import com.module.notelycompose.notes.domain.mapper.TextFormatMapper
 import com.module.notelycompose.notes.domain.model.TextAlignDomainModel
@@ -10,7 +10,7 @@ class InsertNoteUseCase(
     private val noteDataSource: NoteDataSource,
     private val textFormatMapper: TextFormatMapper,
     private val noteDomainMapper: NoteDomainMapper
-) : com.module.notelycompose.notes.domain.interfaces.InsertNoteUseCase {
+) : InsertNoteUseCaseContract {
     override suspend fun execute(
         title: String,
         content: String,
@@ -18,12 +18,14 @@ class InsertNoteUseCase(
         formatting: List<TextFormatDomainModel>,
         textAlign: TextAlignDomainModel,
         recordingPath: String
-    ) = noteDataSource.insertNote(
+    ) {
+        noteDataSource.insertNote(
             title = title,
             content = content,
             starred = starred,
             formatting = formatting.map { textFormatMapper.mapToDataModel(it) },
             textAlign = noteDomainMapper.mapTextAlignToDataModel(textAlign),
             recordingPath = recordingPath
-    )
+        )
+    }
 }

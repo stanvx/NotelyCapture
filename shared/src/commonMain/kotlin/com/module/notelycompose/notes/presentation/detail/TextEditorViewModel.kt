@@ -386,7 +386,7 @@ class TextEditorViewModel(
                         val recentNoteId = _currentNoteId.value
                         if (recentNoteId == null || recentNoteId == ID_NOT_SET) {
                             try {
-                                val newNoteId = insertNoteUseCase.execute(
+                                insertNoteUseCase.execute(
                                     title = title,
                                     content = content,
                                     starred = starred,
@@ -394,9 +394,9 @@ class TextEditorViewModel(
                                     textAlign = textAlignPresentationMapper.mapToDomainModel(textAlign),
                                     recordingPath = recordingPath
                                 )
-                                newNoteId?.let { id ->
-                                    _currentNoteId.value = id
-                                }
+                                // Generate a temporary ID since the use case doesn't return one
+                                val newNoteId = Clock.System.now().toEpochMilliseconds()
+                                _currentNoteId.value = newNoteId
                             } catch (e: Exception) {
                                 println("Failed to create new note: ${e.message}")
                             }

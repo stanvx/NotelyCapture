@@ -7,7 +7,7 @@ import com.module.notelycompose.notes.domain.model.TextFormatDomainModel
  * Interface for updating an existing note in the repository.
  * This contract defines the business logic for note update operations.
  */
-interface UpdateNoteUseCase {
+interface UpdateNoteUseCaseContract {
     /**
      * Execute the use case to update an existing note
      * @param id The ID of the note to update

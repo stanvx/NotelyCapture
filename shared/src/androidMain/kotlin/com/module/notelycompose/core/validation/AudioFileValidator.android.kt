@@ -115,10 +115,12 @@ actual fun validateCanonicalPath(filePath: String, appDirectory: String): Result
 actual fun getAudioDurationMs(filePath: String): Long? {
     return try {
         val retriever = MediaMetadataRetriever()
-        retriever.use { metadataRetriever ->
-            metadataRetriever.setDataSource(filePath)
-            val durationStr = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        try {
+            retriever.setDataSource(filePath)
+            val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
             durationStr?.toLongOrNull()
+        } finally {
+            retriever.release()
         }
     } catch (e: Exception) {
         // Log the error but don't throw - return null to indicate failure

@@ -17,7 +17,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -126,13 +125,8 @@ kotlin {
 
     }
 
-    targets.all {
-        compilations.all {
-            compilerOptions.configure {
-                freeCompilerArgs.add("-Xexpected-actual-classes")
-            }
-        }
-    }
+    // Removed unsupported compiler flag -Xexpected-actual-classes
+    // This flag is not supported in the current Kotlin version
 }
 compose.resources {
     publicResClass = true
