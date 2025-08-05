@@ -106,7 +106,7 @@ object RichTextAnimations {
  * Premium animated visibility for bottom toolbar with sophisticated spring physics.
  */
 @Composable
-fun AnimatedBottomToolbar(
+fun AnimatedBottomToolbarWithScope(
     visible: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable AnimatedVisibilityScope.() -> Unit
@@ -306,7 +306,7 @@ fun ContextualToolbarAnimation(
 ) {
     when (toolbarType) {
         ToolbarAnimationType.Bottom -> {
-            AnimatedBottomToolbar(
+            AnimatedBottomToolbarWithScope(
                 visible = visible,
                 modifier = modifier,
                 content = content

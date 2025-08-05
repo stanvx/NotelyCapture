@@ -103,8 +103,6 @@ class RichTextKeyboardShortcutsManager(
             is AccessibilityAction.ToggleCodeBlock -> viewModel.onAddHeading(0) // Code block styling
             is AccessibilityAction.ToggleQuoteBlock -> viewModel.onAddHeading(0) // Quote block styling
             is AccessibilityAction.Strikethrough -> viewModel.onToggleUnderline() // Placeholder for strikethrough
-            is AccessibilityAction.Undo -> viewModel.onUndo()
-            is AccessibilityAction.Redo -> viewModel.onRedo()
             is AccessibilityAction.SelectAll -> selectAllText()
             is AccessibilityAction.Copy -> copyText()
             is AccessibilityAction.Paste -> pasteText()
@@ -200,8 +198,6 @@ object RichTextShortcutsConfig {
         "Ctrl+Q" to "Toggle quote block",
         
         // Editing shortcuts
-        "Ctrl+Z" to "Undo last action",
-        "Ctrl+Shift+Z" to "Redo last action",
         "Ctrl+A" to "Select all text",
         "Ctrl+C" to "Copy selected text",
         "Ctrl+V" to "Paste from clipboard",
@@ -239,7 +235,7 @@ object RichTextShortcutsConfig {
  * Keyboard shortcut overlay component for displaying available shortcuts.
  */
 @Composable
-fun RichTextShortcutsOverlay(
+fun RichTextKeyboardShortcutsOverlay(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -598,7 +594,6 @@ private fun groupShortcutsByCategory(shortcuts: Map<String, String>): LinkedHash
             description.contains("Heading") || description.contains("heading") ||
             description.contains("Code") || description.contains("Quote") -> "Document Structure"
             
-            description.contains("Undo") || description.contains("Redo") ||
             description.contains("Select") || description.contains("Copy") ||
             description.contains("Paste") || description.contains("Cut") -> "Editing Actions"
             

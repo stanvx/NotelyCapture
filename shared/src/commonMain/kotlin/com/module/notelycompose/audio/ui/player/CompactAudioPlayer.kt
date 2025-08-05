@@ -28,6 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,7 +61,7 @@ fun CompactAudioPlayer(
     noteId: Long,
     noteDurationMs: Int,
     uiState: AudioPlayerUiState,
-    onLoadAudio: (String, Long) -> Unit,
+    onLoadAudio: (String, Long, Boolean) -> Unit,
     onTogglePlayPause: (Long) -> Unit,
     onTogglePlaybackSpeed: () -> Unit,
     isNoteCurrentlyPlaying: (Long) -> Boolean,
@@ -68,6 +71,16 @@ fun CompactAudioPlayer(
 ) {
     val isCurrentlyLoaded = isNoteLoaded(noteId)
     val isCurrentlyPlaying = isNoteCurrentlyPlaying(noteId)
+    
+    // Local state to track loading action for immediate visual feedback
+    var isLoadingAudio by remember(noteId) { mutableStateOf(false) }
+    
+    // Reset loading state when the note actually starts playing or when note changes
+    LaunchedEffect(isCurrentlyPlaying, noteId) {
+        if (isCurrentlyPlaying) {
+            isLoadingAudio = false
+        }
+    }
     
     // Use shared state for currently loaded note, otherwise use note-specific data
     val displayDuration = if (isCurrentlyLoaded) uiState.duration else noteDurationMs
@@ -101,19 +114,16 @@ fun CompactAudioPlayer(
             ) {
                 // Play/Pause button with immediate feedback
                 CompactPlayButton(
-                    isPlaying = isCurrentlyPlaying,
-                    isLoaded = isCurrentlyLoaded || (noteDurationMs > 0 && filePath.isNotEmpty()), // Show as loaded if we have valid audio
+                    isPlaying = isCurrentlyPlaying || isLoadingAudio,
+                    isLoaded = isCurrentlyLoaded || filePath.isNotEmpty(),
                     onClick = {
                         hapticFeedback?.light()
-                        // Immediate action for better UX - no two-click requirement
                         if (!isCurrentlyLoaded && filePath.isNotEmpty()) {
-                            // Load and immediately start playing
-                            onLoadAudio(filePath, noteId)
-                            // Note: The ViewModel should handle auto-play after loading for immediate feedback
+                            isLoadingAudio = true
+                            onLoadAudio(filePath, noteId, true)
                         } else if (isCurrentlyLoaded) {
-                            onTogglePlayPause(noteId)
+                            onTogglePlayPause(noteId) 
                         }
-                        // Do nothing if no valid audio file path
                     }
                 )
 

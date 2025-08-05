@@ -17,7 +17,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -45,6 +44,12 @@ kotlin {
             // splash
             implementation(libs.core.splashscreen)
             implementation(libs.androidx.compose.documentfile)
+            
+            // security
+            implementation(libs.androidx.security.crypto)
+            
+            // Platform-specific Ktor client
+            implementation(libs.ktor.client.android)
         }
 
         commonMain.dependencies {
@@ -85,6 +90,15 @@ kotlin {
             // HTML Sanitizer for security
             implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20220608.1")
 
+            // OpenAI & Network
+            implementation(libs.openai.kotlin)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.json)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.serialization)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+
             implementation(project(":core:audio"))
         }
 
@@ -94,18 +108,25 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
                 implementation(libs.koin.test)
                 implementation(libs.datastore.preferences)
+                
+                // Modern testing dependencies
+                implementation("io.mockk:mockk:1.13.8")
+                implementation("app.cash.turbine:turbine:1.0.0")
+            }
+        }
+
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation("io.mockk:mockk-android:1.13.8")
+                implementation("androidx.test.ext:junit:1.1.5")
+                implementation("androidx.test.espresso:espresso-core:3.5.1")
             }
         }
 
     }
 
-    targets.all {
-        compilations.all {
-            compilerOptions.configure {
-                freeCompilerArgs.add("-Xexpect-actual-classes")
-            }
-        }
-    }
+    // Removed unsupported compiler flag -Xexpected-actual-classes
+    // This flag is not supported in the current Kotlin version
 }
 compose.resources {
     publicResClass = true

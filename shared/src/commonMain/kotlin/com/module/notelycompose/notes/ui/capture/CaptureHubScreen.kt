@@ -70,6 +70,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -163,12 +167,12 @@ fun CaptureHubScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 16.dp,
-                bottom = 104.dp // Account for navigation bar + FAB space
+                start = 16.dp, // 2 × 8dp
+                end = 16.dp,   // 2 × 8dp
+                top = 16.dp,   // 2 × 8dp
+                bottom = 104.dp // 13 × 8dp - Account for navigation bar + FAB space
             ),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp) // 3 × 8dp for better breathing room
         ) {
             
             // Pinned Templates Section
@@ -180,7 +184,9 @@ fun CaptureHubScreen(
             item {
                 Text(
                     text = "Capture Methods",
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        letterSpacing = 0.25.sp // Enhanced letter spacing for headline
+                    ),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -191,16 +197,16 @@ fun CaptureHubScreen(
             item {
                 val captureMethodsList = getCaptureMethodsList()
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(18.dp) // Slightly increased spacing
+                    verticalArrangement = Arrangement.spacedBy(16.dp) // 2 × 8dp for consistent grid
                 ) {
                     // Group capture methods into rows of 2 with staggered animation
                     captureMethodsList.chunked(2).forEachIndexed { rowIndex, rowMethods ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(18.dp) // Increased spacing for better breathing room
+                            horizontalArrangement = Arrangement.spacedBy(16.dp) // 2 × 8dp for consistent grid
                         ) {
                             rowMethods.forEachIndexed { columnIndex, captureMethod ->
-                                val animationDelay = (rowIndex * 2 + columnIndex) * 100 // Staggered delay
+                                val animationDelay = (rowIndex * 2 + columnIndex) * 30 // Reduced delay for snappier feel
                                 
                                 CompactCaptureMethodCard(
                                     captureMethod = captureMethod,
@@ -243,25 +249,32 @@ private fun PinnedTemplatesSection() {
         ) {
             Text(
                 text = "Pinned",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    letterSpacing = 0.25.sp // Enhanced letter spacing for headline
+                ),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             
-            MaterialIcon(
-                symbol = MaterialSymbols.Add,
-                contentDescription = "Add template",
-                tint = MaterialTheme.colorScheme.primary,
-                size = 28.dp // Increased for better visibility
-            )
+            IconButton(
+                onClick = { /* Add template action */ },
+                modifier = Modifier.size(48.dp) // Minimum touch target size
+            ) {
+                MaterialIcon(
+                    symbol = MaterialSymbols.Add,
+                    contentDescription = "Add template",
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 28.dp // Increased for better visibility
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
         val pinnedTemplates = getPinnedTemplates()
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp), // 2 × 8dp for consistent spacing
+            contentPadding = PaddingValues(horizontal = 8.dp) // 1 × 8dp for grid alignment
         ) {
             items(pinnedTemplates) { template ->
                 PinnedTemplateCard(template = template)
@@ -281,8 +294,12 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
     
     Card(
         modifier = Modifier
-            .size(width = 150.dp, height = 110.dp)
+            .size(width = 152.dp, height = 112.dp) // Slightly larger for better proportions
             .scale(scale)
+            .semantics {
+                role = Role.Button
+                contentDescription = "Use ${template.name} template"
+            }
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -292,11 +309,18 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                     }
                 )
             },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp), // Increased radius for consistency
         elevation = if (isPressed) {
-            CardElevationPresets.compact()
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp,
+                pressedElevation = 1.dp
+            )
         } else {
-            CardElevationPresets.noteCard()
+            CardDefaults.cardElevation(
+                defaultElevation = 4.dp, // Enhanced but subtle elevation
+                hoveredElevation = 6.dp,
+                focusedElevation = 6.dp
+            )
         }
     ) {
         Box(
@@ -305,28 +329,37 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            template.color.copy(alpha = 0.4f), // Increased opacity for better contrast
-                            template.color.copy(alpha = 0.3f),
-                            template.color.copy(alpha = 0.2f)
+                            template.color.copy(alpha = 0.45f), // Enhanced opacity for better contrast
+                            template.color.copy(alpha = 0.25f),
+                            template.color.copy(alpha = 0.15f),
+                            template.color.copy(alpha = 0.05f)
                         ),
                         start = Offset(0f, 0f),
-                        end = Offset(200f, 200f)
+                        end = Offset(180f, 140f) // Better proportioned gradient
                     )
                 )
         ) {
-            // Glassmorphism overlay
+            // Enhanced glassmorphism overlay for depth
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Color.White.copy(alpha = 0.1f)
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.15f),
+                                Color.White.copy(alpha = 0.05f),
+                                Color.Transparent
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(120f, 120f)
+                        )
                     )
             )
             
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(16.dp), // 2 × 8dp for consistent grid alignment
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(
@@ -362,9 +395,11 @@ private fun PinnedTemplateCard(template: PinnedTemplate) {
                 
                 Text(
                     text = template.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        letterSpacing = 0.1.sp // Subtle letter spacing
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                 )
             }
@@ -384,29 +419,30 @@ private fun CompactCaptureMethodCard(
     var isPressed by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
     
-    // Entrance animation with staggered delay
+    // Optimized entrance animation with reduced delay
     val scale by animateFloatAsState(
         targetValue = when {
-            !isVisible -> 0.8f
-            isPressed -> 0.95f
+            !isVisible -> 0.92f // Less dramatic initial scale for smoother feel
+            isPressed -> 0.96f // Subtle press effect
             else -> 1f
         },
         animationSpec = if (!isVisible) {
             tween(
-                durationMillis = 500,
+                durationMillis = 250, // Reduced from 500ms for snappier response
                 delayMillis = animationDelay,
-                easing = LinearEasing
+                easing = androidx.compose.animation.core.FastOutSlowInEasing // Better easing curve
             )
         } else {
-            spring(dampingRatio = 0.4f)
+            spring(dampingRatio = 0.6f, stiffness = androidx.compose.animation.core.Spring.StiffnessMedium)
         },
         label = "card_scale"
     )
     
+    // Simplified alpha animation - immediate visibility with subtle fade-in
     val alpha by animateFloatAsState(
-        targetValue = if (isVisible) 1f else 0f,
+        targetValue = if (isVisible) 1f else 0.8f, // Start more visible
         animationSpec = tween(
-            durationMillis = 400,
+            durationMillis = 200, // Faster alpha transition
             delayMillis = animationDelay,
             easing = LinearEasing
         ),
@@ -420,9 +456,13 @@ private fun CompactCaptureMethodCard(
     
     Card(
         modifier = modifier
-            .height(120.dp) // Slightly increased for better proportions
+            .height(100.dp) // Simplified height
             .scale(scale)
             .alpha(alpha)
+            .semantics {
+                role = Role.Button
+                contentDescription = "Capture ${captureMethod.name} note"
+            }
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -434,65 +474,42 @@ private fun CompactCaptureMethodCard(
                     onTap = { onClick() }
                 )
             },
-        shape = RoundedCornerShape(24.dp), // More rounded for modern feel
-        elevation = if (isPressed) {
-            CardElevationPresets.compact()
-        } else {
-            CardElevationPresets.enhanced()
-        },
+        shape = RoundedCornerShape(16.dp), // Simplified radius
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+            pressedElevation = 1.dp
+        ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp) // 2 × 8dp for consistent grid alignment
         ) {
-            // Subtle gradient background for visual interest
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                captureMethod.backgroundColor.copy(alpha = 0.12f),
-                                captureMethod.backgroundColor.copy(alpha = 0.06f),
-                                captureMethod.backgroundColor.copy(alpha = 0.03f)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset(200f, 200f)
-                        )
-                    )
+            // Simplified icon
+            MaterialIcon(
+                symbol = captureMethod.icon,
+                contentDescription = "${captureMethod.name} capture method",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                size = 32.dp,
+                style = MaterialIconStyle.Outlined
             )
             
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(18.dp)
-            ) {
-                // Clean icon with theme colors
-                MaterialIcon(
-                    symbol = captureMethod.icon,
-                    contentDescription = captureMethod.name,
-                    tint = captureMethod.backgroundColor, // Use theme color for icons
-                    size = 36.dp, // Larger for better visibility
-                    style = MaterialIconStyle.Filled
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp)) // Increased spacing
-                
-                // Enhanced typography with better hierarchy
-                Text(
-                    text = captureMethod.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Simplified text
+            Text(
+                text = captureMethod.name,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
         }
     }
 }

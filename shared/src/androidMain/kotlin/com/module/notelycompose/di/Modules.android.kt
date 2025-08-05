@@ -19,6 +19,10 @@ import com.module.notelycompose.platform.dataStore
 import com.module.notelycompose.transcription.domain.WhisperModelLoader
 import com.module.notelycompose.core.security.SecurityMonitoringService
 import com.module.notelycompose.core.security.SecurityMonitoringServiceImpl
+import com.module.notelycompose.core.security.SecurePreferencesRepository
+import com.module.notelycompose.core.security.SecurePreferencesRepositoryImpl
+import com.module.notelycompose.openai.data.NetworkConnectivityManagerImpl
+import com.module.notelycompose.openai.domain.NetworkConnectivityManager
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
 import org.koin.core.qualifier.named
@@ -59,6 +63,18 @@ actual val platformModule = module {
             context = get(),
             appVersion = get(named("AppVersion"))
         )
+    }
+    
+    single<SecurePreferencesRepository> {
+        SecurePreferencesRepositoryImpl(
+            context = get(),
+            securityMonitoringService = get()
+        )
+    }
+    
+    // OpenAI & Network
+    single<NetworkConnectivityManager> {
+        NetworkConnectivityManagerImpl(context = get())
     }
 
     // domain

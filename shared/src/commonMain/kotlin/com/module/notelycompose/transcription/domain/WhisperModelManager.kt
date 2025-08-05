@@ -68,24 +68,21 @@ class WhisperModelManager(
     }
     
     /**
-     * Marks the start of a transcription session.
-     * Prevents idle timeout while transcription is active.
+     * Simplified session tracking - just update usage time
      */
     fun startTranscriptionSession() {
         activeTranscriptionCount++
         updateLastUsageTime()
-        debugPrintln { "WhisperModelManager: Transcription session started, active count: $activeTranscriptionCount" }
     }
     
     /**
-     * Marks the end of a transcription session.
+     * End transcription session
      */
     fun endTranscriptionSession() {
         if (activeTranscriptionCount > 0) {
             activeTranscriptionCount--
         }
         updateLastUsageTime()
-        debugPrintln { "WhisperModelManager: Transcription session ended, active count: $activeTranscriptionCount" }
     }
     
     /**

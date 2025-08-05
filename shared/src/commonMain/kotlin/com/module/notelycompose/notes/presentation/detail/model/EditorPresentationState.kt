@@ -14,5 +14,5 @@ data class EditorPresentationState(
     val selectionSize: TextFormatPresentationOption = TextPresentationFormats.NoSelection,
     val recording: RecordingPathPresentationModel = RecordingPathPresentationModel(),
     val starred: Boolean = false,
-    val createdAt: String = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).formattedDate()
+    val createdAt: String = Clock.System.now().toString()
 )

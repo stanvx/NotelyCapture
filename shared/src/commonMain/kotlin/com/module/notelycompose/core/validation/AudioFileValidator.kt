@@ -52,7 +52,9 @@ object AudioFileValidator {
                 )
             }
             
-            if (filePath.count { it == '.' } > 1) {
+            // Check for multiple extensions in filename only (not full path)
+            val fileName = filePath.substringAfterLast('/').substringAfterLast('\\')
+            if (fileName.count { it == '.' } > 1) {
                 return Result.failure(
                     TranscriptionError.AudioFileValidationError(
                         message = "Invalid filename: multiple extensions detected",
@@ -259,3 +261,9 @@ expect fun canReadFile(filePath: String): Boolean
  * Resolves symbolic links and validates against canonical app directory path.
  */
 expect fun validateCanonicalPath(filePath: String, appDirectory: String): Result<Unit>
+
+/**
+ * Platform-specific audio duration retrieval in milliseconds.
+ * Returns null if duration cannot be determined.
+ */
+expect fun getAudioDurationMs(filePath: String): Long?

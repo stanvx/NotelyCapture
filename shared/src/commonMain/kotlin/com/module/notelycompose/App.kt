@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,11 @@ import com.module.notelycompose.platform.Theme
 import com.module.notelycompose.platform.presentation.PlatformUiState
 import com.module.notelycompose.platform.presentation.PlatformViewModel
 import com.module.notelycompose.transcription.TranscriptionScreen
+import com.module.notelycompose.notes.ui.cache.GlobalMemoryMonitor
+import com.module.notelycompose.notes.ui.cache.MemoryFallbackManager
+import com.module.notelycompose.notes.ui.cache.MemoryAdaptiveEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -127,6 +133,25 @@ fun App(
 @Composable
 fun NoteAppRoot(platformUiState: PlatformUiState) {
     val navController = rememberNavController()
+    val coroutineScope = rememberCoroutineScope()
+    
+    // MEMORY OPTIMIZATION: Initialize global memory monitoring
+    LaunchedEffect(Unit) {
+        GlobalMemoryMonitor.initialize(coroutineScope)
+        
+        // Enable adaptive mode for automatic memory management
+        MemoryFallbackManager.setAdaptiveMode(true)
+    }
+    
+    // MEMORY OPTIMIZATION: Monitor memory pressure and adapt behavior
+    MemoryAdaptiveEffect()
+    
+    // Cleanup memory monitoring on dispose
+    DisposableEffect(Unit) {
+        onDispose {
+            GlobalMemoryMonitor.shutdown()
+        }
+    }
     
     // Shared audio player for entire app to prevent multiple MediaPlayer instances
     val sharedAudioPlayerViewModel: com.module.notelycompose.audio.presentation.AudioPlayerViewModel = koinViewModel()
@@ -141,6 +166,13 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
     
     // State for calendar go-to-today functionality
     var calendarGoToToday by remember { mutableStateOf<(() -> Unit)?>(null) }
+    
+    // Thread-safe navigation callback that ensures navigation happens on main thread
+    val safeNavigateBack: () -> Unit = {
+        coroutineScope.launch(Dispatchers.Main) {
+            navController.popBackStack()
+        }
+    }
 
     MainScreenScaffold(
         navController = navController,
@@ -181,7 +213,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 }
                 composableWithVerticalSlide<Routes.Menu> {
                     InfoScreen(
-                        navigateBack = { navController.popBackStack() },
+                        navigateBack = safeNavigateBack,
                         onNavigateToWebPage = { title, url ->
                             // navController.navigateSingleTopWithPopUp("${Routes.WEB_VIEW}/$title/$url")
                         }
@@ -189,18 +221,18 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 }
                 composableWithVerticalSlide<Routes.Settings> {
                     SettingsScreen(
-                        navigateBack = { navController.popBackStack() },
+                        navigateBack = safeNavigateBack,
                         navigateToLanguages = { navController.navigateSingleTop(Routes.Language) }
                     )
                 }
                 composableWithVerticalSlide<Routes.Language> {
                     LanguageSelectionScreen(
-                        navigateBack = { navController.popBackStack() }
+                        navigateBack = safeNavigateBack
                     )
                 }
                 composableWithSharedAxis<Routes.Calendar> {
                     CalendarScreen(
-                        navigateBack = { navController.popBackStack() },
+                        navigateBack = safeNavigateBack,
                         navigateToNoteDetails = { noteId ->
                             navController.navigateSingleTop(Routes.Details(noteId = noteId))
                         },
@@ -226,14 +258,14 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     onNavigateToSettings = {
                         navController.navigateSingleTop(Routes.Settings)
                     },
-                    navigateBack = { navController.popBackStack() }
+                    navigateBack = safeNavigateBack
                 )
             }
         }
         composableWithHorizontalSlide<Routes.QuickRecord> {
             RecordingScreen(
                 noteId = null, // No existing note for quick record
-                navigateBack = { navController.popBackStack() },
+                navigateBack = safeNavigateBack,
                 editorViewModel = koinViewModel(), // Create new instance for quick record
                 isQuickRecordMode = true
             )
@@ -246,7 +278,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 }
                 NoteDetailScreen(
                     noteId = route.noteId ?: DEFAULT_NOTE_ID,
-                    navigateBack = { navController.popBackStack() },
+                    navigateBack = safeNavigateBack,
                     navigateToRecorder = { noteId ->
                         navController.navigateSingleTop(Routes.Recorder(noteId))
                     },
@@ -262,7 +294,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                     navController.getBackStackEntry(Routes.DetailsGraph)
                 }
                 TranscriptionScreen(
-                    navigateBack = { navController.popBackStack() },
+                    navigateBack = safeNavigateBack,
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
                 )
             }
@@ -273,7 +305,7 @@ fun NoteAppRoot(platformUiState: PlatformUiState) {
                 }
                 RecordingScreen(
                     noteId = route.noteId?.toLong()?.takeIf { it != 0L },
-                    navigateBack = { navController.popBackStack() },
+                    navigateBack = safeNavigateBack,
                     editorViewModel = koinViewModel(viewModelStoreOwner = parentEntry),
                     isQuickRecordMode = false // Traditional recording flow
                 )

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.module.notelycompose.core.debugPrintln
 import com.module.notelycompose.core.validation.AudioFileValidator
 import com.module.notelycompose.notes.domain.InsertNoteUseCase
+import com.module.notelycompose.notes.domain.GetLastNote
 import com.module.notelycompose.notes.domain.model.TextAlignDomainModel
 import com.module.notelycompose.transcription.error.TranscriptionError
 import com.module.notelycompose.transcription.error.isRecoverable
@@ -29,7 +30,8 @@ import kotlinx.datetime.toLocalDateTime
  */
 class BackgroundTranscriptionService(
     private val transcriptionViewModel: TranscriptionViewModel,
-    private val insertNoteUseCase: InsertNoteUseCase
+    private val insertNoteUseCase: InsertNoteUseCase,
+    private val getLastNoteUseCase: GetLastNote
 ) {
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     
@@ -98,15 +100,27 @@ class BackgroundTranscriptionService(
                 // Start transcription - model is now guaranteed to be ready
                 transcriptionViewModel.startRecognizer(audioFilePath)
                 
+                // Wait briefly to ensure transcription has started
+                kotlinx.coroutines.delay(50)
+                
                 // Monitor transcription progress and wait for completion
+                var transcriptionStarted = false
                 transcriptionViewModel.uiState.collect { uiState ->
-                    if (!uiState.inTranscription && !cleanupCompleted) {
+                    // Only proceed after we've seen transcription actually start
+                    if (uiState.inTranscription) {
+                        transcriptionStarted = true
+                    }
+                    
+                    if (!uiState.inTranscription && transcriptionStarted && !cleanupCompleted) {
                         cleanupCompleted = true
                         
-                        // Create note with transcribed content (handles empty transcription)
+                        // Get transcribed text directly from UI state
+                        val transcribedText = uiState.originalText
+                        
+                        // Create note with final transcription result
                         val noteId = try {
                             createNoteFromTranscription(
-                                transcribedText = uiState.originalText,
+                                transcribedText = transcribedText,
                                 audioFilePath = audioFilePath
                             )
                         } catch (noteError: Exception) {
@@ -171,39 +185,40 @@ class BackgroundTranscriptionService(
     }
     
     /**
-     * Create a new note with the transcribed content and empty title for smart UI-based naming
-     * Handles empty transcriptions by creating audio-only notes
+     * Create a new note optimized for audio-first experience
+     * Audio-only notes are treated as first-class content, not failed transcriptions
      */
     private suspend fun createNoteFromTranscription(
         transcribedText: String,
         audioFilePath: String
     ): Long {
-        // Use empty title to leverage existing UI smart title generation from content
-        val title = ""
-        
-        // Handle empty transcriptions by providing placeholder content
-        val content = if (transcribedText.isBlank()) {
-            "[Audio recording - transcription unavailable]"
+        val (title, content) = if (transcribedText.isBlank()) {
+            // Audio-first design: empty content means audio-only note (not failed transcription)
+            "Voice Note" to ""
         } else {
-            transcribedText
+            // Standard note with transcription content
+            "" to transcribedText
         }
         
         debugPrintln { 
             if (transcribedText.isBlank()) {
-                "BackgroundTranscriptionService: Creating audio-only note (empty transcription)"
+                "BackgroundTranscriptionService: Creating audio-only note (voice note)"
             } else {
-                "BackgroundTranscriptionService: Creating note with transcribed content"
+                "BackgroundTranscriptionService: Creating note with transcription: '${transcribedText.take(50)}${if (transcribedText.length > 50) "..." else ""}'"
             }
         }
         
-        return insertNoteUseCase.execute(
+        insertNoteUseCase.execute(
             title = title,
             content = content,
             starred = false,
             formatting = emptyList(), // No special formatting for quick records
             textAlign = TextAlignDomainModel.Left,
             recordingPath = audioFilePath
-        ) ?: throw Exception("Failed to create note")
+        )
+        
+        // Get the ID of the note that was just inserted
+        return getLastNoteUseCase.execute()?.id ?: throw IllegalStateException("Failed to get note ID after insertion")
     }
     
     /**

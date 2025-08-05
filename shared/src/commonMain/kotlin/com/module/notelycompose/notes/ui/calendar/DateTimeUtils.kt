@@ -64,7 +64,6 @@ private fun parseHumanReadableDateWithoutTime(dateString: String): LocalDate? {
                 Month.AUGUST, Month.OCTOBER, Month.DECEMBER -> 31
                 Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
                 Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
-                else -> 31
             }
             
             if (day in 1..maxDaysInMonth) {
@@ -110,7 +109,6 @@ private fun parseHumanReadableDate(dateString: String): LocalDate? {
                 Month.AUGUST, Month.OCTOBER, Month.DECEMBER -> 31
                 Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
                 Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
-                else -> 31
             }
             
             if (day in 1..maxDaysInMonth) {
@@ -164,6 +162,7 @@ fun String.parseToTimeString(): String {
 }
 
 // Extension function to format LocalDate to display string
+// Updated to use unified format pattern: Monday, 3 August
 fun LocalDate.formatToDisplayString(): String {
     val dayOfWeek = when (dayOfWeek) {
         kotlinx.datetime.DayOfWeek.MONDAY -> "Monday"
@@ -173,7 +172,7 @@ fun LocalDate.formatToDisplayString(): String {
         kotlinx.datetime.DayOfWeek.FRIDAY -> "Friday"
         kotlinx.datetime.DayOfWeek.SATURDAY -> "Saturday"
         kotlinx.datetime.DayOfWeek.SUNDAY -> "Sunday"
-        else -> ""
+        else -> "Sunday"
     }
     
     val monthName = when (month) {
@@ -189,10 +188,44 @@ fun LocalDate.formatToDisplayString(): String {
         Month.OCTOBER -> "October"
         Month.NOVEMBER -> "November"
         Month.DECEMBER -> "December"
-        else -> ""
+        else -> "January"
     }
     
-    return "$dayOfWeek, $monthName $dayOfMonth, $year"
+    // For calendar displays, use full format: Monday, 3 August
+    return "$dayOfWeek, $dayOfMonth $monthName"
+}
+
+// Extension function to format LocalDate to unified display string
+// Format: <short-day> <day-number> <short-month> (for date-only displays)
+fun LocalDate.formatToUnifiedDisplayString(): String {
+    val shortDayName = when (dayOfWeek) {
+        kotlinx.datetime.DayOfWeek.MONDAY -> "Mon"
+        kotlinx.datetime.DayOfWeek.TUESDAY -> "Tue"
+        kotlinx.datetime.DayOfWeek.WEDNESDAY -> "Wed"
+        kotlinx.datetime.DayOfWeek.THURSDAY -> "Thu"
+        kotlinx.datetime.DayOfWeek.FRIDAY -> "Fri"
+        kotlinx.datetime.DayOfWeek.SATURDAY -> "Sat"
+        kotlinx.datetime.DayOfWeek.SUNDAY -> "Sun"
+        else -> "Sun"
+    }
+    
+    val shortMonthName = when (month) {
+        Month.JANUARY -> "Jan"
+        Month.FEBRUARY -> "Feb"
+        Month.MARCH -> "Mar"
+        Month.APRIL -> "Apr"
+        Month.MAY -> "May"
+        Month.JUNE -> "Jun"
+        Month.JULY -> "Jul"
+        Month.AUGUST -> "Aug"
+        Month.SEPTEMBER -> "Sep"
+        Month.OCTOBER -> "Oct"
+        Month.NOVEMBER -> "Nov"
+        Month.DECEMBER -> "Dec"
+        else -> "Jan"
+    }
+    
+    return "$shortDayName $dayOfMonth $shortMonthName"
 }
 
 // Custom YearMonth implementation for kotlinx-datetime compatibility

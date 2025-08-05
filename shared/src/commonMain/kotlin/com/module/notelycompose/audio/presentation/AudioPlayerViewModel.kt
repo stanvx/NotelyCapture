@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.module.notelycompose.onboarding.data.PreferencesRepository
+import com.module.notelycompose.security.AudioPathValidator
+import com.module.notelycompose.security.AudioPathValidator.ValidationResult
 
 /**
  * Platform-independent ViewModel for audio playback functionality
@@ -45,7 +47,6 @@ class AudioPlayerViewModel(
                 // Note: Speed will be applied when media is prepared via loadAudio()
             } catch (e: Exception) {
                 // Use default speed if unable to load preferences
-                println("Failed to load playback speed: ${e.message}")
             }
         }
     }
@@ -84,43 +85,85 @@ class AudioPlayerViewModel(
                     preferencesRepository.setPlaybackSpeed(nextSpeed)
                     
                 } catch (e: Exception) {
-                    println("Error setting playback speed: ${e.message}")
                     // On error, keep current state unchanged
                 }
             }
         }
     }
 
-    fun onLoadAudio(filePath: String, noteId: Long) {
+    fun onLoadAudio(filePath: String, noteId: Long, autoPlay: Boolean = false) {
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                // Stop any currently playing audio
-                if (_uiState.value.isPlaying) {
-                    audioPlayer.pause()
-                    onStopProgressUpdates()
+                // SECURITY: Validate audio path before processing (defense-in-depth)
+                // This provides an additional security layer beyond UI validation
+                when (val validation = AudioPathValidator.validateAudioPath(filePath)) {
+                    is ValidationResult.Valid -> {
+                        loadValidatedAudio(filePath, noteId, autoPlay)
+                    }
+                    is ValidationResult.Invalid -> {
+                        // Security threat detected - log and reject
+                        val threatLevel = validation.securityThreat
+                        val reason = validation.reason
+                        
+                        _uiState.update { it.copy(
+                            errorMessage = when (threatLevel) {
+                                AudioPathValidator.SecurityThreat.CRITICAL -> "Audio file access denied for security reasons"
+                                AudioPathValidator.SecurityThreat.HIGH -> "Audio file format not supported"
+                                AudioPathValidator.SecurityThreat.MEDIUM -> "Audio file path is invalid"
+                                AudioPathValidator.SecurityThreat.LOW -> "Audio file is unavailable"
+                            },
+                            isLoaded = false,
+                            isPlaying = false
+                        ) }
+                    }
                 }
-                
-                val duration = audioPlayer.prepare(filePath)
-                val currentSpeed = _uiState.value.playbackSpeed
-                audioPlayer.setPlaybackSpeed(currentSpeed) // Apply current speed to new audio
-                
-                // Extract waveform data in parallel
-                val amplitudes = waveformExtractor.extractAmplitudesForDuration(filePath, duration)
-                
-                _uiState.update { it.copy(
-                    isLoaded = true,
-                    duration = duration,
-                    isPlaying = false,
-                    currentPosition = 0,
-                    filePath = filePath,
-                    currentPlayingNoteId = noteId,
-                    waveformAmplitudes = amplitudes
-                ) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(
-                    errorMessage = e.message ?: "Failed to load audio"
+                    errorMessage = "Failed to load audio"
                 ) }
             }
+        }
+    }
+    
+    /**
+     * Internal method to load audio after path validation has passed
+     */
+    private suspend fun loadValidatedAudio(validatedFilePath: String, noteId: Long, autoPlay: Boolean = false) {
+        try {
+            // Stop any currently playing audio
+            if (_uiState.value.isPlaying) {
+                audioPlayer.pause()
+                onStopProgressUpdates()
+            }
+            
+            val duration = audioPlayer.prepare(validatedFilePath)
+            val currentSpeed = _uiState.value.playbackSpeed
+            audioPlayer.setPlaybackSpeed(currentSpeed)
+            
+            // Extract waveform data in parallel
+            val amplitudes = waveformExtractor.extractAmplitudesForDuration(validatedFilePath, duration)
+            
+            _uiState.update { it.copy(
+                isLoaded = true,
+                duration = duration,
+                isPlaying = false,
+                currentPosition = 0,
+                filePath = validatedFilePath,
+                currentPlayingNoteId = noteId,
+                waveformAmplitudes = amplitudes,
+                errorMessage = null // Clear any previous errors
+            ) }
+            
+            // Auto-play if requested
+            if (autoPlay) {
+                onPlay()
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(
+                errorMessage = e.message ?: "Failed to load audio",
+                isLoaded = false,
+                isPlaying = false
+            ) }
         }
     }
 

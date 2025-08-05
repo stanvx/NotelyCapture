@@ -133,15 +133,6 @@ class RichTextAccessibilityManager(
                     true
                 } else false
             }
-            Key.Z -> {
-                if (event.isShiftPressed) {
-                    onAction(AccessibilityAction.Redo)
-                    true
-                } else {
-                    onAction(AccessibilityAction.Undo)
-                    true
-                }
-            }
             Key.A -> {
                 onAction(AccessibilityAction.SelectAll)
                 true
@@ -232,8 +223,6 @@ sealed class AccessibilityAction {
     object ToggleCodeBlock : AccessibilityAction()
     object ToggleQuoteBlock : AccessibilityAction()
     object Strikethrough : AccessibilityAction()
-    object Undo : AccessibilityAction()
-    object Redo : AccessibilityAction()
     object SelectAll : AccessibilityAction()
     object Copy : AccessibilityAction()
     object Paste : AccessibilityAction()
@@ -262,8 +251,6 @@ enum class RichTextButtonType(val description: String) {
     CODE_BLOCK("Code block"),
     QUOTE_BLOCK("Quote block"),
     STRIKETHROUGH("Strikethrough"),
-    UNDO("Undo"),
-    REDO("Redo"),
     SELECT_ALL("Select all"),
     COPY("Copy"),
     PASTE("Paste"),
@@ -429,8 +416,6 @@ fun KeyboardShortcutsOverlay(
             "Ctrl+R" to "Code Block",
             "Ctrl+Q" to "Quote Block",
             "Ctrl+Shift+X" to "Strikethrough",
-            "Ctrl+Z" to "Undo",
-            "Ctrl+Shift+Z" to "Redo",
             "Ctrl+A" to "Select All",
             "Ctrl+C" to "Copy",
             "Ctrl+V" to "Paste",

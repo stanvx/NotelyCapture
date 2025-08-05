@@ -32,7 +32,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Dispatchers
 
 const val DEFAULT_TITLE = "New Note"
-const val DEFAULT_CONTENT = "No additional text"
+const val DEFAULT_CONTENT = ""
 const val CONTENT_LENGTH = 36
 private const val SEARCH_DEBOUNCE = 300L
 
@@ -122,8 +122,9 @@ class NoteListViewModel(
                 ?: DEFAULT_TITLE,
             content = note.content.trim().takeIf { it.isNotEmpty() }
                 ?.getFirstNonEmptyLineAfterFirst()
+                ?.takeIf { it.isNotEmpty() }
                 ?.truncateWithEllipsis(CONTENT_LENGTH)
-                ?: DEFAULT_CONTENT
+                ?: ""
         )
     }
 

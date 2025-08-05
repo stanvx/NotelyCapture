@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.module.notelycompose.audio.ui.recorder.RecordingSuccessScreen
 import com.module.notelycompose.notes.ui.theme.LocalCustomColors
 import kotlinx.coroutines.delay
 
@@ -37,9 +36,8 @@ internal fun ImportingAudioStateHost(
         }
 
         is ImportingAudioState.Success -> {
-            RecordingSuccessScreen()
+            // Immediately navigate to success without animation
             LaunchedEffect(Unit) {
-                delay(2000)
                 onSuccess(state.path)
                 onRelease()
             }
